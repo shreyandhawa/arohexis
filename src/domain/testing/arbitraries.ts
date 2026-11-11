@@ -13,10 +13,17 @@ const ZONES = ['America/New_York', 'Europe/London', 'Asia/Tokyo'];
 
 type Op = 'start' | 'undo' | 'tag' | 'close' | 'dismiss';
 
-function buildAttempt(n: number, tz: string, named: boolean, ops: Op[], basis: Basis): AppEvent[] {
+function buildAttempt(
+  n: number,
+  tz: string,
+  named: boolean,
+  ops: Op[],
+  basis: Basis,
+  ids: readonly string[],
+): AppEvent[] {
   const attemptId = `a${n}`;
   const common = (type: AppEvent['type'], k: number) => ({
-    id: `e${n}-${k}`,
+    id: ids[n * 16 + k] ?? `e${n}-${k}`,
     type,
     at: 0,
     tz,
@@ -78,7 +85,12 @@ function buildAttempt(n: number, tz: string, named: boolean, ops: Op[], basis: B
   return out;
 }
 
-/** Valid per-attempt event sequences, interleaved across attempts, with random undo/tag/close. */
+/**
+ * Valid per-attempt event sequences, interleaved across attempts, with random undo/tag/close.
+ * Event ids are random UUIDs, and some attempts put all their events on one `at`, as a single
+ * tap does. Storage orders equal-`at` events by id, so a test that wants the storage view should
+ * sort by (at, id).
+ */
 export function arbAttemptEvents(): fc.Arbitrary<AppEvent[]> {
   const arbOps = fc.array(fc.constantFrom<Op>('start', 'undo', 'tag', 'close', 'dismiss'), {
     maxLength: 6,
@@ -88,14 +100,17 @@ export function arbAttemptEvents(): fc.Arbitrary<AppEvent[]> {
     named: fc.boolean(),
     ops: arbOps,
     basis: fc.constantFrom(...BASES),
+    sameAt: fc.boolean(),
   });
   return fc
     .tuple(
       fc.array(arbAttempt, { maxLength: 6 }),
       fc.array(fc.nat({ max: 1000 }), { minLength: 64, maxLength: 64 }),
+      fc.uniqueArray(fc.uuid(), { minLength: 96, maxLength: 96 }),
     )
-    .map(([attempts, picks]) => {
-      const queues = attempts.map((a, n) => buildAttempt(n, a.tz, a.named, a.ops, a.basis));
+    .map(([attempts, picks, ids]) => {
+      const queues = attempts.map((a, n) => buildAttempt(n, a.tz, a.named, a.ops, a.basis, ids));
+      const firstAt = new Map<string, number>();
       const merged: AppEvent[] = [];
       let p = 0;
       while (queues.some((q) => q.length > 0)) {
@@ -103,7 +118,15 @@ export function arbAttemptEvents(): fc.Arbitrary<AppEvent[]> {
         const pick = picks[p++ % picks.length] ?? 0;
         const q = live[pick % live.length];
         const ev = q?.shift();
-        if (ev) merged.push({ ...ev, at: Date.UTC(2026, 10, 1) + merged.length * 60_000 });
+        if (!ev) continue;
+        const at = Date.UTC(2026, 10, 1) + merged.length * 60_000;
+        if (!('attemptId' in ev)) {
+          merged.push({ ...ev, at });
+          continue;
+        }
+        const first = firstAt.get(ev.attemptId) ?? at;
+        firstAt.set(ev.attemptId, first);
+        merged.push({ ...ev, at: attempts[Number(ev.attemptId.slice(1))]?.sameAt ? first : at });
       }
       return merged;
     });

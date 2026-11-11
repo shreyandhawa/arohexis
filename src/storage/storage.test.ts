@@ -1,5 +1,6 @@
 import 'fake-indexeddb/auto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { foldAttempts, isCountedStart } from '../domain/attempts';
 import { makeStart, openAttempt } from '../domain/commands';
 import { testDeps } from '../domain/testing/fixtures';
 import { ArohexisDB, type DbName } from './db';
@@ -72,6 +73,23 @@ describe('storage', () => {
     expect((await store.list({ from: 2500 })).map((e) => e.at)).toEqual([3000]);
     expect((await store.list({ to: 1500 })).map((e) => e.at)).toEqual([1000]);
     expect((await store.listByType('attempt.opened')).map((e) => e.at)).toEqual([1000, 2000, 3000]);
+  });
+
+  it('counts every start when attempt.opened and start.made share a millisecond', async () => {
+    const db = await freshDb();
+    const store = createEventStore(db);
+    // Production ids are random UUIDs, so IndexedDB orders equal-`at` rows at random.
+    const deps = { ...testDeps(), ids: { next: () => crypto.randomUUID() } };
+    const total = 200;
+    for (let n = 0; n < total; n++) {
+      const opened = openAttempt(deps, { source: 'stuck' });
+      await store.append([opened, ...makeStart(deps, [opened], opened.attemptId)]);
+    }
+    expect(foldAttempts(await store.list()).filter(isCountedStart)).toHaveLength(total);
+    // The same rows read per attempt (what appendForAttempt hands the decider).
+    const [first] = await store.listByType('attempt.opened');
+    const rows = await store.listByAttempt(first!.attemptId);
+    expect(foldAttempts(rows).filter(isCountedStart)).toHaveLength(1);
   });
 
   it('appendForAttempt serializes concurrent starts', async () => {

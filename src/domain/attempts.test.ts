@@ -175,4 +175,27 @@ describe('foldAttempts', () => {
       }),
     );
   });
+
+  it('counts every start regardless of how storage orders equal-at events', () => {
+    fc.assert(
+      fc.property(arbAttemptEvents(), (evts) => {
+        // IndexedDB returns equal `at` rows by primary key, which is a random id.
+        const stored = [...evts].sort((x, y) => x.at - y.at || (x.id < y.id ? -1 : 1));
+        const key = (list: AppEvent[]) =>
+          JSON.stringify(foldAttempts(list).map((a) => [a.id, a.start?.at, a.undone]));
+        expect(key(stored)).toBe(key(evts));
+        expect(foldAttempts(stored).filter(isCountedStart)).toHaveLength(
+          foldAttempts(evts).filter(isCountedStart).length,
+        );
+      }),
+    );
+  });
+
+  it('opens an attempt even when start.made sorts before attempt.opened', () => {
+    const { deps, open } = setup();
+    const opened = open();
+    const made = createEvent(deps, 'start.made', { attemptId: 'a1', backfilled: false });
+    const a = findAttempt([made, opened], 'a1');
+    expect(a && isCountedStart(a)).toBe(true);
+  });
 });
