@@ -8,6 +8,7 @@ import {
   GENERIC_RESPONSE_ID,
 } from '../domain/defaults';
 import { EXPORT_MESSAGES } from '../domain/exportFormat';
+import readme from '../../README.md?raw';
 import { BANNED_WORDS, checkCopy, wordCount } from './rules';
 
 function collectStrings(value: unknown, out: string[] = []): string[] {
@@ -99,5 +100,16 @@ describe('copy rules', () => {
     expect(BASIS_SOURCES['reframe']).toBe(
       'Rozental et al. 2018 (cognitive techniques used in CBT)',
     );
+  });
+});
+
+describe('README', () => {
+  it('README prose passes copy rules', () => {
+    const prose = readme
+      .replace(/```[\s\S]*?```/g, '')
+      .split('\n')
+      .filter((line) => !line.includes('http') && !line.includes('doi:'))
+      .join('\n');
+    expect(checkCopy(prose)).toEqual([]);
   });
 });
