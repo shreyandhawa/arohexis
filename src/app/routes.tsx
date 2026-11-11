@@ -5,12 +5,8 @@ import { Feeling } from './screens/Feeling';
 import { Home } from './screens/Home';
 import { ResponseScreen } from './screens/ResponseScreen';
 import { Settings } from './screens/Settings';
+import { SettingsData } from './screens/SettingsData';
 import { Started } from './screens/Started';
-
-/** Stand-in until the screen lands (Data). */
-function Placeholder() {
-  return null;
-}
 
 export function AppRoutes() {
   return (
@@ -21,7 +17,7 @@ export function AppRoutes() {
         <Route path="stuck/:attemptId" element={<ResponseScreen />} />
         <Route path="started/:attemptId" element={<Started />} />
         <Route path="settings" element={<Settings />} />
-        <Route path="settings/data" element={<Placeholder />} />
+        <Route path="settings/data" element={<SettingsData />} />
         <Route path="about" element={<About />} />
       </Route>
     </Routes>
