@@ -19,7 +19,11 @@ export function UpdateCard() {
   return (
     <div role="status" className={styles['card']}>
       <p className={styles['message']}>{updateReady.message}</p>
-      <Button variant="quiet" onClick={() => void updateServiceWorker(true)}>
+      <Button
+        variant="quiet"
+        className={styles['action']}
+        onClick={() => void updateServiceWorker(true)}
+      >
         {updateReady.action}
       </Button>
     </div>
