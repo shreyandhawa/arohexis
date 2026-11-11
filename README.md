@@ -81,7 +81,7 @@ Caveat: self-report.
 
 ## Privacy
 
-All data stays on your device, in the browser's IndexedDB. There are no accounts, no analytics, no error reporting service, and no third-party fonts or scripts. The app makes no network requests after it loads, and a Content Security Policy enforces that. The repository never contains real user data.
+All data stays on your device, in the browser's IndexedDB. There are no accounts, no analytics, no error reporting service, and no third-party fonts or scripts. The app makes no requests to any other site, and a Content Security Policy enforces that. The repository never contains real user data.
 
 ## Architecture
 
