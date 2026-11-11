@@ -233,8 +233,8 @@ Statuses:
 - Date: 2026-11-11 · Status: **Accepted**
 - **Context:** Task 1 produced three mockups (`.superpowers/sdd/plan/design/`) for the owner to choose between. Task 11 turns this ADR into the CSS tokens, so the values below are exact. Spec §11.1 describes one accent reserved for the primary action and the "Started." moment.
 - **Options:**
-  - A "Paper": warm cream, sepia and blue ink with serif display. Rejected: the owner found it too close to the stock warm-cream-and-serif look.
-  - B "Dusk": a dark, hued direction with a lamp-style Started moment. Rejected by the owner.
+  - A "Paper": warm cream, sepia and blue ink with serif display. Not chosen as-is: the owner asked for higher contrast (an off-white background with jet-black text, inverted in dark mode) and kept Paper's typefaces and layout rhythm as the base for C.
+  - B "Dusk": a dark, hued direction with a lamp-style Started moment. Not chosen: the owner preferred Paper's type and layout as the base.
   - C "Contrast": Paper's typefaces and layout rhythm, re-coloured as one neutral scale with no hue.
 - **Decision:** Direction C. Jet black `#0A0A0A` on off-white `#F5F5F2` in light mode, inverted in dark mode with softened body text `#E6E6E2` (the owner's choice, to avoid halation on a black screen).
 
