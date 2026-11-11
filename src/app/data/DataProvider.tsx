@@ -3,7 +3,7 @@ import type { ConfigStore, Clock, EventStore, IdGen } from '../../domain/ports';
 import { createConfigStore } from '../../storage/configStore';
 import type { ArohexisDB } from '../../storage/db';
 import { createEventStore } from '../../storage/eventStore';
-import { openStorage } from '../../storage/open';
+import { openStorageWithin } from '../../storage/open';
 import { StorageError } from '../screens/StorageError';
 import { browserClock, browserIds } from './runtime';
 
@@ -30,7 +30,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     let opened: ArohexisDB | undefined;
-    void openStorage('arohexis').then((result) => {
+    void openStorageWithin('arohexis').then((result) => {
       if (!result.ok) {
         if (!cancelled) setState({ status: 'failed' });
         return;

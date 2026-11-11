@@ -7,7 +7,7 @@ import { ArohexisDB, type DbName } from './db';
 import { createConfigStore } from './configStore';
 import { createEventStore } from './eventStore';
 import { readExportData } from './exportData';
-import { StorageUnavailableError, openStorage } from './open';
+import { StorageUnavailableError, openStorage, openStorageWithin } from './open';
 import { seedDefaults } from './seed';
 
 const opened: ArohexisDB[] = [];
@@ -148,6 +148,35 @@ describe('storage', () => {
       opened.push(res.db);
       expect(await res.db.feelings.count()).toBe(6);
     }
+  });
+
+  it('openStorageWithin gives up on a hung open', async () => {
+    vi.spyOn(ArohexisDB.prototype, 'open').mockReturnValue(
+      new Promise(() => undefined) as ReturnType<ArohexisDB['open']>,
+    );
+    const res = await openStorageWithin(`test-${crypto.randomUUID()}`, 20);
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error).toBeInstanceOf(StorageUnavailableError);
+  });
+
+  it('openStorageWithin closes a database that opens after the timeout', async () => {
+    const realOpen = ArohexisDB.prototype.open;
+    vi.spyOn(ArohexisDB.prototype, 'open').mockImplementation(function (this: ArohexisDB) {
+      opened.push(this);
+      return new Promise((resolve) =>
+        setTimeout(() => resolve(realOpen.call(this)), 60),
+      ) as ReturnType<ArohexisDB['open']>;
+    });
+    const close = vi.spyOn(ArohexisDB.prototype, 'close');
+    const res = await openStorageWithin(`test-${crypto.randomUUID()}`, 10);
+    expect(res.ok).toBe(false);
+    await vi.waitFor(() => expect(close).toHaveBeenCalled());
+  });
+
+  it('openStorageWithin returns the database when it opens in time', async () => {
+    const res = await openStorageWithin(`test-${crypto.randomUUID()}`, 5000);
+    expect(res.ok).toBe(true);
+    if (res.ok) opened.push(res.db);
   });
 
   it('openStorage reports unavailable storage', async () => {
