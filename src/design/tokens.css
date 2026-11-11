@@ -1,0 +1,109 @@
+/* Design tokens (ADR-018 "Contrast"). Components use only the semantic
+   custom properties below, never the --mono-* primitives. */
+
+:root {
+  color-scheme: light;
+
+  /* Primitives: one neutral scale, no hue. */
+  --mono-0: #fbfbf9;
+  --mono-50: #f5f5f2;
+  --mono-100: #e6e6e2;
+  --mono-200: #d6d6d2;
+  --mono-400: #a3a39f;
+  --mono-600: #4f4f4c;
+  --mono-800: #2b2b2b;
+  --mono-850: #1f1f1f;
+  --mono-900: #141414;
+  --mono-950: #0a0a0a;
+
+  /* Colour, light theme. */
+  --color-bg: #f5f5f2;
+  --color-surface: #fbfbf9;
+  --color-hover: #e6e6e2;
+  --color-text: #0a0a0a;
+  --color-text-muted: #4f4f4c;
+  --color-border: #4f4f4c;
+  --color-rule: #4f4f4c;
+  --color-accent: #0a0a0a;
+  --color-accent-pressed: #2b2b2b;
+  --color-on-accent: #f5f5f2;
+  --color-focus: #0a0a0a;
+  --color-selected: #0a0a0a;
+  --color-on-selected: #f5f5f2;
+
+  /* Type. */
+  --font-display: 'Newsreader Variable', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --font-text:
+    'Atkinson Hyperlegible Next Variable', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+
+  /* Fluid scale: ratio 4/3, base 17px at 375px rising to 18px at 1280px. */
+  --step--1: clamp(12.75px, 12.439px + 0.0829vw, 13.5px);
+  --step-0: clamp(17px, 16.586px + 0.1105vw, 18px);
+  --step-1: clamp(22.667px, 22.114px + 0.1473vw, 24px);
+  --step-2: clamp(30.222px, 29.486px + 0.1964vw, 32px);
+  --step-3: clamp(40.296px, 39.314px + 0.2619vw, 42.667px);
+  --step-4: clamp(53.728px, 52.419px + 0.3492vw, 56.889px);
+  --step-5: clamp(71.638px, 69.892px + 0.4656vw, 75.852px);
+
+  /* Spacing, 4px base. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-9: 36px;
+  --space-10: 40px;
+
+  /* Shape. */
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --radius-pill: 999px;
+  --target-min: 48px;
+
+  /* Motion. */
+  --motion-quick: 120ms;
+  --motion-calm: 240ms;
+  --motion-slow: 480ms;
+  --ease-standard: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Dark theme follows the device unless the person chose light. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --color-bg: #0a0a0a;
+    --color-surface: #141414;
+    --color-hover: #1f1f1f;
+    --color-text: #e6e6e2;
+    --color-text-muted: #a3a39f;
+    --color-border: #a3a39f;
+    --color-rule: #a3a39f;
+    --color-accent: #e6e6e2;
+    --color-accent-pressed: #d6d6d2;
+    --color-on-accent: #0a0a0a;
+    --color-focus: #e6e6e2;
+    --color-selected: #e6e6e2;
+    --color-on-selected: #0a0a0a;
+  }
+}
+
+/* Dark theme chosen explicitly. Keep identical to the block above. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-bg: #0a0a0a;
+  --color-surface: #141414;
+  --color-hover: #1f1f1f;
+  --color-text: #e6e6e2;
+  --color-text-muted: #a3a39f;
+  --color-border: #a3a39f;
+  --color-rule: #a3a39f;
+  --color-accent: #e6e6e2;
+  --color-accent-pressed: #d6d6d2;
+  --color-on-accent: #0a0a0a;
+  --color-focus: #e6e6e2;
+  --color-selected: #e6e6e2;
+  --color-on-selected: #0a0a0a;
+}
