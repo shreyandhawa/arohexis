@@ -1,15 +1,10 @@
 import { useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { backToHome } from '../../copy/common';
+import { isTyping } from '../typing';
 import { UpdateCard } from '../components/UpdateCard';
 import { StuckButton } from './StuckButton';
 import styles from './Shell.module.css';
-
-const TEXT_ENTRY = 'input, textarea, select, [contenteditable]:not([contenteditable="false"])';
-
-function isTyping(target: EventTarget | null): boolean {
-  return target instanceof Element && target.closest(TEXT_ENTRY) !== null;
-}
 
 /** The stuck flow and the Started screen have their own primary action. */
 function inFlow(pathname: string): boolean {

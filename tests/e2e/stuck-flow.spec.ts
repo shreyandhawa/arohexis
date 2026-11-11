@@ -230,6 +230,51 @@ test('keyboard-only flow', async ({ page }, testInfo) => {
   await expect(page.getByText('Started.', { exact: true })).toBeVisible();
 });
 
+test('Esc goes back from Feeling and runs Not now on Response', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'keyboard shortcuts are desktop only');
+  await page.goto('/');
+  await page.keyboard.press('s');
+  await expect(page.getByRole('button', { name: 'Anxious' })).toBeEnabled();
+  await page.keyboard.press('Escape');
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole('button', { name: stuck })).toBeVisible();
+
+  await page.keyboard.press('s');
+  await expect(page.getByRole('button', { name: 'Anxious' })).toBeEnabled();
+  await page.keyboard.press('1');
+  await expect(startBtn(page)).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByText(/That's fine/)).toBeVisible();
+  expect(await eventsOf(page, 'start.made')).toHaveLength(0);
+  expect(await eventsOf(page, 'attempt.dismissed')).toHaveLength(2);
+});
+
+test('Esc is ignored while an input is focused', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'keyboard shortcuts are desktop only');
+  await page.goto('/');
+  await page.keyboard.press('s');
+  await expect(page.getByRole('button', { name: 'Anxious' })).toBeEnabled();
+  await page.evaluate(() => {
+    const input = document.createElement('input');
+    input.setAttribute('aria-label', 'scratch');
+    document.body.append(input);
+    input.focus();
+  });
+  await page.keyboard.press('Escape');
+  await expect(page).toHaveURL(/\/stuck$/);
+  await page.getByRole('button', { name: 'Anxious' }).click();
+  await expect(startBtn(page)).toBeVisible();
+  await page.evaluate(() => {
+    const input = document.createElement('textarea');
+    input.setAttribute('aria-label', 'scratch');
+    document.body.append(input);
+    input.focus();
+  });
+  await page.keyboard.press('Escape');
+  await expect(startBtn(page)).toBeVisible();
+});
+
 test('reduced motion has no transforms', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await toStarted(page);

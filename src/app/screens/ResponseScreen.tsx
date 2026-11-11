@@ -6,6 +6,7 @@ import { notNow, start } from '../actions/stuck';
 import { Button } from '../components/Button';
 import { useData } from '../data/DataProvider';
 import { useAttempt } from '../hooks/useAttempt';
+import { isTyping } from '../typing';
 import { useConfig } from '../hooks/useConfig';
 import styles from './ResponseScreen.module.css';
 
@@ -58,7 +59,13 @@ export function ResponseScreen() {
   useEffect(() => {
     if (!begin) return;
     function onKeyDown(event: KeyboardEvent) {
-      if (event.defaultPrevented || event.repeat || event.key !== 'Enter') return;
+      if (event.defaultPrevented || event.repeat || isTyping(event.target)) return;
+      // Spec §8: Esc dismisses, the same as Not now.
+      if (event.key === 'Escape') {
+        void onNotNow();
+        return;
+      }
+      if (event.key !== 'Enter') return;
       // A focused control handles Enter itself.
       if (event.target instanceof Element && event.target.closest('button, a, input')) return;
       void onStart();

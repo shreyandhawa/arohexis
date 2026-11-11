@@ -4,12 +4,9 @@ import { actionFailed, feeling as copy } from '../../copy/stuck';
 import { beginStuck, chooseFeeling, notNow } from '../actions/stuck';
 import { Button } from '../components/Button';
 import { useData } from '../data/DataProvider';
+import { isTyping } from '../typing';
 import { useConfig } from '../hooks/useConfig';
 import styles from './Feeling.module.css';
-
-function isTyping(target: EventTarget | null): boolean {
-  return target instanceof Element && target.closest('input, textarea, select') !== null;
-}
 
 export function Feeling() {
   const deps = useData();
@@ -72,7 +69,13 @@ export function Feeling() {
     function onKeyDown(event: KeyboardEvent) {
       if (event.defaultPrevented || event.repeat || event.ctrlKey || event.metaKey || event.altKey)
         return;
-      if (isTyping(event.target) || !/^[1-9]$/.test(event.key)) return;
+      if (isTyping(event.target)) return;
+      // Spec §8: Esc goes back.
+      if (event.key === 'Escape') {
+        void back();
+        return;
+      }
+      if (!/^[1-9]$/.test(event.key)) return;
       const chosen = feelings[Number(event.key) - 1];
       if (chosen) void pick(chosen.id);
     }
