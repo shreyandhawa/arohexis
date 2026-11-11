@@ -1,6 +1,6 @@
 # Arohexis: design spec
 
-Status: **draft for review**. Date: 2026-11-11. Decision log: [decisions.md](decisions.md).
+Status: **approved** by the owner on 2026-11-11. Decision log: [decisions.md](decisions.md).
 
 ## 1. Summary
 

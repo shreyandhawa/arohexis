@@ -4,7 +4,7 @@ A running record of the decisions that shape Arohexis: what was chosen, what els
 
 Statuses:
 - **Accepted:** decided by the owner.
-- **Proposed:** recommended in the spec and waiting for spec review.
+- **Proposed:** recommended and waiting for owner review.
 - **Superseded.**
 
 ---
@@ -50,7 +50,7 @@ Statuses:
 
 ## ADR-004: A start counts the moment Start is tapped, with Undo
 
-- Date: 2026-11-11 · Status: **Accepted** (the Undo refinement below is **Proposed**)
+- Date: 2026-11-11 · Status: **Accepted**
 - **Context:** Starts per week is the key metric, and learning works best when the reward comes right after the behavior.
 - **Options:**
   - count on tap, with Undo;
@@ -118,7 +118,7 @@ Statuses:
 
 ## ADR-009: Hybrid data model, with editable config and an append-only event log
 
-- Date: 2026-11-11 · Status: **Proposed**
+- Date: 2026-11-11 · Status: **Accepted**
 - **Context:** Insights need full history. Labels change over time. Export, import and demo data must be simple.
 - **Options:**
   - **Mutable records** (attempts updated in place): simple, but history and timing are lost.
@@ -133,7 +133,7 @@ Statuses:
 
 ## ADR-010: The evidence wording was corrected from the brief
 
-- Date: 2026-11-11 · Status: **Proposed**
+- Date: 2026-11-11 · Status: **Accepted**
 - **Context:** Each source in the brief was checked against primary records.
   - Rozental et al. (2018, *Front Psychol* 9:1588) is a meta-analysis of 12 small RCTs with a small overall effect (g=0.34). Its CBT estimate (g=0.55) rests on 3 studies, and the authors call CBT's superiority "unclear". It doesn't pool implementation intentions.
   - The APA podcast page could not be read (blocked by a CAPTCHA).
@@ -149,7 +149,7 @@ Statuses:
 
 ## ADR-011: Reminders use calendar export and in-app cues, with no push server in v1
 
-- Date: 2026-11-11 · Status: **Proposed**
+- Date: 2026-11-11 · Status: **Accepted**
 - **Context:** A PWA can't fire a notification at a set time without a push server.
   - Chrome ended development of Notification Triggers.
   - Periodic Background Sync is Chromium-only and can't fire at a set time.
@@ -170,21 +170,21 @@ Statuses:
 
 ## ADR-012: TypeScript 6.0 now; TypeScript 7 evaluated at scaffold
 
-- Date: 2026-11-11 · Status: **Proposed**
+- Date: 2026-11-11 · Status: **Accepted**
 - **Context:** TypeScript 7 (the native compiler) has been stable since July 2026. The owner's projects use 6.0, and tool support for 7 is uneven (SvelteKit 3, for example, accepts only 6).
 - **Decision:** start on TypeScript 6.0 in strict mode, plus `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`. When scaffolding, check whether typescript-eslint and Vite tooling support 7. Switch only if both do, and record the result here.
 - **Consequences:** a predictable toolchain now and an easy switch later.
 
 ## ADR-013: React Compiler stays off in v1
 
-- Date: 2026-11-11 · Status: **Proposed**
+- Date: 2026-11-11 · Status: **Accepted**
 - **Context:** React Compiler 1.0 is stable. On Vite it needs `@rolldown/plugin-babel` (0.3.x, pre-1.0), or the built-in Oxc mode, which is marked experimental and needs a pinned transform version.
 - **Decision:** off. The app is small and the hot path (the stuck flow) is a handful of components.
 - **Consequences:** one less pre-1.0 dependency. To be revisited once the Vite integration reaches 1.0.
 
 ## ADR-014: Valibot for import validation
 
-- Date: 2026-11-11 · Status: **Proposed**
+- Date: 2026-11-11 · Status: **Accepted**
 - **Context:** Imported JSON is untrusted and must be validated in the pure domain layer.
 - **Options:**
   - Zod 4.6;
@@ -195,7 +195,7 @@ Statuses:
 
 ## ADR-015: Hand-written CSS tokens plus CSS Modules instead of Tailwind
 
-- Date: 2026-11-11 · Status: **Proposed**
+- Date: 2026-11-11 · Status: **Accepted**
 - **Context:** The brief asks for design tokens first and a distinctive, typography-led look. The owner uses Tailwind 4 elsewhere.
 - **Options:**
   - Tailwind 4 `@theme`, where tokens become utilities;
@@ -210,14 +210,14 @@ Statuses:
 
 ## ADR-016: Badging API skipped
 
-- Date: 2026-11-11 · Status: **Proposed**
+- Date: 2026-11-11 · Status: **Accepted**
 - **Context:** Home Screen apps on iOS support the Badging API, but only with notification permission, and the badge can only update while the app or service worker runs.
 - **Decision:** not used in v1. Without push, a badge couldn't appear at plan time, and asking for notification permission just for a badge adds a decision with little payoff.
 - **Consequences:** to be revisited together with the v1.1 push path.
 
 ## ADR-017: Plans use wall-clock time in the device's current time zone
 
-- Date: 2026-11-11 · Status: **Proposed**
+- Date: 2026-11-11 · Status: **Accepted**
 - **Context:** Plans repeat weekly at a local time, and the owner may travel or cross daylight-saving changes.
 - **Options:**
   - store a time zone per plan;
