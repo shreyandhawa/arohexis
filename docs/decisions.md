@@ -345,3 +345,17 @@ Statuses:
   - `npm run lint` and the ESLint purity tests keep working on a supported compiler;
   - the template's `~7.0.2` pin is replaced with exact `6.0.3`;
   - revisit once typescript-eslint widens its peer range to include 7.
+
+## ADR-020: Preview deploys
+
+- Date: 2026-11-11 · Status: **Accepted**
+- **Context:** Arohexis is hosted as static assets on a Cloudflare Worker. Every pull request needs a live URL that carries the production headers, and only `main` may reach production.
+- **Options:**
+  - `wrangler deploy` for every branch under a separate Worker name;
+  - `wrangler versions upload --preview-alias <alias>`, which uploads a version without deploying it and gives it a stable alias URL.
+- **Decision:** the second. The `preview` job runs on pull requests from the same repository only, because forks receive no secrets, and uses the alias `pr-<number>`. The verified command is `npx wrangler versions upload --preview-alias pr-<number>`, giving `https://pr-<number>-arohexis.<subdomain>.workers.dev`. `wrangler.jsonc` sets `preview_urls` and `workers_dev` to `true`, since Version URLs run only on `workers.dev`. The `deploy` job runs `npx wrangler deploy` on `push` to `refs/heads/main`, after `check` and `e2e`. Source: https://developers.cloudflare.com/workers/configuration/previews/ (checked 2026-11-11).
+- **Consequences:**
+  - aliases may use only lowercase letters, digits and dashes, start with a letter, and keep alias plus worker name within 63 characters, which `pr-<number>` satisfies;
+  - Version URLs are public unless protected with Cloudflare Access, which is acceptable because the app holds no server data;
+  - only the 1,000 most recent aliases are kept;
+  - `public/_headers` is the single source of the CSP: Cloudflare serves it in production and `vite preview` serves its `/*` block, so the E2E suite runs under the real CSP.

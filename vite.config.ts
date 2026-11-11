@@ -1,12 +1,32 @@
+import { readFileSync } from 'node:fs';
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { parseHeaders } from './config/parseHeaders.ts';
 
 // ADR-018 light --color-bg.
 const BG = '#F5F5F2';
 
+/**
+ * Makes `vite preview` send the `/*` block of public/_headers, which Cloudflare
+ * applies in production, so the CSP is exercised by the E2E suite before deploy.
+ */
+function previewHeaders(): Plugin {
+  return {
+    name: 'arohexis:preview-headers',
+    configurePreviewServer(server) {
+      const all = parseHeaders(readFileSync('public/_headers', 'utf8'))['/*'] ?? {};
+      server.middlewares.use((_req, res, next) => {
+        for (const [name, value] of Object.entries(all)) res.setHeader(name, value);
+        next();
+      });
+    },
+  };
+}
+
 export default defineConfig({
   plugins: [
+    previewHeaders(),
     react(),
     VitePWA({
       registerType: 'prompt',
