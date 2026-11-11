@@ -79,3 +79,31 @@ test('storage failure shows a calm message', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: "Can't save on this device" })).toBeVisible();
 });
+
+for (const path of ['/settings', '/about']) {
+  test(`stuck button is visible without scrolling on ${path}`, async ({ page }) => {
+    await page.goto(path);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.getByRole('button', { name: "I'm stuck" })).toBeInViewport({ ratio: 1 });
+  });
+}
+
+for (const path of ['/stuck', '/started/x']) {
+  test(`stuck button is absent on ${path}`, async ({ page }) => {
+    await page.goto(path);
+    await expect(page.getByRole('button', { name: "I'm stuck" })).toHaveCount(0);
+  });
+}
+
+test('stuck button does not cover the end of the about page', async ({ page }) => {
+  await page.goto('/about');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  const last = page.locator('main li').last();
+  const button = page.getByRole('button', { name: "I'm stuck" });
+  await expect(button).toBeInViewport({ ratio: 1 });
+  await expect(last).toBeInViewport({ ratio: 1 });
+  const lastBox = await last.boundingBox();
+  const buttonBox = await button.boundingBox();
+  expect(lastBox && buttonBox && lastBox.y + lastBox.height <= buttonBox.y).toBe(true);
+});

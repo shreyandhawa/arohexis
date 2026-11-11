@@ -22,8 +22,18 @@
   padding-block: var(--space-4);
 }
 
+/* Sticky so the stuck button stays in the thumb zone on long pages. */
 .footer {
-  padding-top: var(--space-4);
+  position: sticky;
+  bottom: 0;
+  padding-block: var(--space-3);
+  background: var(--color-bg);
+}
+
+/* Keeps a focused element above the sticky footer (WCAG 2.4.11). The footer
+   is the target height plus 2 x space-3, so this clears it. */
+:global(html) {
+  scroll-padding-bottom: calc(var(--target-min) + var(--space-8));
 }
 
 .title {
