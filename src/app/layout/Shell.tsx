@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { backToHome } from '../../copy/common';
+import { UpdateCard } from '../components/UpdateCard';
 import { StuckButton } from './StuckButton';
 import styles from './Shell.module.css';
 
@@ -42,6 +43,7 @@ export function Shell() {
           </Link>
         </header>
       )}
+      <UpdateCard />
       <main className={styles['main']}>
         <Outlet />
       </main>

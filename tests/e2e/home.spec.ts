@@ -107,3 +107,23 @@ test('stuck button does not cover the end of the about page', async ({ page }) =
   const buttonBox = await button.boundingBox();
   expect(lastBox && buttonBox && lastBox.y + lastBox.height <= buttonBox.y).toBe(true);
 });
+
+test('iPhone Safari tab sees the install note without losing the thumb zone', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'iphone', 'the note is for iOS Safari only');
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.goto('/');
+  await expect(page.getByText(/add Arohexis to your Home Screen/)).toBeVisible();
+  await expect(page.getByRole('button', { name: "I'm stuck" })).toBeInViewport({ ratio: 1 });
+  expect(
+    await page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight),
+  ).toBe(true);
+});
+
+test('other browsers do not see the install note', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'iphone', 'iOS Safari shows it');
+  await page.goto('/');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expect(page.getByText(/add Arohexis to your Home Screen/)).toHaveCount(0);
+});

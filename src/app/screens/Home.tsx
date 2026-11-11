@@ -1,7 +1,8 @@
 import { Link, useLocation } from 'react-router';
 import { appName } from '../../copy/common';
-import { nav, startsThisWeek } from '../../copy/home';
+import { installNote, nav, startsThisWeek } from '../../copy/home';
 import { homeNotices } from '../../copy/stuck';
+import { currentPlatformEnv, isIosSafariNonStandalone } from '../platform';
 import { readNotice } from '../notice';
 import { useStartsThisWeek } from '../hooks/useStartsThisWeek';
 import { StuckButton } from '../layout/StuckButton';
@@ -9,6 +10,7 @@ import styles from '../layout/Shell.module.css';
 
 export function Home() {
   const starts = useStartsThisWeek();
+  const showInstallNote = isIosSafariNonStandalone(currentPlatformEnv());
   const notice = readNotice(useLocation().state);
   return (
     <>
@@ -19,6 +21,7 @@ export function Home() {
             {homeNotices[notice]}
           </p>
         )}
+        {showInstallNote && <p className={styles['installNote']}>{installNote}</p>}
         <StuckButton variant="primary" />
         {starts > 0 && <p className={styles['muted']}>{startsThisWeek(starts)}</p>}
         <nav aria-label={nav.label} className={styles['nav']}>
