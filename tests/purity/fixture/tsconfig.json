@@ -1,0 +1,4 @@
+{
+  "extends": "../../../src/domain/tsconfig.json",
+  "include": ["./uses-window.ts"]
+}

@@ -227,3 +227,16 @@ Statuses:
   - "9:00 at my desk" keeps meaning 9:00 after travel;
   - nonexistent times (spring-forward gaps) move to the next valid minute, and ambiguous times use the first instance;
   - the calendar export uses the time zone at export time.
+
+## ADR-019: TypeScript stays on 6.0.3 at scaffold
+
+- Date: 2026-11-11 · Status: **Accepted**
+- **Context:** ADR-012 says to switch to TypeScript 7 at scaffold only if both typescript-eslint and the Vite tooling support it. The Vite template now ships `typescript ~7.0.2`, and TypeScript 7.0.2 is the latest release.
+- **Options:**
+  - TypeScript 7.0.2;
+  - TypeScript 6.0.3, the last 6.0 release.
+- **Decision:** TypeScript 6.0.3. `typescript-eslint@8.72.2` declares the peer range `typescript >=4.8.4 <6.1.0`, so it does not support 7. Vite 8.3 and vite-plugin-pwa 2.0 declare no TypeScript peer, so the lint tooling is what blocks the switch.
+- **Consequences:**
+  - `npm run lint` and the ESLint purity tests keep working on a supported compiler;
+  - the template's `~7.0.2` pin is replaced with exact `6.0.3`;
+  - revisit once typescript-eslint widens its peer range to include 7.
