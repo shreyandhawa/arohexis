@@ -1,0 +1,38 @@
+# --- Personal data: never commit (this repository is public) ---
+# JSON exports of a real user's data
+exports/
+arohexis-export-*.json
+
+# Secrets
+.env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*
+*.pem
+*.key
+
+# Node / Vite / TypeScript
+node_modules/
+dist/
+dev-dist/
+.vite/
+coverage/
+*.tsbuildinfo
+npm-debug.log*
+
+# Cloudflare Wrangler
+.wrangler/
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
