@@ -1,5 +1,6 @@
 import * as fc from 'fast-check';
 import type { AppEvent, Basis } from '../events';
+import type { Config, Settings, WeekDay } from '../config';
 
 const BASES: Basis[] = [
   'name-the-feeling',
@@ -106,4 +107,86 @@ export function arbAttemptEvents(): fc.Arbitrary<AppEvent[]> {
       }
       return merged;
     });
+}
+
+const arbText = fc.string({ maxLength: 12 });
+const arbWeekDay = fc.constantFrom<WeekDay>(0, 1, 2, 3, 4, 5, 6);
+const arbBasis = fc.constantFrom(...BASES);
+
+const arbListItem = fc.record({
+  id: arbText,
+  label: arbText,
+  order: fc.nat({ max: 99 }),
+  enabled: fc.boolean(),
+});
+
+const arbFeeling = fc.record({
+  id: arbText,
+  label: arbText,
+  order: fc.nat({ max: 99 }),
+  enabled: fc.boolean(),
+  builtIn: fc.boolean(),
+});
+
+const arbResponse = fc.record({
+  id: arbText,
+  feelingId: arbText,
+  body: arbText,
+  basis: arbBasis,
+  enabled: fc.boolean(),
+  order: fc.nat({ max: 99 }),
+  builtIn: fc.boolean(),
+});
+
+const arbPlan = fc.record(
+  {
+    id: arbText,
+    place: arbText,
+    cueDetail: arbText,
+    firstAction: arbText,
+    time: arbText,
+    days: fc.array(arbWeekDay, { maxLength: 7 }),
+    graceMin: fc.nat({ max: 120 }),
+    active: fc.boolean(),
+    createdAt: fc.nat(),
+    editCount: fc.nat({ max: 50 }),
+  },
+  {
+    requiredKeys: [
+      'id',
+      'place',
+      'firstAction',
+      'time',
+      'days',
+      'graceMin',
+      'active',
+      'createdAt',
+      'editCount',
+    ],
+  },
+);
+
+const arbSettings = fc.record(
+  {
+    theme: fc.constantFrom<Settings['theme']>('system', 'light', 'dark'),
+    weekStartsOn: arbWeekDay,
+    checkinDay: arbWeekDay,
+    checkinDismissedWeek: arbText,
+    lastExportAt: fc.nat(),
+    persistRequested: fc.boolean(),
+    onboarded: fc.boolean(),
+  },
+  { requiredKeys: ['theme', 'weekStartsOn', 'checkinDay', 'persistRequested', 'onboarded'] },
+);
+
+/** Arbitrary configs; optional plan and settings fields are generated both present and absent. */
+export function arbConfig(): fc.Arbitrary<Config> {
+  return fc.record({
+    feelings: fc.array(arbFeeling, { maxLength: 4 }),
+    responses: fc.array(arbResponse, { maxLength: 4 }),
+    taskTypes: fc.array(arbListItem, { maxLength: 4 }),
+    obstacles: fc.array(arbListItem, { maxLength: 4 }),
+    plans: fc.array(arbPlan, { maxLength: 4 }),
+    settings: arbSettings,
+  });
 }

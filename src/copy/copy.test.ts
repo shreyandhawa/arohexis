@@ -7,6 +7,7 @@ import {
   DEFAULT_TASK_TYPES,
   GENERIC_RESPONSE_ID,
 } from '../domain/defaults';
+import { EXPORT_MESSAGES } from '../domain/exportFormat';
 import { BANNED_WORDS, checkCopy, wordCount } from './rules';
 
 function collectStrings(value: unknown, out: string[] = []): string[] {
@@ -48,6 +49,10 @@ describe('copy rules', () => {
     for (const t of DEFAULT_TASK_TYPES) expect(checkCopy(t.label)).toEqual([]);
     for (const o of DEFAULT_OBSTACLES) expect(checkCopy(o.label)).toEqual([]);
     for (const s of Object.values(BASIS_SOURCES)) expect(checkCopy(s)).toEqual([]);
+  });
+
+  it('export messages pass copy rules', () => {
+    for (const m of Object.values(EXPORT_MESSAGES)) expect(checkCopy(m)).toEqual([]);
   });
 
   it('all copy modules pass copy rules', () => {
