@@ -4,17 +4,29 @@ import { isUndoProminent, TIMER_SECONDS, timerState, UNDO_PROMINENT_MS } from '.
 describe('timerState', () => {
   const start = 1_000_000;
   it('counts down', () => {
-    expect(timerState(start, start + 30_000)).toEqual({ elapsedSec: 30, remainingSec: 90, done: false });
+    expect(timerState(start, start + 30_000)).toEqual({
+      elapsedSec: 30,
+      remainingSec: 90,
+      done: false,
+    });
   });
   it('is done at 120 s', () => {
     expect(TIMER_SECONDS).toBe(120);
-    expect(timerState(start, start + 120_000)).toEqual({ elapsedSec: 120, remainingSec: 0, done: true });
+    expect(timerState(start, start + 120_000)).toEqual({
+      elapsedSec: 120,
+      remainingSec: 0,
+      done: true,
+    });
   });
   it('shows done straight away after a locked phone, never negative', () => {
     expect(timerState(start, start + 600_000)).toMatchObject({ remainingSec: 0, done: true });
   });
   it('clamps elapsed at 0 when the clock is behind', () => {
-    expect(timerState(start, start - 5_000)).toEqual({ elapsedSec: 0, remainingSec: 120, done: false });
+    expect(timerState(start, start - 5_000)).toEqual({
+      elapsedSec: 0,
+      remainingSec: 120,
+      done: false,
+    });
   });
 });
 

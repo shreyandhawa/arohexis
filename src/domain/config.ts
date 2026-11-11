@@ -1,7 +1,13 @@
 import type { Basis } from './events';
 
 export type WeekDay = 0 | 1 | 2 | 3 | 4 | 5 | 6;
-export type Feeling = { id: string; label: string; order: number; enabled: boolean; builtIn: boolean };
+export type Feeling = {
+  id: string;
+  label: string;
+  order: number;
+  enabled: boolean;
+  builtIn: boolean;
+};
 export type FeelingResponse = {
   id: string;
   feelingId: string;

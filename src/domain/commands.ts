@@ -52,7 +52,12 @@ export function makeStart(
       deps,
       'start.made',
       link
-        ? { attemptId, planId: link.planId, occurrence: link.occurrence, backfilled: link.backfilled }
+        ? {
+            attemptId,
+            planId: link.planId,
+            occurrence: link.occurrence,
+            backfilled: link.backfilled,
+          }
         : { attemptId, backfilled: false },
     ),
   ];
@@ -76,7 +81,13 @@ export function tagStart(
 ): AppEvent[] {
   const a = findAttempt(attemptEvents, attemptId);
   if (!a || !isCountedStart(a)) return [];
-  return [createEvent(deps, 'start.tagged', { attemptId, taskTypeId: taskType.id, label: taskType.label })];
+  return [
+    createEvent(deps, 'start.tagged', {
+      attemptId,
+      taskTypeId: taskType.id,
+      label: taskType.label,
+    }),
+  ];
 }
 
 export function closeTimer(

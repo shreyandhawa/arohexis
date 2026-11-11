@@ -3,11 +3,7 @@ import type { Clock, IdGen } from './ports';
 export const EVENT_SCHEMA_VERSION = 1;
 
 export type Basis =
-  | 'name-the-feeling'
-  | 'shrink-the-step'
-  | 'self-kindness'
-  | 'reframe'
-  | 'pair-a-reward';
+  'name-the-feeling' | 'shrink-the-step' | 'self-kindness' | 'reframe' | 'pair-a-reward';
 
 type Envelope<T extends string> = { id: string; type: T; at: number; tz: string; v: 1 };
 
