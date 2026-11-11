@@ -98,6 +98,33 @@ test('downloads when the browser can share but the device is not an iPhone or iP
   );
 });
 
+test('a failed load shows the calm message and the button retries it', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await page.addInitScript(() => {
+    const w = window as unknown as { __failRead: boolean };
+    w.__failRead = true;
+    const original = IDBDatabase.prototype.transaction;
+    IDBDatabase.prototype.transaction = function (this: IDBDatabase, ...args) {
+      // Only the backup read spans every table; startup reads touch fewer.
+      if (w.__failRead && args[1] !== 'readwrite' && Array.isArray(args[0]) && args[0].length > 5)
+        throw new Error('read failed');
+      return original.apply(this, args);
+    } as typeof original;
+  });
+  await openData(page);
+  await expect(page.getByText("The backup didn't save. Try again.")).toBeVisible();
+  expect(errors.some((e) => e.includes('read failed'))).toBe(true);
+
+  await page.evaluate(() => ((window as never as { __failRead: boolean }).__failRead = false));
+  await page.getByRole('button', { name: 'Export backup' }).click();
+  await expect(page.getByText("The backup didn't save. Try again.")).toHaveCount(0);
+  const downloading = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export backup' }).click();
+  await downloading;
+  await expect(page.getByText('Last backup: today')).toBeVisible();
+});
+
 test.describe('at 375x667', () => {
   test.use({ viewport: { width: 375, height: 667 } });
   test('data screen fits without scrolling', async ({ page }) => {
