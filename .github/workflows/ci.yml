@@ -64,8 +64,8 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
   preview:
-    # Fork pull requests get no secrets, so they cannot upload a preview.
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    # Fork and Dependabot pull requests get no secrets, so they cannot upload a preview.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
     needs: check
     runs-on: ubuntu-latest
     steps:
@@ -79,6 +79,8 @@ jobs:
         env:
           VITE_BUILD_SHA: ${{ github.sha }}
       - name: Upload a version with a PR alias
+        # bash with pipefail: a failed upload must fail the step, not hide behind tee.
+        shell: bash
         run: |
           npx wrangler versions upload --preview-alias "pr-${{ github.event.pull_request.number }}" | tee upload.log
           {
