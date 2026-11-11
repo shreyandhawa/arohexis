@@ -27,6 +27,12 @@
   margin-top: auto;
 }
 
+.error {
+  min-height: 1lh;
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
 @keyframes fade {
   from {
     opacity: 0;

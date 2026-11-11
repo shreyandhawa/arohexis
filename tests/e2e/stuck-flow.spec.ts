@@ -14,6 +14,53 @@ async function fits(page: Page): Promise<boolean> {
   return page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight);
 }
 
+function attemptIdFromUrl(page: Page): string {
+  return page.url().split('/').pop() ?? '';
+}
+
+/** Reads events of one type straight from IndexedDB. */
+async function eventsOf(page: Page, type: string): Promise<{ attemptId?: string }[]> {
+  return page.evaluate(
+    (t) =>
+      new Promise<{ attemptId?: string; type: string }[]>((resolve, reject) => {
+        const open = indexedDB.open('arohexis');
+        open.onerror = () => reject(open.error);
+        open.onsuccess = () => {
+          const db = open.result;
+          const req = db.transaction('events').objectStore('events').getAll();
+          req.onerror = () => reject(req.error);
+          req.onsuccess = () => {
+            db.close();
+            resolve(
+              (req.result as { attemptId?: string; type: string }[]).filter((e) => e.type === t),
+            );
+          };
+        };
+      }),
+    type,
+  );
+}
+
+/** Makes every IndexedDB write throw, as a full or broken store would. Reads still work. */
+async function breakStorage(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const w = window as unknown as { __add?: IDBObjectStore['add'] };
+    w.__add = IDBObjectStore.prototype.add;
+    IDBObjectStore.prototype.add = () => {
+      throw new Error('storage unavailable');
+    };
+  });
+}
+
+async function fixStorage(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const w = window as unknown as { __add?: IDBObjectStore['add'] };
+    if (w.__add) IDBObjectStore.prototype.add = w.__add;
+  });
+}
+
+const failedCopy = "That didn't save. Try again.";
+
 async function toResponse(page: Page): Promise<void> {
   await page.goto('/');
   await page.getByRole('button', { name: stuck }).click();
@@ -105,16 +152,39 @@ test('done for now is available before the timer ends', async ({ page }) => {
 test('returning after the phone locks shows two minutes done', async ({ page }) => {
   await page.clock.install();
   await toStarted(page);
-  await page.clock.fastForward('10:00');
+  const attemptId = attemptIdFromUrl(page);
+  // Pause so no interval can fire; only the visibilitychange handler may refresh.
+  const before = await page.evaluate(() => Date.now());
+  await page.clock.pauseAt(before + 1000);
+  await page.clock.setSystemTime(before + 10 * 60 * 1000);
+  await expect(page.getByTestId('timer')).not.toHaveText('0:00');
   await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
   await expect(page.getByText('Two minutes done.')).toBeVisible();
   await expect(page.getByTestId('timer')).toHaveText('0:00');
+  await page.getByRole('button', { name: 'Done for now' }).click();
+  await expect(page).toHaveURL(/\/$/);
+  const closed = await eventsOf(page, 'timer.closed');
+  expect(closed.filter((e) => e.attemptId === attemptId)).toHaveLength(1);
+});
+
+test('one minute left is announced but not shown', async ({ page }) => {
+  await page.clock.install();
+  await toStarted(page);
+  await page.clock.fastForward('01:05');
+  const live = page.locator('[aria-live="polite"]');
+  await expect(live).toHaveText('One minute left.');
+  const box = await live.getByText('One minute left.').boundingBox();
+  expect(box?.width).toBeLessThanOrEqual(1);
 });
 
 test('double tap on Start counts once', async ({ page }) => {
   await toResponse(page);
   await startBtn(page).dblclick();
+  await expect(page).toHaveURL(/\/started\//);
+  const attemptId = attemptIdFromUrl(page);
   await expect(page.getByText('1 start this week')).toBeVisible();
+  const made = await eventsOf(page, 'start.made');
+  expect(made.filter((e) => e.attemptId === attemptId)).toHaveLength(1);
 });
 
 test('reload keeps one start and Back goes Home', async ({ page }) => {
@@ -194,3 +264,65 @@ for (const scheme of ['light', 'dark'] as const) {
     await expectAccessible(page);
   });
 }
+
+test('a failed Done for now shows a message and can be retried', async ({ page }) => {
+  await toStarted(page);
+  await breakStorage(page);
+  await page.getByRole('button', { name: 'Done for now' }).click();
+  await expect(page.getByText(failedCopy)).toBeVisible();
+  await expect(page).toHaveURL(/\/started\//);
+  await fixStorage(page);
+  await page.getByRole('button', { name: 'Done for now' }).click();
+  await expect(page).toHaveURL(/\/$/);
+});
+
+test('a failed undo and tag show a message', async ({ page }) => {
+  await toStarted(page);
+  await breakStorage(page);
+  await page.getByRole('button', { name: 'Writing' }).click();
+  await expect(page.getByText(failedCopy)).toBeVisible();
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(page.getByText(failedCopy)).toBeVisible();
+  await expect(page).toHaveURL(/\/started\//);
+  await fixStorage(page);
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(page.getByText('Start removed.')).toBeVisible();
+});
+
+test('a failed Not now shows a message and can be retried', async ({ page }) => {
+  await toResponse(page);
+  await breakStorage(page);
+  await page.getByRole('button', { name: 'Not now' }).click();
+  await expect(page.getByText(failedCopy)).toBeVisible();
+  await fixStorage(page);
+  await page.getByRole('button', { name: 'Not now' }).click();
+  await expect(page).toHaveURL(/\/$/);
+});
+
+test('a failed start and feeling choice can be retried', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: stuck }).click();
+  await expect(page.getByRole('button', { name: 'Anxious' })).toBeEnabled();
+  await breakStorage(page);
+  await page.getByRole('button', { name: 'Anxious' }).click();
+  await expect(page.getByText(failedCopy)).toBeVisible();
+  await fixStorage(page);
+  await page.getByRole('button', { name: 'Anxious' }).click();
+  await expect(startBtn(page)).toBeVisible();
+  await breakStorage(page);
+  await startBtn(page).click();
+  await expect(page.getByText(failedCopy)).toBeVisible();
+  await fixStorage(page);
+  await startBtn(page).click();
+  await expect(page.getByText('Started.', { exact: true })).toBeVisible();
+});
+
+test('when the attempt cannot open, a message shows and Back still works', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('button', { name: stuck })).toBeVisible();
+  await breakStorage(page);
+  await page.getByRole('button', { name: stuck }).click();
+  await expect(page.getByText(failedCopy)).toBeVisible();
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
+  await expect(page).toHaveURL(/\/$/);
+});

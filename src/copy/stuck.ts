@@ -1,3 +1,6 @@
+/** Shown inline when saving an action fails; the person can try again. */
+export const actionFailed = "That didn't save. Try again.";
+
 export const feeling = {
   heading: "What's in the way?",
   back: 'Back',

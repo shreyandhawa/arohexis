@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { feeling as copy } from '../../copy/stuck';
+import { actionFailed, feeling as copy } from '../../copy/stuck';
 import { beginStuck, chooseFeeling, notNow } from '../actions/stuck';
 import { Button } from '../components/Button';
 import { useData } from '../data/DataProvider';
@@ -15,16 +15,17 @@ export function Feeling() {
   const deps = useData();
   const navigate = useNavigate();
   const config = useConfig();
-  const opening = useRef<Promise<string> | null>(null);
+  const opening = useRef<Promise<string | undefined> | null>(null);
   const picking = useRef(false);
   const [attemptId, setAttemptId] = useState<string>();
+  const [failed, setFailed] = useState(false);
 
   // One attempt per mount, however often this re-renders.
   useEffect(() => {
     if (opening.current) return;
-    const opened = beginStuck(deps);
+    const opened = beginStuck(deps).catch(() => undefined);
     opening.current = opened;
-    void opened.then(setAttemptId);
+    void opened.then((id) => (id ? setAttemptId(id) : setFailed(true)));
   }, [deps]);
 
   const feelings = (config?.feelings ?? [])
@@ -35,19 +36,29 @@ export function Feeling() {
   async function pick(feelingId: string) {
     if (!attemptId || picking.current) return;
     picking.current = true;
+    setFailed(false);
     try {
       await chooseFeeling(deps, attemptId, feelingId);
       void navigate(`/stuck/${attemptId}`, { replace: true });
     } catch {
       picking.current = false;
+      setFailed(true);
     }
   }
 
   async function back() {
     if (picking.current) return;
     picking.current = true;
-    const id = await opening.current;
-    if (id) await notNow(deps, id);
+    setFailed(false);
+    try {
+      const id = await opening.current;
+      // No attempt exists when opening failed, so there is nothing to dismiss.
+      if (id) await notNow(deps, id);
+    } catch {
+      picking.current = false;
+      setFailed(true);
+      return;
+    }
     void navigate('/', { replace: true });
   }
 
@@ -80,6 +91,9 @@ export function Feeling() {
           </button>
         ))}
       </div>
+      <p aria-live="polite" className={styles['error']}>
+        {failed ? actionFailed : ''}
+      </p>
       <Button variant="quiet" className={styles['back']} onClick={() => void back()}>
         {copy.back}
       </Button>

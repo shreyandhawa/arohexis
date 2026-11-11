@@ -3,7 +3,7 @@ import { Navigate, useNavigate, useParams } from 'react-router';
 import { isCountedStart } from '../../domain/attempts';
 import { isUndoProminent, timerState } from '../../domain/timer';
 import { startsThisWeek } from '../../copy/home';
-import { started as copy } from '../../copy/stuck';
+import { actionFailed, started as copy } from '../../copy/stuck';
 import { finishTimer, tag, undo } from '../actions/stuck';
 import { Button } from '../components/Button';
 import { Chip } from '../components/Chip';
@@ -33,6 +33,7 @@ export function Started() {
   const weekCount = useStartsThisWeek();
   const leaving = useRef(false);
   const [leavingNow, setLeavingNow] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   if (attempt === undefined) return null;
   if (!attempt || !attempt.start || !isCountedStart(attempt)) {
@@ -52,8 +53,25 @@ export function Started() {
     if (leaving.current) return;
     leaving.current = true;
     setLeavingNow(true);
-    await action();
+    setFailed(false);
+    try {
+      await action();
+    } catch {
+      leaving.current = false;
+      setLeavingNow(false);
+      setFailed(true);
+      return;
+    }
     void navigate('/', { replace: true, ...(notice && { state: { notice } }) });
+  }
+
+  async function onTag(taskTypeId: string) {
+    setFailed(false);
+    try {
+      await tag(deps, attemptId, taskTypeId);
+    } catch {
+      setFailed(true);
+    }
   }
 
   const stop = () => void leave(() => finishTimer(deps, attemptId, 'stopped'));
@@ -72,7 +90,8 @@ export function Started() {
           {formatClock(remainingSec)}
         </p>
         <div aria-live="polite" className={styles['status']}>
-          {status && <p className={done ? styles['done'] : styles['warning']}>{status}</p>}
+          {status && <p className={done ? styles['done'] : styles['srOnly']}>{status}</p>}
+          {failed && <p className={styles['error']}>{actionFailed}</p>}
         </div>
       </div>
 
@@ -83,7 +102,7 @@ export function Started() {
             <Chip
               key={t.id}
               pressed={attempt.taskType?.id === t.id}
-              onClick={() => void tag(deps, attemptId, t.id)}
+              onClick={() => void onTag(t.id)}
             >
               {t.label}
             </Chip>

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router';
 import { isCountedStart } from '../../domain/attempts';
-import { response as copy } from '../../copy/stuck';
+import { actionFailed, response as copy } from '../../copy/stuck';
 import { notNow, start } from '../actions/stuck';
 import { Button } from '../components/Button';
 import { useData } from '../data/DataProvider';
@@ -17,6 +17,7 @@ export function ResponseScreen() {
   const config = useConfig();
   const busy = useRef(false);
   const [disabled, setDisabled] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   const begin = attempt && !isCountedStart(attempt) && !attempt.dismissed;
 
@@ -25,12 +26,14 @@ export function ResponseScreen() {
     if (busy.current) return;
     busy.current = true;
     setDisabled(true);
+    setFailed(false);
     try {
       await start(deps, attemptId);
       void navigate(`/started/${attemptId}`, { replace: true });
     } catch {
       busy.current = false;
       setDisabled(false);
+      setFailed(true);
     }
   }
 
@@ -38,7 +41,15 @@ export function ResponseScreen() {
     if (busy.current) return;
     busy.current = true;
     setDisabled(true);
-    await notNow(deps, attemptId);
+    setFailed(false);
+    try {
+      await notNow(deps, attemptId);
+    } catch {
+      busy.current = false;
+      setDisabled(false);
+      setFailed(true);
+      return;
+    }
     void navigate('/', { replace: true, state: { notice: 'not-now' } });
   }
 
@@ -67,6 +78,9 @@ export function ResponseScreen() {
       {body && <p className={styles['body']}>{body}</p>}
       <h1 className={styles['firstStep']}>{copy.firstStep}</h1>
       <div className={styles['actions']}>
+        <p aria-live="polite" className={styles['error']}>
+          {failed ? actionFailed : ''}
+        </p>
         <Button variant="primary" disabled={disabled} onClick={() => void onStart()}>
           {copy.start}
         </Button>
