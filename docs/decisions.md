@@ -23,10 +23,10 @@ Statuses:
 ## ADR-002: The product is named Arohexis everywhere
 
 - Date: 2026-11-11 · Status: **Accepted**
-- **Context:** The brief's working title was "Startline", but the owner named the project Arohexis.
+- **Context:** One name has to be set for the repo, the README, the PWA manifest and the UI.
 - **Options:**
-  - Arohexis everywhere;
-  - repo `arohexis` with the app called Startline.
+  - one name everywhere;
+  - a repo name that differs from the app's display name.
 - **Decision:** Arohexis for the repo, README, PWA manifest and UI.
 - **Consequences:** the name lives in one constant (`APP_NAME`), so a later rename is a one-line change plus the manifest.
 
