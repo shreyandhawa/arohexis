@@ -83,7 +83,15 @@ describe('stuck-flow actions', () => {
     expect((await d.config.getConfig()).settings.persistRequested).toBe(true);
   });
 
+  it('does not wait for a persist() permission prompt', async () => {
+    const { d } = await setup(vi.fn().mockReturnValue(new Promise<boolean>(() => undefined)));
+    const id = await beginStuck(d);
+    await expect(start(d, id)).resolves.toBeUndefined();
+    expect(await weekCount(d)).toBe(1);
+  });
+
   it('a persist rejection does not fail the start but still sets the flag', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const { d } = await setup(vi.fn().mockRejectedValue(new Error('denied')));
     const id = await beginStuck(d);
     await expect(start(d, id)).resolves.toBeUndefined();

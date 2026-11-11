@@ -56,7 +56,8 @@ export function Started() {
     setFailed(false);
     try {
       await action();
-    } catch {
+    } catch (error) {
+      console.error(error);
       leaving.current = false;
       setLeavingNow(false);
       setFailed(true);
@@ -69,7 +70,8 @@ export function Started() {
     setFailed(false);
     try {
       await tag(deps, attemptId, taskTypeId);
-    } catch {
+    } catch (error) {
+      console.error(error);
       setFailed(true);
     }
   }

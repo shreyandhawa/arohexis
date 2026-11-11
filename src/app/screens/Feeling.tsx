@@ -23,7 +23,10 @@ export function Feeling() {
   // One attempt per mount, however often this re-renders.
   useEffect(() => {
     if (opening.current) return;
-    const opened = beginStuck(deps).catch(() => undefined);
+    const opened = beginStuck(deps).catch((error: unknown) => {
+      console.error(error);
+      return undefined;
+    });
     opening.current = opened;
     void opened.then((id) => (id ? setAttemptId(id) : setFailed(true)));
   }, [deps]);
@@ -40,7 +43,8 @@ export function Feeling() {
     try {
       await chooseFeeling(deps, attemptId, feelingId);
       void navigate(`/stuck/${attemptId}`, { replace: true });
-    } catch {
+    } catch (error) {
+      console.error(error);
       picking.current = false;
       setFailed(true);
     }
@@ -54,7 +58,8 @@ export function Feeling() {
       const id = await opening.current;
       // No attempt exists when opening failed, so there is nothing to dismiss.
       if (id) await notNow(deps, id);
-    } catch {
+    } catch (error) {
+      console.error(error);
       picking.current = false;
       setFailed(true);
       return;

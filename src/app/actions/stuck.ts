@@ -45,11 +45,11 @@ export async function start(d: AppDeps, attemptId: string): Promise<void> {
   if (!appended.some((e) => e.type === 'start.made')) return;
   const { settings } = await d.config.getConfig();
   if (settings.persistRequested) return;
-  try {
-    await d.persist();
-  } catch {
-    // The browser may refuse or lack the API; the start itself still counts.
-  }
+  // Not awaited: Firefox shows a permission prompt, and waiting on it would hold up the
+  // reward. The browser may refuse or lack the API; the start itself still counts.
+  void Promise.resolve()
+    .then(() => d.persist())
+    .catch((error: unknown) => console.error(error));
   await d.config.applyConfigPatch({ settings: { persistRequested: true } });
 }
 

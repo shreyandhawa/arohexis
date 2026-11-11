@@ -30,7 +30,8 @@ export function ResponseScreen() {
     try {
       await start(deps, attemptId);
       void navigate(`/started/${attemptId}`, { replace: true });
-    } catch {
+    } catch (error) {
+      console.error(error);
       busy.current = false;
       setDisabled(false);
       setFailed(true);
@@ -44,7 +45,8 @@ export function ResponseScreen() {
     setFailed(false);
     try {
       await notNow(deps, attemptId);
-    } catch {
+    } catch (error) {
+      console.error(error);
       busy.current = false;
       setDisabled(false);
       setFailed(true);
