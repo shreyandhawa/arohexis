@@ -7,7 +7,7 @@ import type { ArohexisDB } from '../../storage/db';
 import { createEventStore } from '../../storage/eventStore';
 import { openStorage } from '../../storage/open';
 import type { AppDeps } from '../data/DataProvider';
-import { daysSinceBackup, exportBackup } from './backup';
+import { browserSharer, daysSinceBackup, exportBackup, loadBackupData } from './backup';
 
 const opened: ArohexisDB[] = [];
 
@@ -46,7 +46,7 @@ describe('exportBackup', () => {
   it('shares a valid backup file and records the time', async () => {
     const { d, clock } = await setup();
     const s = sharer(true);
-    await exportBackup(d, s);
+    await exportBackup(d, s, await loadBackupData(d));
     expect(s.download).not.toHaveBeenCalled();
     const file = s.share.mock.calls[0]?.[0] as File;
     expect(file.name).toBe('arohexis-export-2026-11-16.json');
@@ -58,7 +58,7 @@ describe('exportBackup', () => {
   it('downloads when sharing files is not available', async () => {
     const { d, clock } = await setup();
     const s = sharer(false);
-    await exportBackup(d, s);
+    await exportBackup(d, s, await loadBackupData(d));
     expect(s.share).not.toHaveBeenCalled();
     expect(s.download).toHaveBeenCalledOnce();
     expect(await lastExportAt(d)).toBe(clock.now());
@@ -67,7 +67,7 @@ describe('exportBackup', () => {
   it('does nothing when the user cancels the share sheet', async () => {
     const { d } = await setup();
     const s = sharer(true, vi.fn().mockRejectedValue(new DOMException('x', 'AbortError')));
-    await exportBackup(d, s);
+    await exportBackup(d, s, await loadBackupData(d));
     expect(s.download).not.toHaveBeenCalled();
     expect(await lastExportAt(d)).toBeUndefined();
   });
@@ -75,15 +75,48 @@ describe('exportBackup', () => {
   it('falls back to download on any other share error', async () => {
     const { d, clock } = await setup();
     const s = sharer(true, vi.fn().mockRejectedValue(new Error('nope')));
-    await exportBackup(d, s);
+    await exportBackup(d, s, await loadBackupData(d));
     expect(s.download).toHaveBeenCalledOnce();
     expect(await lastExportAt(d)).toBe(clock.now());
   });
 
-  it('rejects, without setting the time, when reading fails', async () => {
+  it('calls share before any await, so the tap activation is still live', async () => {
     const { d } = await setup();
-    d.db.close();
-    await expect(exportBackup(d, sharer(false))).rejects.toThrow();
+    const data = await loadBackupData(d);
+    const s = sharer(true);
+    const done = exportBackup(d, s, data);
+    // No await between the call and this check: only synchronous work has run.
+    expect(s.share).toHaveBeenCalledOnce();
+    await done;
+  });
+
+  it('rejects, without calling download twice, when recording the time fails', async () => {
+    const { d } = await setup();
+    const data = await loadBackupData(d);
+    const s = sharer(false);
+    vi.spyOn(d.config, 'applyConfigPatch').mockRejectedValue(new Error('write failed'));
+    await expect(exportBackup(d, s, data)).rejects.toThrow('write failed');
+    expect(s.download).toHaveBeenCalledOnce();
+  });
+});
+
+describe('browserSharer', () => {
+  const iphone = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15';
+  const macSafari = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15';
+  const stub = (userAgent: string, maxTouchPoints: number) => {
+    vi.stubGlobal('navigator', { userAgent, maxTouchPoints, canShare: () => true });
+    vi.stubGlobal('window', { matchMedia: () => ({ matches: false }) });
+  };
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('shares files on iOS', () => {
+    stub(iphone, 5);
+    expect(browserSharer().canShareFiles).toBe(true);
+  });
+
+  it('downloads on macOS Safari even though canShare says yes', () => {
+    stub(macSafari, 0);
+    expect(browserSharer().canShareFiles).toBe(false);
   });
 });
 

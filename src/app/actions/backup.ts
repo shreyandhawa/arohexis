@@ -1,6 +1,7 @@
-import { buildExport, exportFileName } from '../../domain/exportFormat';
+import { buildExport, exportFileName, type ExportData } from '../../domain/exportFormat';
 import { localDate } from '../../domain/week';
 import { readExportData } from '../../storage/exportData';
+import { currentPlatformEnv, isIos } from '../platform';
 import type { AppDeps } from '../data/DataProvider';
 
 export type Sharer = {
@@ -27,9 +28,11 @@ export function daysSinceBackup(
  * Saves a backup through the share sheet when files can be shared, otherwise
  * as a download. `lastExportAt` is set only once the file has been handed off.
  * A cancelled share sheet changes nothing.
+ *
+ * The caller loads `data` ahead of time: WebKit only allows `navigator.share`
+ * during the tap's transient activation, so nothing here awaits before it.
  */
-export async function exportBackup(d: AppDeps, sharer: Sharer): Promise<void> {
-  const data = await readExportData(d.db);
+export async function exportBackup(d: AppDeps, sharer: Sharer, data: ExportData): Promise<void> {
   const now = d.clock.now();
   const file = new File(
     [
@@ -50,17 +53,28 @@ export async function exportBackup(d: AppDeps, sharer: Sharer): Promise<void> {
       handedOff = true;
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') return;
+      console.error(error);
     }
   }
   if (!handedOff) sharer.download(file);
   await d.config.applyConfigPatch({ settings: { lastExportAt: d.clock.now() } });
 }
 
-/** The browser's share sheet or, failing that, a download through an object URL. */
+/** Loads everything the backup holds, ready for a tap to export without waiting. */
+export function loadBackupData(d: AppDeps): Promise<ExportData> {
+  return readExportData(d.db);
+}
+
+/**
+ * The share sheet on iPhone and iPad (spec §7.3), where a download opens a preview
+ * instead of saving to Files. Everywhere else, including macOS Safari whose share
+ * menu cannot save to disk, a download through an object URL.
+ */
 export function browserSharer(): Sharer {
   const probe = new File([], 'probe.json', { type: 'application/json' });
   return {
-    canShareFiles: navigator.canShare?.({ files: [probe] }) ?? false,
+    canShareFiles:
+      isIos(currentPlatformEnv()) && (navigator.canShare?.({ files: [probe] }) ?? false),
     share: (file) => navigator.share({ files: [file] }),
     download(file) {
       const url = URL.createObjectURL(file);
