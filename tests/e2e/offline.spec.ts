@@ -31,6 +31,14 @@ test('works offline after first load', async ({ page, context }, testInfo) => {
   await completeStuckFlow(page);
   await page.goto('/');
   await expect(page.getByText('1 start this week')).toBeVisible();
+
+  // Spec §13 scenario 4: back online, the app keeps working with nothing lost.
+  await context.setOffline(false);
+  await page.reload();
+  await expect(page.getByText('1 start this week')).toBeVisible();
+  await completeStuckFlow(page);
+  await page.goto('/');
+  await expect(page.getByText('2 starts this week')).toBeVisible();
 });
 
 test('data survives reload and a new page', async ({ page, context }, testInfo) => {

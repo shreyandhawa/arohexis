@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
 import { parseExport } from '../../src/domain/exportFormat';
-import { expectAccessible } from './helpers';
+import { expectAccessible, setTheme } from './helpers';
 
 test.beforeEach(({ page }, testInfo) => {
   void page;
@@ -108,7 +108,10 @@ test.describe('at 375x667', () => {
   });
 });
 
-test('data screen is accessible', async ({ page }) => {
-  await openData(page);
-  await expectAccessible(page);
-});
+for (const scheme of ['light', 'dark'] as const) {
+  test(`data screen is accessible in ${scheme}`, async ({ page }) => {
+    await setTheme(page, scheme);
+    await openData(page);
+    await expectAccessible(page);
+  });
+}

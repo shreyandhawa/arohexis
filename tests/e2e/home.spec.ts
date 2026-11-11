@@ -50,9 +50,12 @@ test('settings links to data and about', async ({ page }) => {
 });
 
 for (const scheme of ['light', 'dark'] as const) {
-  test(`home and about are accessible in ${scheme}`, async ({ page }) => {
+  test(`home, settings and about are accessible in ${scheme}`, async ({ page }) => {
     await setTheme(page, scheme);
     await page.goto('/');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectAccessible(page);
+    await page.goto('/settings');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await expectAccessible(page);
     await page.goto('/about');
