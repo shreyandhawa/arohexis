@@ -13,7 +13,14 @@
   cursor: pointer;
   transition:
     background-color var(--motion-quick) var(--ease-standard),
-    color var(--motion-quick) var(--ease-standard);
+    color var(--motion-quick) var(--ease-standard),
+    transform var(--motion-quick) var(--ease-standard);
+}
+
+/* ADR-018: every pressable answers a tap with the same small press. The global
+   reduced-motion rule removes the transform, leaving the fill change alone. */
+.button:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .primary {
@@ -34,6 +41,13 @@
   color: var(--color-text);
 }
 
-.quiet:hover {
+/* Hover only where a pointer can hover, so a tap on iOS does not leave it stuck on. */
+@media (hover: hover) {
+  .quiet:hover {
+    background: var(--color-hover);
+  }
+}
+
+.quiet:active:not(:disabled) {
   background: var(--color-hover);
 }
