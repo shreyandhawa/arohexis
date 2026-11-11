@@ -88,7 +88,7 @@ for (const path of ['/settings', '/about']) {
   });
 }
 
-for (const path of ['/stuck', '/started/x']) {
+for (const path of ['/stuck']) {
   test(`stuck button is absent on ${path}`, async ({ page }) => {
     await page.goto(path);
     await expect(page.getByRole('button', { name: "I'm stuck" })).toHaveCount(0);

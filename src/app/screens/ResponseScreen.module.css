@@ -1,0 +1,38 @@
+.screen {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-4);
+  animation: fade var(--motion-quick) var(--ease-standard) both;
+}
+
+.body {
+  margin: 0;
+  font-size: var(--step-1);
+  line-height: 1.4;
+}
+
+.firstStep {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: auto;
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
