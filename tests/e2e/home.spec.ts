@@ -121,6 +121,20 @@ test('iPhone Safari tab sees the install note without losing the thumb zone', as
   ).toBe(true);
 });
 
+test('the install note goes away once the database has data', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'iphone', 'the note is for iOS Safari only');
+  await page.goto('/');
+  await expect(page.getByText(/add Arohexis to your Home Screen/)).toBeVisible();
+  await page.getByRole('button', { name: "I'm stuck" }).click();
+  await page.getByRole('button', { name: 'Anxious' }).click();
+  await page.getByRole('button', { name: 'Not now' }).click();
+  await expect(page.getByText(/That's fine/)).toBeVisible();
+  await expect(page.getByText(/add Arohexis to your Home Screen/)).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByRole('button', { name: "I'm stuck" })).toBeVisible();
+  await expect(page.getByText(/add Arohexis to your Home Screen/)).toHaveCount(0);
+});
+
 test('other browsers do not see the install note', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'iphone', 'iOS Safari shows it');
   await page.goto('/');

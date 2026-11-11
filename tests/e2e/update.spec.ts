@@ -101,7 +101,26 @@ test.describe('worst case: install note, notice and update card together', () =>
     await page.getByRole('button', { name: 'Anxious' }).click();
     await page.getByRole('button', { name: 'Not now' }).click();
     await expect(page.getByText(/That's fine/)).toBeVisible();
-    await expect(page.getByText(ready)).toBeVisible();
+    // The install note only shows while the database is empty, so empty it behind the
+    // app's back and reload. The notice survives a reload in the history state.
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve, reject) => {
+          const open = indexedDB.open('arohexis');
+          open.onerror = () => reject(open.error);
+          open.onsuccess = () => {
+            const tx = open.result.transaction('events', 'readwrite');
+            tx.objectStore('events').clear();
+            tx.oncomplete = () => {
+              open.result.close();
+              resolve();
+            };
+          };
+        }),
+    );
+    await page.reload();
+    await expect(page.getByText(/That's fine/)).toBeVisible();
+    await expect(page.getByText(ready)).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(/add Arohexis to your Home Screen/)).toBeVisible();
     await expect(page.getByRole('button', { name: "I'm stuck" })).toBeInViewport({ ratio: 1 });
     expect(await noScroll(page)).toBe(true);
