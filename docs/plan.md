@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. **The checkboxes in this file are the progress ledger:** tick them as you go and commit the ticks with the work.
 
-**Goal:** Ship Arohexis v1, a local-first PWA that trains the moment of starting, in five milestones that each end in something the owner can use on their iPhone.
+**Goal:** Ship Arohexis v1, a local-first PWA that trains the moment of starting, in six milestones that each end in something the owner can use on their iPhone. (Five until the Brain space amendment of 2026-11-12, which is proposed; see spec §16 and ADR-021 to ADR-032.)
 
 **Architecture:**
 - **Domain:** pure TypeScript in `src/domain` (events, projections, rules), with no DOM, React or Dexie.
@@ -21,9 +21,9 @@
 ## How this plan is used
 
 - **Milestone 1 is fully specified below.**
-  - Milestones 2–5 list their scope, tasks and acceptance checks.
+  - Milestones 2–6 list their scope, tasks and acceptance checks.
   - Each one is expanded to M1's level of detail at its start, in this file, and the owner gets a short summary and can redirect before its tasks begin.
-- **One branch per milestone:** `m1-stuck-flow`, `m2-plans`, …
+- **One branch per milestone:** `m1-stuck-flow`, `m2-brain-space`, `m3-plans`, …
   - Small commits, each with its tests.
   - The branch gets a PR to `main` at the end of the milestone. CI and a preview URL must pass, the owner merges, and the merge deploys.
 - **Session hygiene:**
@@ -31,6 +31,12 @@
   - The brief points at this file, the spec, the decision log and the current branch, and **repeats this 40% rule**.
   - Never hand off mid-task.
 - **Commits and PRs:** no `Co-Authored-By` trailer or any other Claude attribution line in any commit or PR.
+- **Working rules** (owner brief, 2026-11-12):
+  - **The lead talks to the owner.** The lead session is the only agent that does. It owns decisions, this ledger, branches, commits and merges, and never delegates an approval gate.
+  - **Subagents do the work.** They handle exploration, research, implementation, review and test runs. Each gets a self-contained brief: the goal, the files it may touch, the constraints that apply (quoted), the acceptance checks, and what to return. Returns are under 200 words, plus paths and command output, never file dumps.
+  - **Building and reviewing are separate.** A different subagent builds and reviews, and the reviewer hasn't seen the work being written. Two subagents writing in parallel use separate worktrees.
+  - **State is written to `docs/` at every task boundary:** ticks in this file, decisions in `decisions.md`. A fresh session resumes from these files alone. The SDD scratch files in `.superpowers/` are git-ignored, and they are not the record.
+  - **Design skills are advisory.** Use frontend-design and impeccable's guidance when designing screens (ADR-031). End each UI milestone (M2 to M6) with an unslop audit against the running preview. None of them overrides the spec's tokens, the accessibility rules, the CSP, the copy rules or the approved Brain space look.
 
 ## Global Constraints
 
@@ -783,64 +789,143 @@ export function exportBackup(d: AppDeps, share: { canShareFiles: boolean; share(
 
 ---
 
-## Milestone 2: If-then plans and reminders
+## Milestone 2: Brain space
 
-**You can:** create plans ("If it's 9:00 on weekdays at my desk, then I will open the essay doc"), add each to Apple Calendar with an alarm, tap **Start now** when a plan is due, and get a short forgive-and-replan sheet when a plan slips.
+> **Proposed** on 2026-11-12 with spec §16 and ADR-021 to ADR-032, waiting for owner review. Expanded to M1's level of detail at milestone start.
 
-**Branch:** `m2-plans`. **Spec:** §6.4 (plan occurrences, lapse), §8.5–8.7, §10.
+**You can:**
+- see your starts as light in Brain space on Home: every start since M1, in the part you tagged it with;
+- tap Start and watch the burst, then your new line drawn during the timer;
+- name your parts and pick their colours;
+- turn and zoom the brain, tap a part to open its card, and stop all motion with **Still**.
+
+Everything works without the canvas, and offline.
+
+**Branch:** `m2-brain-space`. It holds this amendment, and is rebased onto `main` once M1 merges. **Spec:** §16. **Decisions:** ADR-021 to ADR-032.
+
+**Tasks** (expanded at milestone start):
+1. **Setup.**
+   - **Owner steps:** run the design-skill commands in ADR-031, approve the project subagents in ADR-032, and put the reference stills and the prototype in `docs/reference/brain-space/`.
+   - **Lead:** create `.claude/agents/` and copy unslop per ADR-031.
+2. **Renderer check on the iPhone.**
+   - **Subagent:** rebuild ADR-029's canvas 2D test page as a throwaway, outside the repo (the spike's files were session scratch), and serve it on the local network under the exact CSP.
+   - **Owner step:** open it on the iPhone and drag it for a few seconds.
+   - **Lead:**
+     - confirm ADR-029, or record a switch to WebGL2 in a new ADR;
+     - set the frame-time guard threshold from the first CI run, with 2× headroom;
+     - keep the chunk budget at 30 kB.
+3. **Parts:**
+   - domain types;
+   - the Dexie version 2 migration from `taskTypes`, with a fixture test;
+   - export version 2, with version 1 migrated in `parseExport`;
+   - the default parts;
+   - "What is it?" lists parts;
+   - the new banned words and the anatomy-term ban test.
+4. **`brainSpace.ts` and `focus.ts`:** the projection and focus rules from spec §16.4 and §16.9, with the property tests in §16.13. Plans are an empty list until M3.
+5. **`src/geometry`:**
+   - the seeded field, `assignFibres`, line shades and pull-apart directions;
+   - its own tsconfig and lint purity;
+   - tests for determinism, bounds, stability and overflow.
+6. **Plate tokens and part colours:** `--plate-*`, the six part colours, and the contrast and colour-vision checks in spec §16.7.
+7. **Renderer and Home:**
+   - the lazy chunk: the dim field, additive light, signals, labels on zoom, the camera, render on demand, Still, reduced motion and the fallback;
+   - the Home layout, the parts row and the text equivalent.
+
+   **Owner gate (ADR-021):** the design critic reviews the build against the stills first. Then the owner reviews the built Home screen on the preview URL, on the iPhone, in light and dark. Later tasks wait for a yes.
+8. **Part card and Started:**
+   - the part card sheet: starts, lines by strength, and the focus line;
+   - the compact plate on Started with the burst and the reveal, or the ADR-030 fallback.
+9. **Settings and About:** Settings → Parts (rename, colour, enable, add up to six) and Preferences → Still. The About paragraph and a README note.
+10. **E2E and guards:**
+    - spec §16.13's scenarios on all three projects;
+    - axe on Home and Started;
+    - the WebKit frame-time guard;
+    - the chunk budget in `scripts/check-bundle-size.mjs`;
+    - offline with the chunk precached;
+    - zero CSP violations.
+11. **Review and acceptance:**
+    - a whole-branch review by a subagent that didn't write the code;
+    - the unslop audit against the running preview;
+    - owner acceptance on the iPhone;
+    - merge, then tick the ledger.
+
+**Acceptance (owner):**
+- your M1 starts show as light in their parts;
+- a start on the iPhone fires the burst and draws its line during the timer;
+- turning the brain doesn't stutter;
+- **Still** stops all motion;
+- VoiceOver reads each part's counts;
+- it all works in airplane mode.
+
+## Milestone 3: If-then plans and reminders
+
+**You can:** create plans ("If it's 9:00 on weekdays at my desk, then I will open the essay doc"), add each to Apple Calendar with an alarm, tap **Start now** when a plan is due, and get a short forgive-and-replan sheet when a plan slips. Each plan draws its own line in Brain space, which grows every time you start on cue.
+
+**Branch:** `m3-plans`. **Spec:** §6.4 (plan occurrences, lapse), §8.5–8.7, §10, §16.3–16.4.
 
 **Tasks** (expanded at milestone start):
 1. `plans.ts`: `occurrencesBetween`, `occurrenceStatus` (ordered rules), `planSentence`. DST property tests in America/New_York, Europe/London, Australia/Lord_Howe and Asia/Kathmandu; nonexistent times move forward and ambiguous times take the first instance.
 2. `ics.ts`: `planToIcs` with VTIMEZONE generated from offset transitions over 3 years, RRULE, VALARM, UID and SEQUENCE, CRLF, and folding at 75 octets. Tests parse the output with `ical.js` and check the alarm stays at 09:00 local across a DST change.
-3. `lapse.ts`: `findLapseToRepair` (one prompt, older ones expired, 7-day window) and `applyRepair`, plus the plan commands (`startFromPlan`, `resolveOccurrence`, `repairLapse`).
-4. Storage: plan CRUD through `ConfigPatch` (add, update with `editCount++`, pause).
-5. Plans list and editor screens, with the live sentence preview and Add to calendar (one-time import help text).
+3. `lapse.ts`: `findLapseToRepair` (one prompt, older ones expired, 7-day window) and `applyRepair`, plus the plan commands (`startFromPlan`, `resolveOccurrence`, `repairLapse`). `openAttempt` also accepts a plan with no occurrence, for **Two minutes now?**.
+4. Storage: plan CRUD through `ConfigPatch` (add, update with `editCount++`, pause), and `plans.partId`.
+5. Plans list and editor screens, with the live sentence preview, an optional part, and Add to calendar (one-time import help text).
 6. Home plan-due card (Start now, "I'm stuck on this") and the lapse repair sheet (focus trap, every step skippable, closing records `slipped`).
-7. E2E: spec §13 scenarios 6 and 7, plus axe on the new screens.
+7. **Brain space with plans** (spec §16.4, §16.9):
+   - plans feed `projectBrainSpace`: waiting lines are dashed with a ring, and growth comes from on-cue starts only, with strengths and labels;
+   - the part card lists the part's plans, with Start now while an occurrence is open and "Next: …" otherwise;
+   - focus rules 1 to 4.
+8. E2E: spec §13 scenarios 6 and 7, an on-cue start brightening its line, an off-cue start leaving a start line, plus axe on the new screens. Then the unslop audit.
 
-**Acceptance (owner):** a weekday plan imported on the iPhone fires its alarm. Start now counts as a linked start. A deliberately skipped plan shows one repair sheet on the next open.
+**Acceptance (owner):**
+- a weekday plan imported on the iPhone fires its alarm;
+- Start now counts as a linked start and brightens its plan's line;
+- a deliberately skipped plan shows one repair sheet on the next open.
 
-## Milestone 3: Insights and the weekly check-in
+## Milestone 4: Insights and the weekly check-in
 
-**You can:** see starts per week, when you start, which feelings and task types lead to starts, which responses help, and your weekly "how automatic does starting feel" trend.
+**You can:** see starts per week, when you start, which feelings and parts lead to starts, which responses help, and your weekly "how automatic does starting feel" trend.
 
-**Branch:** `m3-insights`. **Spec:** §6.4 (metrics, check-in), §8.8–8.9.
+**Branch:** `m4-insights`. **Spec:** §6.4 (metrics, check-in), §8.8–8.9.
 
 **Tasks:**
-1. Metrics: `startsByWeek` (contiguous, zero weeks included), `startsByFeeling` (with "From a plan"), `startsByHour`, `startsByTaskType` (with "Untagged") and `responseStats` (`earlyDays` when n < 5). Property tests: the weekly sum equals total starts, and undone starts are never counted.
+1. Metrics: `startsByWeek` (contiguous, zero weeks included), `startsByFeeling` (with "From a plan"), `startsByHour`, `startsByPart` (with "No part") and `responseStats` (`earlyDays` when n < 5). Property tests: the weekly sum equals total starts, and undone starts are never counted.
 2. `checkin.ts`: SRBAI items, the period and `weekOf` rules, `isCheckinDue`, scoring and trend.
 3. SVG chart components (columns, hour strip, bars, line), each with a visually hidden table and a one-sentence summary.
-4. Insights screen with an empty state for fewer than 3 starts and neutral colors.
+4. Insights screen with an empty state for fewer than 3 starts and neutral colors. Parts are shown in neutral colors, not part colours.
 5. Check-in screen and Home card (7-point radio groups, Skip this week, attribution).
-6. E2E: spec §13 scenarios 3 and 8, plus axe.
+6. E2E: spec §13 scenarios 3 and 8, plus axe. Then the unslop audit.
 
 **Acceptance (owner):** the first Sunday check-in shows in the trend. Insights match a hand count of a week's starts.
 
-## Milestone 4: Demo mode, restore and onboarding
+## Milestone 5: Demo mode, restore and onboarding
 
-**You can:** let anyone explore Arohexis with 10 realistic weeks of demo data, restore your own data from a backup, and onboard new users, including the iPhone install guidance.
+**You can:** let anyone explore Arohexis with 10 realistic weeks of demo data that fill Brain space, restore your own data from a backup, and onboard new users, including the iPhone install guidance.
 
-**Branch:** `m4-demo-data`. **Spec:** §7.3–7.5, §8.10 (Data), §8.11.
+**Branch:** `m5-demo-data`. **Spec:** §7.3–7.5, §8.10 (Data), §8.11, §16.11.
 
 **Tasks:**
-1. `demo.ts`: `generateDemoData(seed, endDate, tz)` using mulberry32. Tests: deterministic for a seed, 10 weeks, and the shape bands from spec §7.4.
+1. `demo.ts`: `generateDemoData(seed, endDate, tz)` using mulberry32, with 5 named parts, 5 plans and about 80% of starts tagged (spec §16.11). Tests:
+   - deterministic for a seed, 10 weeks, and the shape bands from spec §7.4;
+   - every region has light, at least two plan lines reach Well-worn, and a fresh demo is moving.
 2. Demo database switching (`localStorage['arohexis:db']`), the Demo ribbon with Exit and Reset, and isolation from the main database.
 3. Import:
-   - parse and migrate;
+   - parse and migrate (export versions 1 and 2);
    - a preview of counts;
    - an offer to export first;
    - a replace inside one transaction that rolls back on failure.
 4. Delete everything, the storage persistence status, and a "Back up now" link on the check-in card after 14 days.
 5. Onboarding at `/welcome`: 3 steps, with the iOS step shown only in Safari outside standalone mode, then Start fresh or Explore the demo.
-6. E2E: spec §13 scenarios 9 and 10, plus axe.
+6. E2E: spec §13 scenarios 9 and 10, plus axe. Then the unslop audit.
 
-**Acceptance (owner):** export, delete, import on the iPhone brings back the same Insights. A friend opening the public URL can explore the demo without being able to touch real data.
+**Acceptance (owner):**
+- export, delete, import on the iPhone brings back the same Insights and the same Brain space;
+- a friend opening the public URL can explore a full demo brain without being able to touch real data.
 
-## Milestone 5: Your configuration, About, v1.0
+## Milestone 6: Your configuration, About, v1.0
 
-**You can:** edit feelings, responses, task types and obstacles; set the theme, week start and check-in day; and read the evidence inside the app. v1.0 meets every success criterion in spec §2.
+**You can:** edit feelings, responses and obstacles; set the theme, week start, check-in day and Still; and read the evidence inside the app. v1.0 meets every success criterion in spec §2.
 
-**Branch:** `m5-config-v1`. **Spec:** §2, §8.10, §11.
+**Branch:** `m6-config-v1`. **Spec:** §2, §8.10, §11, §16.
 
 **Tasks:**
 1. Feelings and responses editor:
@@ -848,9 +933,9 @@ export function exportBackup(d: AppDeps, share: { canShareFiles: boolean; share(
    - a live word count capped at 40;
    - a basis picker;
    - built-in items can't be deleted, and `other` can't be disabled.
-2. Task types and obstacles list editor.
-3. Preferences: theme (`data-theme`), `weekStartsOn`, `checkinDay`.
-4. About: the full evidence table, basis sources and SRBAI attribution, the version, and the build SHA.
+2. Obstacles list editor. Parts have had their own editor since M2.
+3. Preferences: theme (`data-theme`), `weekStartsOn`, `checkinDay`. Still has been there since M2.
+4. About: the full evidence table, basis sources and SRBAI attribution, the Brain space paragraph, the version, and the build SHA.
 5. Accessibility pass:
    - VoiceOver on iPhone;
    - keyboard-only on desktop;
@@ -860,6 +945,7 @@ export function exportBackup(d: AppDeps, share: { canShareFiles: boolean; share(
 6. Release:
    - README final;
    - case-study notes drawn from `decisions.md`;
+   - the final unslop audit;
    - tag `v1.0.0`.
 
 **Acceptance (owner):** every row of the spec §2 success-criteria table is checked and recorded in the v1.0 PR.
@@ -869,7 +955,8 @@ export function exportBackup(d: AppDeps, share: { canShareFiles: boolean; share(
 ## Ledger
 
 - [ ] M1: The stuck button, on the iPhone
-- [ ] M2: If-then plans and reminders
-- [ ] M3: Insights and the weekly check-in
-- [ ] M4: Demo mode, restore and onboarding
-- [ ] M5: Your configuration, About, v1.0
+- [ ] M2: Brain space
+- [ ] M3: If-then plans and reminders
+- [ ] M4: Insights and the weekly check-in
+- [ ] M5: Demo mode, restore and onboarding
+- [ ] M6: Your configuration, About, v1.0
