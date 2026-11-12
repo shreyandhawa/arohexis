@@ -865,7 +865,7 @@ tests/e2e/                  brain-home, brain-started, parts, brain-guards, brai
   - run `claude plugin install frontend-design@claude-plugins-official --scope project`;
   - put the reference stills and the canvas prototype in `docs/reference/brain-space/`, ideally with a line per still saying what it shows.
   Wait for both.
-- [ ] **Step 2:** Read every file the owner added. The repository is public, so check the prototype carries no secrets and no third-party code whose licence forbids publishing. Ask the owner if anything does. The prototype's anatomy-named identifiers are fine there, because the anatomy scan covers `src/**` and `tests/**` only.
+- [x] **Step 2:** Read every file the owner added. The repository is public, so check the prototype carries no secrets and no third-party code whose licence forbids publishing. Ask the owner if anything does. The prototype's anatomy-named identifiers are fine there, because the anatomy scan covers `src/**` and `tests/**` only.
 - [x] **Step 3:** Write the eight agent files.
   - **Frontmatter:** `name`, `description`, `tools` and `model`, per ADR-032's table. The read-only agents get `tools: Read, Grep, Glob`. `researcher` adds `WebSearch, WebFetch`. `code-reviewer` adds `Bash`, and its body limits it to `git` reads and test commands.
   - **Body:**
