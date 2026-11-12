@@ -95,8 +95,17 @@
 
 .chips {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: var(--space-2);
+  /* The focus ring (2px plus a 3px offset) must not be cut off by the scroll box, so the row
+     pads on every side and pulls back out with a negative margin to stay aligned. */
+  margin: calc(var(--space-2) * -1);
+  padding: var(--space-2);
+  overflow-x: auto;
+}
+
+.chips > * {
+  flex: none;
 }
 
 .actions {

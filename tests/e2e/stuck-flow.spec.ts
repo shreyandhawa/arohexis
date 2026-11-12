@@ -117,15 +117,29 @@ test('remove this start after ten seconds', async ({ page }) => {
   await expect(page.getByText('Start removed.')).toBeVisible();
 });
 
+test.describe('parts row at 375px', () => {
+  test.use({ viewport: { width: 375, height: 667 } });
+
+  test('the parts row is one line', async ({ page }) => {
+    await toStarted(page);
+    const tops = await page
+      .getByRole('heading', { name: 'What is it?' })
+      .locator('xpath=following-sibling::div[1]/button')
+      .evaluateAll((chips) => chips.map((c) => (c as HTMLElement).offsetTop));
+    expect(tops.length).toBe(5);
+    expect(new Set(tops).size).toBe(1);
+  });
+});
+
 test('tags the task', async ({ page }) => {
   await toStarted(page);
-  const writing = page.getByRole('button', { name: 'Writing' });
+  const work = page.getByRole('button', { name: 'Work' });
   const study = page.getByRole('button', { name: 'Study' });
-  await writing.click();
-  await expect(writing).toHaveAttribute('aria-pressed', 'true');
+  await work.click();
+  await expect(work).toHaveAttribute('aria-pressed', 'true');
   await study.click();
   await expect(study).toHaveAttribute('aria-pressed', 'true');
-  await expect(writing).toHaveAttribute('aria-pressed', 'false');
+  await expect(work).toHaveAttribute('aria-pressed', 'false');
 });
 
 test('timer end offers two equal choices', async ({ page }) => {
@@ -306,7 +320,7 @@ for (const scheme of ['light', 'dark'] as const) {
     await expectAccessible(page);
     await startBtn(page).click();
     await expect(page.getByText('Started.', { exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Writing' }).click();
+    await page.getByRole('button', { name: 'Work' }).click();
     await settled(page);
     await expectAccessible(page);
   });
@@ -326,7 +340,7 @@ test('a failed Done for now shows a message and can be retried', async ({ page }
 test('a failed undo and tag show a message', async ({ page }) => {
   await toStarted(page);
   await breakStorage(page);
-  await page.getByRole('button', { name: 'Writing' }).click();
+  await page.getByRole('button', { name: 'Work' }).click();
   await expect(page.getByText(failedCopy)).toBeVisible();
   await page.getByRole('button', { name: 'Undo' }).click();
   await expect(page.getByText(failedCopy)).toBeVisible();
