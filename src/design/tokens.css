@@ -124,6 +124,7 @@
 /* Controls on the plate keep the dark theme's tokens in either theme (ADR-026).
    Keep identical to the dark blocks above. */
 .plate-scope {
+  color: var(--color-text);
   color-scheme: dark;
   --color-bg: #0a0a0a;
   --color-surface: #141414;

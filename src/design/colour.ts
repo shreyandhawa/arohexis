@@ -26,7 +26,8 @@ function toHex(rgb: Rgb): string {
     .join('')}`;
 }
 
-export function hslToHex({ h, s, l }: Hsl): string {
+export function hslToHex({ h: hue, s, l }: Hsl): string {
+  const h = ((hue % 360) + 360) % 360;
   const sat = s / 100;
   const lig = l / 100;
   const k = (n: number): number => (n + h / 30) % 12;

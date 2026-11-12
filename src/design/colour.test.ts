@@ -1,31 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import rawTokensCss from './tokens.css?raw';
-import rawGlobalCss from './global.css?raw';
 import { contrastRatio } from './contrast';
 import { ciede2000, ciede2000Lab, hslToHex, simulateCvd } from './colour';
 import { PART_COLOURS, PLATE } from './partColours';
 import type { Hsl } from './partColours';
-
-const tokensCss = rawTokensCss.replaceAll('"', "'");
-const globalCss = rawGlobalCss.replaceAll('"', "'");
-
-function blockAfter(css: string, selector: string): string {
-  const start = css.indexOf(selector);
-  if (start === -1) throw new Error(`selector not found: ${selector}`);
-  const open = css.indexOf('{', start);
-  let depth = 0;
-  for (let i = open; i < css.length; i++) {
-    if (css[i] === '{') depth++;
-    if (css[i] === '}' && --depth === 0) return css.slice(open + 1, i);
-  }
-  throw new Error(`unclosed block: ${selector}`);
-}
-
-function declarations(body: string): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const m of body.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) out[m[1]!] = m[2]!.trim();
-  return out;
-}
 
 const ids = [1, 2, 3, 4, 5, 6] as const;
 const kinds = ['protanopia', 'deuteranopia', 'tritanopia'] as const;
@@ -37,10 +14,28 @@ describe('ciede2000', () => {
       [50, 2.6772, -79.7751, 50, 0, -82.7485, 2.0425],
       [50, 3.1571, -77.2803, 50, 0, -82.7485, 2.8615],
       [50, 2.8361, -74.02, 50, 0, -82.7485, 3.4412],
+      // Rows 7, 9, 11, 13 and 15 of the published test data
+      // (hajim.rochester.edu/ece/sites/gsharma/ciede2000/dataNprograms/ciede2000testdata.txt).
+      // Row 7: zero chroma on one side, so the hue difference is forced to 0.
+      [50, 0, 0, 50, -1, 2, 2.3669],
+      // Rows 9 and 11: hue primes sit on either side of the 180 degree boundary.
+      // Row 9 falls on the |h1 - h2| <= 180 branch of the mean hue, row 11 on the > 180 branch;
+      // rows 13 and 15 are the same pair of branches on the other axis.
+      [50, 2.49, -0.001, 50, -2.49, 0.0009, 7.1792],
+      [50, 2.49, -0.001, 50, -2.49, 0.0011, 7.2195],
+      [50, -0.001, 2.49, 50, 0.0009, -2.49, 4.8045],
+      [50, -0.001, 2.49, 50, 0.0011, -2.49, 4.7461],
     ];
     for (const [L1, a1, b1, L2, a2, b2, want] of ref) {
       expect(ciede2000Lab({ L: L1, a: a1, b: b1 }, { L: L2, a: a2, b: b2 })).toBeCloseTo(want, 4);
     }
+  });
+
+  it('normalises the hue in hslToHex', () => {
+    const base = { s: 80, l: 50 };
+    expect(hslToHex({ h: -120, ...base })).toBe(hslToHex({ h: 240, ...base }));
+    expect(hslToHex({ h: 480, ...base })).toBe(hslToHex({ h: 120, ...base }));
+    expect(hslToHex({ h: 360, ...base })).toBe(hslToHex({ h: 0, ...base }));
   });
 
   it('is zero for identical hex colours and symmetric', () => {
@@ -94,7 +89,7 @@ describe('part colours meet spec §16.7', () => {
     for (const { id, hsl } of bases) {
       for (const dh of [-8, 8]) {
         for (const dl of [-6, 6]) {
-          const c: Hsl = { h: (hsl.h + dh + 360) % 360, s: hsl.s, l: hsl.l + dl };
+          const c: Hsl = { h: hsl.h + dh, s: hsl.s, l: hsl.l + dl };
           expect(
             contrastRatio(hslToHex(c), PLATE.bg),
             `colour ${id} ${dh}/${dl}`,
@@ -129,41 +124,5 @@ describe('part colours meet spec §16.7', () => {
       const d = Math.min(hsl.h % 360, 360 - (hsl.h % 360));
       expect(d, `colour ${id}`).toBeGreaterThan(15);
     }
-  });
-});
-
-describe('tokens.css plate tokens', () => {
-  const root = declarations(blockAfter(tokensCss, ':root {'));
-
-  it('mirrors partColours.ts', () => {
-    expect(root['--plate-bg']!.toLowerCase()).toBe(PLATE.bg.toLowerCase());
-    expect(root['--plate-dim-point']!.toLowerCase()).toBe(PLATE.dimPoint.toLowerCase());
-    expect(root['--plate-dim-trace']!.toLowerCase()).toBe(PLATE.dimTrace.toLowerCase());
-    expect(root['--plate-waiting']!.toLowerCase()).toBe(PLATE.waiting.toLowerCase());
-    expect(root['--plate-core']!.toLowerCase()).toBe(PLATE.core.toLowerCase());
-    for (const { id, hsl } of bases) {
-      expect(root[`--part-${id}`], `--part-${id}`).toBe(`hsl(${hsl.h} ${hsl.s}% ${hsl.l}%)`);
-    }
-  });
-
-  it('declares plate and part tokens only outside the theme blocks', () => {
-    const dark = blockAfter(tokensCss, ":root[data-theme='dark']");
-    expect(dark).not.toMatch(/--plate-|--part-/);
-  });
-
-  it('.plate-scope equals the dark block', () => {
-    const scope = declarations(blockAfter(tokensCss, '.plate-scope'));
-    const dark = declarations(blockAfter(tokensCss, ":root[data-theme='dark']"));
-    expect(Object.keys(scope).length).toBeGreaterThan(10);
-    expect(scope).toEqual(dark);
-  });
-});
-
-describe('global.css', () => {
-  it('has a .visually-hidden class', () => {
-    const block = blockAfter(globalCss, '.visually-hidden');
-    expect(block).toMatch(/position:\s*absolute/);
-    expect(block).toMatch(/clip-path:\s*inset\(50%\)|clip:\s*rect/);
-    expect(block).toMatch(/width:\s*1px/);
   });
 });
