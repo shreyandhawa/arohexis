@@ -805,7 +805,7 @@ export function exportBackup(d: AppDeps, share: { canShareFiles: boolean; share(
 
 ## Milestone 2: Brain space
 
-> **Approved** by the owner on 2026-11-12, with spec §16 and ADR-021 to ADR-034. **Expanded** on 2026-11-12. The choices this expansion makes where §16 is open are in ADR-035.
+> **Approved** by the owner on 2026-11-12, with spec §16 and ADR-021 to ADR-034. **Expanded** and approved on 2026-11-12. The choices this expansion makes where §16 is open are in ADR-035.
 
 **You can:**
 - see your starts as light in Brain space on Home: every start since M1, in the part you tagged it with;

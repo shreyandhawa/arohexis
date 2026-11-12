@@ -668,7 +668,7 @@ Statuses:
 
 ## ADR-035: Choices made while expanding the M2 plan
 
-- Date: 2026-11-12 · Status: **Proposed** (sent to the owner with the expanded M2 plan)
+- Date: 2026-11-12 · Status: **Accepted** (owner approval of the expanded M2 plan, 2026-11-12)
 - **Context:** Expanding Milestone 2 to M1's level of detail found details that spec §16 leaves open, and one rule that, read literally, would move light. Each choice below is the smallest one that keeps §16's stated intent.
 - **Decision:**
   - **Fibre order for plan lines:**
@@ -690,4 +690,4 @@ Statuses:
 - **Consequences:**
   - the projection's property tests can assert that appending events never moves settled light;
   - `Attempt` grows one field (`tags`), and §16.4's `BrainLine` plan kind grows two (`everStarted`, `hidden`);
-  - the owner can redirect any of these at the plan summary, before Task 1 starts.
+  - the owner approved these with the M2 plan on 2026-11-12.
