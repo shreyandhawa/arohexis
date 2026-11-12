@@ -88,8 +88,8 @@ CI runs on every push, `main` deploys to Cloudflare, and the README carries the 
 **Interfaces:**
 - Produces: ADR-018 recording the chosen typefaces (Fontsource package names and exact versions), palette primitives as hex for both themes, accent, focus color, type scale ratio, and motion character. Task 11 consumes it.
 
-- [ ] **Step 1:** Call `Artifact` with `action: "quickstart"` and `intent: "other"`, then load the `artifact-design` skill.
-- [ ] **Step 2:** Build Direction A and Direction B as static HTML. Each shows:
+- [x] **Step 1:** Call `Artifact` with `action: "quickstart"` and `intent: "other"`, then load the `artifact-design` skill.
+- [x] **Step 2:** Build Direction A and Direction B as static HTML. Each shows:
   - **Screens:** Home, Feeling, Response and Started (with the timer and task chips), at 375×667 and in a desktop frame, in both light and dark;
   - **Copy:** the real copy from spec §8–9 (`anxious.name` as the sample response);
   - **Motion:** a toggle that plays the "Started." moment with and without reduced motion.
@@ -97,10 +97,10 @@ CI runs on every push, `main` deploys to Cloudflare, and the README carries the 
   The two must differ in typeface pairing, palette temperature and layout rhythm, and both must stay calm and typography-led:
   - **Direction A:** working name "Paper", light-first, with an editorial serif for display.
   - **Direction B:** working name "Dusk", dark-first, with a grotesk and large tabular numerals.
-- [ ] **Step 3:** Publish both as private Artifacts and send the owner both links.
-- [ ] **Step 4:** **Owner step.** The owner picks one, or asks for a blend. Iterate until the owner says yes.
-- [ ] **Step 5:** Verify each chosen font's Fontsource package and version with `npm view @fontsource-variable/<family> version`. Write ADR-018 with exact hex values and confirm every semantic text/background pair is ≥ 4.5:1.
-- [ ] **Step 6:** Commit.
+- [x] **Step 3:** Publish both as private Artifacts and send the owner both links.
+- [x] **Step 4:** **Owner step.** The owner picks one, or asks for a blend. Iterate until the owner says yes.
+- [x] **Step 5:** Verify each chosen font's Fontsource package and version with `npm view @fontsource-variable/<family> version`. Write ADR-018 with exact hex values and confirm every semantic text/background pair is ≥ 4.5:1.
+- [x] **Step 6:** Commit.
 
 ```bash
 git add docs/decisions.md && git commit -m "docs: record the chosen visual direction (ADR-018)"
@@ -119,8 +119,8 @@ git add docs/decisions.md && git commit -m "docs: record the chosen visual direc
   - `typecheck` (`tsc -b --noEmit && tsc -p src/domain/tsconfig.json --noEmit`)
   - `test` (`vitest run`), `test:watch`, `e2e` (`playwright test`)
 
-- [ ] **Step 1:** Scaffold with `npm create vite@latest . -- --template react-ts`. Pin exact versions of `react@19.3.x`, `vite@8.3.x`, `@vitejs/plugin-react@6.3.x` and `typescript@6.0.x`. Install `vitest@5.1.x`, `fast-check@4.10.x`, `eslint@10.x`, `typescript-eslint@8.72.x` and `prettier` (latest 3.x, confirmed with `npm view prettier version`), all `--save-dev --save-exact`.
-- [ ] **Step 2:** Configure:
+- [x] **Step 1:** Scaffold with `npm create vite@latest . -- --template react-ts`. Pin exact versions of `react@19.3.x`, `vite@8.3.x`, `@vitejs/plugin-react@6.3.x` and `typescript@6.0.x`. Install `vitest@5.1.x`, `fast-check@4.10.x`, `eslint@10.x`, `typescript-eslint@8.72.x` and `prettier` (latest 3.x, confirmed with `npm view prettier version`), all `--save-dev --save-exact`.
+- [x] **Step 2:** Configure:
   - TypeScript compiler options per Global Constraints;
   - `vitest.config.ts`:
     - environment `node`;
@@ -131,7 +131,7 @@ git add docs/decisions.md && git commit -m "docs: record the chosen visual direc
     - `{ group: ['../storage*', '../app*', '../copy*', '../design*', '../../*'], message: 'The domain may not import outside src/domain.' }`.
 
     `../X` from the domain root and `../../X` from `src/domain/testing` are the only ways out of the folder.
-- [ ] **Step 3:** Write the failing purity tests in `tests/purity/purity.test.ts`:
+- [x] **Step 3:** Write the failing purity tests in `tests/purity/purity.test.ts`:
 
 ```ts
 it('domain tsconfig rejects DOM globals', () => {
@@ -150,13 +150,13 @@ it('eslint rejects storage imports inside domain', async () => {
 ```
 
   `uses-window.ts` contains `export const href = window.location.href;`. The fixture `tsconfig.json` extends `../../../src/domain/tsconfig.json` and includes only `uses-window.ts`.
-- [ ] **Step 4:** Run `npm test`. Expected: all three tests PASS. Then temporarily set `lib` to include `"DOM"` in the domain tsconfig, confirm the first test FAILS, and revert.
-- [ ] **Step 5:** Evaluate TypeScript 7.
+- [x] **Step 4:** Run `npm test`. Expected: all three tests PASS. Then temporarily set `lib` to include `"DOM"` in the domain tsconfig, confirm the first test FAILS, and revert.
+- [x] **Step 5:** Evaluate TypeScript 7.
   - Check: `npm view typescript-eslint peerDependencies` and the vite-plugin-pwa/Vite docs.
   - Rule: switch only if both support TypeScript 7.
   - Record: write the outcome as ADR-019.
-- [ ] **Step 6:** Run `npm run lint && npm run typecheck && npm run format:check && npm run build`. Expected: all exit 0.
-- [ ] **Step 7:** Commit.
+- [x] **Step 6:** Run `npm run lint && npm run typecheck && npm run format:check && npm run build`. Expected: all exit 0.
+- [x] **Step 7:** Commit.
 
 ```bash
 git add -A && git commit -m "chore: scaffold Vite React TypeScript app with a pure domain boundary"
@@ -170,25 +170,25 @@ git add -A && git commit -m "chore: scaffold Vite React TypeScript app with a pu
 **Interfaces:**
 - Produces: a CI job `check` that later tasks extend. Task 12 adds the `e2e` job, and Task 17 adds `deploy`.
 
-- [ ] **Step 1: Owner step.** Ask: "Create a public GitHub repo `shreyandhawa/arohexis` and push `main` and `m1-stuck-flow`?" Proceed only on a yes. Then run:
+- [x] **Step 1: Owner step.** Ask: "Create a public GitHub repo `shreyandhawa/arohexis` and push `main` and `m1-stuck-flow`?" Proceed only on a yes. Then run:
 
 ```bash
 gh repo create shreyandhawa/arohexis --public --source . --remote origin
 git push -u origin main m1-stuck-flow
 ```
 
-- [ ] **Step 2:** Write `scripts/check-bundle-size.mjs`:
+- [x] **Step 2:** Write `scripts/check-bundle-size.mjs`:
   - read `dist/index.html` and collect `<script type="module" src>` and `<link rel="modulepreload">` files;
   - gzip each and sum the sizes;
   - print the total;
   - exit 1 if the total is over `150 * 1024`.
-- [ ] **Step 3:** Write the `check` job in `ci.yml`.
+- [x] **Step 3:** Write the `check` job in `ci.yml`.
   - **Triggers:** `push` and `pull_request`.
   - **Steps:** `actions/setup-node` with `node-version-file: .nvmrc` and npm cache, then `npm ci`, `npm run lint`, `npm run format:check`, `npm run typecheck`, `npm test -- --coverage`, `npm run build`, `node scripts/check-bundle-size.mjs`.
 
   `dependabot.yml`: weekly updates for `npm` and `github-actions`.
-- [ ] **Step 4:** Push the branch. Run `gh run watch` (or `gh run list --branch m1-stuck-flow`). Expected: `check` succeeds.
-- [ ] **Step 5:** Commit and push.
+- [x] **Step 4:** Push the branch. Run `gh run watch` (or `gh run list --branch m1-stuck-flow`). Expected: `check` succeeds.
+- [x] **Step 5:** Commit and push.
 
 ```bash
 git add .github scripts && git commit -m "ci: run lint, typecheck, tests, build and bundle budget on every push"
@@ -246,13 +246,13 @@ export function testDeps(opts?: { at?: number; tz?: string }): { clock: TestCloc
 // defaults: at = Date.UTC(2026, 10, 16, 14, 0) (Mon 09:00 New York), tz = 'America/New_York'; ids 'id-1', 'id-2', …
 ```
 
-- [ ] **Step 1:** Write the failing tests in `events.test.ts`:
+- [x] **Step 1:** Write the failing tests in `events.test.ts`:
   - `createEvent stamps id, time, zone and version`: `testDeps()` then `createEvent(d, 'start.made', { attemptId: 'a1', backfilled: false })` equals `{ id: 'id-1', type: 'start.made', at: Date.UTC(2026,10,16,14,0), tz: 'America/New_York', v: 1, attemptId: 'a1', backfilled: false }`.
   - `ids are sequential and clock is injectable`: the second event has `id: 'id-2'`, and after `clock.advance(1000)`, `at` is 1000 ms later.
-- [ ] **Step 2:** Run `npx vitest run src/domain/events.test.ts`. Expected: FAIL (module not found).
-- [ ] **Step 3:** Implement the files above.
-- [ ] **Step 4:** Run the same command. Expected: PASS. Then run `npm run typecheck`. Expected: exit 0.
-- [ ] **Step 5:** Commit.
+- [x] **Step 2:** Run `npx vitest run src/domain/events.test.ts`. Expected: FAIL (module not found).
+- [x] **Step 3:** Implement the files above.
+- [x] **Step 4:** Run the same command. Expected: PASS. Then run `npm run typecheck`. Expected: exit 0.
+- [x] **Step 5:** Commit.
 
 ```bash
 git commit -am "feat(domain): add event types, config types, ports and test fixtures"
@@ -281,7 +281,7 @@ export function arbAttemptEvents(): fc.Arbitrary<AppEvent[]>;               // v
 
 `start.tz` is the `start.made` event's `tz`; Task 6 uses it.
 
-- [ ] **Step 1:** Write the failing tests:
+- [x] **Step 1:** Write the failing tests:
   - `folds a full stuck flow into one attempt`:
     - **Input events:** opened (stuck), `feeling.named(anxious, 'Anxious')`, `response.shown(anxious.name, name-the-feeling)`, `start.made`, `start.tagged(writing, 'Writing')`, `timer.closed(kept-going, 120)`.
     - **Expected attempt:** exactly those fields, with `undone: false`, `dismissed: false`, and `isCountedStart` true.
@@ -291,10 +291,10 @@ export function arbAttemptEvents(): fc.Arbitrary<AppEvent[]>;               // v
   - `attempt with no start and no dismissal is abandoned`: `isCountedStart` is false and `dismissed` is false.
   - `orders attempts by openedAt`.
   - **Property** `counted starts equal attempts with a start.made and no start.undone`: over `arbAttemptEvents()`, `foldAttempts(evts).filter(isCountedStart).length` equals the count computed independently from raw events.
-- [ ] **Step 2:** Run `npx vitest run src/domain/attempts.test.ts`. Expected: FAIL.
-- [ ] **Step 3:** Implement `foldAttempts` (a single pass grouped by `attemptId`), `findAttempt` and `isCountedStart`.
-- [ ] **Step 4:** Run it again. Expected: PASS.
-- [ ] **Step 5:** Commit: `feat(domain): fold events into attempts`.
+- [x] **Step 2:** Run `npx vitest run src/domain/attempts.test.ts`. Expected: FAIL.
+- [x] **Step 3:** Implement `foldAttempts` (a single pass grouped by `attemptId`), `findAttempt` and `isCountedStart`.
+- [x] **Step 4:** Run it again. Expected: PASS.
+- [x] **Step 5:** Commit: `feat(domain): fold events into attempts`.
 
 ### Task 6: Weeks, local time, and the weekly start count
 
@@ -313,7 +313,7 @@ export function startsThisWeek(attempts: readonly Attempt[], now: number, tz: st
 // a start counts when weekKey(start.at, start.tz, w) === weekKey(now, tz, w)
 ```
 
-- [ ] **Step 1:** Write the failing tests:
+- [x] **Step 1:** Write the failing tests:
   - `weekKey uses Monday by default`:
     - `weekKey(Date.UTC(2026,10,16,4,59), 'America/New_York', 1)` is `'2026-11-09'` (Sunday 23:59);
     - `weekKey(Date.UTC(2026,10,16,5,1), 'America/New_York', 1)` is `'2026-11-16'`.
@@ -324,10 +324,10 @@ export function startsThisWeek(attempts: readonly Attempt[], now: number, tz: st
     - if the start's `tz` is `'Asia/Kathmandu'`, the result is `1`;
     - if the start's `tz` is `'America/New_York'`, the result is `0`.
   - `startsThisWeek ignores undone and abandoned attempts`.
-- [ ] **Step 2:** Run `npx vitest run src/domain/week.test.ts src/domain/metrics.test.ts`. Expected: FAIL.
-- [ ] **Step 3:** Implement using `TZDate` from `@date-fns/tz` with `format` and `startOfWeek` from `date-fns`. Install both with `--save-exact`.
-- [ ] **Step 4:** Run it again. Expected: PASS.
-- [ ] **Step 5:** Commit: `feat(domain): add timezone-aware weeks and the weekly start count`.
+- [x] **Step 2:** Run `npx vitest run src/domain/week.test.ts src/domain/metrics.test.ts`. Expected: FAIL.
+- [x] **Step 3:** Implement using `TZDate` from `@date-fns/tz` with `format` and `startOfWeek` from `date-fns`. Install both with `--save-exact`.
+- [x] **Step 4:** Run it again. Expected: PASS.
+- [x] **Step 5:** Commit: `feat(domain): add timezone-aware weeks and the weekly start count`.
 
 ### Task 7: Default content, matcher, copy rules
 
@@ -355,24 +355,24 @@ export function wordCount(text: string): number;
 export function checkCopy(text: string): string[];   // human-readable violations; [] when clean
 ```
 
-- [ ] **Step 1:** Write the failing matcher tests:
+- [x] **Step 1:** Write the failing matcher tests:
   - `shows a never-shown response first, lowest order`: anxious with no history gives `anxious.name`.
   - `shows the least recently shown`: after `name@t1` and `shrink@t2`, the pick is `anxious.kind`. After `name@t1`, `shrink@t2` and `kind@t3`, the pick is `anxious.name`.
   - `skips disabled responses`.
   - `falls back to generic.any when a feeling has none enabled`.
   - `other always gets generic.any`.
   - **Property** `k consecutive picks show each enabled response once`: for any subset of enabled anxious responses (k ≥ 1), simulating k picks, each appended to history, yields k distinct ids.
-- [ ] **Step 2:** Write the failing copy tests in `copy.test.ts`:
+- [x] **Step 2:** Write the failing copy tests in `copy.test.ts`:
   - `checkCopy flags banned words and exclamation marks`:
     - `checkCopy('Your streak is broken!')` has length 3;
     - `checkCopy('Permission granted')` is `[]` (whole words only).
   - `default content passes copy rules`: every label and body in `defaults.ts` gives `[]`, and every response satisfies `wordCount(body) <= 40`.
   - `all copy modules pass copy rules`: load `import.meta.glob('./*.ts', { eager: true })` (excluding `rules.ts` and tests), collect every string value recursively, and expect `[]` for each.
   - `ships the spec's defaults`: 6 feelings, 16 responses, 3 per default feeling, `generic.any` present.
-- [ ] **Step 3:** Run `npx vitest run src/domain/matcher.test.ts src/copy`. Expected: FAIL.
-- [ ] **Step 4:** Implement. Copy the bodies verbatim from spec §9.2.
-- [ ] **Step 5:** Run it again. Expected: PASS.
-- [ ] **Step 6:** Commit: `feat(domain): add default content, response matcher and copy rules`.
+- [x] **Step 3:** Run `npx vitest run src/domain/matcher.test.ts src/copy`. Expected: FAIL.
+- [x] **Step 4:** Implement. Copy the bodies verbatim from spec §9.2.
+- [x] **Step 5:** Run it again. Expected: PASS.
+- [x] **Step 6:** Commit: `feat(domain): add default content, response matcher and copy rules`.
 
 ### Task 8: Stuck-flow commands and timer rules
 
@@ -401,7 +401,7 @@ export function timerState(startAt: number, now: number): { elapsedSec: number; 
 export function isUndoProminent(startAt: number, now: number): boolean;
 ```
 
-- [ ] **Step 1:** Write the failing tests:
+- [x] **Step 1:** Write the failing tests:
   - `nameFeeling snapshots the label and the matcher's pick`.
   - `nameFeeling is a no-op the second time`.
   - `makeStart is idempotent`: applying its output, then calling it again, gives `[]` (Review Focus #2).
@@ -415,10 +415,10 @@ export function isUndoProminent(startAt: number, now: number): boolean;
     - at 120 s, `done: true, remainingSec: 0`;
     - 10 minutes later (phone locked), `{ remainingSec: 0, done: true }`, never negative (Review Focus #1).
   - `isUndoProminent`: true at 9 999 ms, false at 10 000 ms.
-- [ ] **Step 2:** Run `npx vitest run src/domain/commands.test.ts src/domain/timer.test.ts`. Expected: FAIL.
-- [ ] **Step 3:** Implement.
-- [ ] **Step 4:** Run it again. Expected: PASS. Then run `npm test -- --coverage`. Expected: the domain thresholds are met.
-- [ ] **Step 5:** Commit: `feat(domain): add stuck-flow commands and timer rules`.
+- [x] **Step 2:** Run `npx vitest run src/domain/commands.test.ts src/domain/timer.test.ts`. Expected: FAIL.
+- [x] **Step 3:** Implement.
+- [x] **Step 4:** Run it again. Expected: PASS. Then run `npm test -- --coverage`. Expected: the domain thresholds are met.
+- [x] **Step 5:** Commit: `feat(domain): add stuck-flow commands and timer rules`.
 
 ### Task 9: Export format (backup)
 
@@ -440,17 +440,17 @@ export function parseExport(input: unknown): ParseResult;     // Valibot schema;
 export function exportFileName(at: number, tz: string): string; // 'arohexis-export-YYYY-MM-DD.json'
 ```
 
-- [ ] **Step 1:** Write the failing tests:
+- [x] **Step 1:** Write the failing tests:
   - `parseExport accepts what buildExport produces`.
   - `rejects a newer version`: the message is `'This backup is from a newer version of Arohexis. Update the app, then try again.'`
   - `rejects a file that is not an Arohexis backup`: the message is `"This file isn't an Arohexis backup."`
   - `rejects malformed events without throwing`.
   - `exportFileName uses the local date`: `exportFileName(Date.UTC(2026,10,12,2,0), 'America/New_York')` is `'arohexis-export-2026-11-11.json'`.
   - **Property** `parse(build(data)) round-trips`: over arbitrary configs plus `arbAttemptEvents()`, the result deep-equals the input data.
-- [ ] **Step 2:** Run `npx vitest run src/domain/exportFormat.test.ts`. Expected: FAIL.
-- [ ] **Step 3:** Implement with `valibot` (installed `--save-exact`), using `v.variant('type', [...])` for events.
-- [ ] **Step 4:** Run it again. Expected: PASS.
-- [ ] **Step 5:** Commit: `feat(domain): add the backup export format with validation`.
+- [x] **Step 2:** Run `npx vitest run src/domain/exportFormat.test.ts`. Expected: FAIL.
+- [x] **Step 3:** Implement with `valibot` (installed `--save-exact`), using `v.variant('type', [...])` for events.
+- [x] **Step 4:** Run it again. Expected: PASS.
+- [x] **Step 5:** Commit: `feat(domain): add the backup export format with validation`.
 
 ### Task 10: Storage (Dexie)
 
@@ -472,7 +472,7 @@ export function createConfigStore(db: ArohexisDB): ConfigStore;      // settings
 export function readExportData(db: ArohexisDB): Promise<ExportData>;
 ```
 
-- [ ] **Step 1:** Write the failing tests with `import 'fake-indexeddb/auto'` and a fresh `test-${crypto.randomUUID()}` database per test:
+- [x] **Step 1:** Write the failing tests with `import 'fake-indexeddb/auto'` and a fresh `test-${crypto.randomUUID()}` database per test:
   - `seeds defaults once`: calling `seedDefaults` twice leaves 6 feelings and 16 responses.
   - `append is all-or-nothing`: a batch whose second event has a duplicate id writes 0 events and rejects.
   - `listByAttempt returns events in time order`.
@@ -480,10 +480,10 @@ export function readExportData(db: ArohexisDB): Promise<ExportData>;
   - `getConfig merges stored settings over defaults`.
   - `readExportData returns every table`.
   - `openStorage reports unavailable storage` (Review Focus #5): when `indexedDB.open` is stubbed to throw, the result is `{ ok: false }` with a `StorageUnavailableError`.
-- [ ] **Step 2:** Run `npx vitest run src/storage`. Expected: FAIL.
-- [ ] **Step 3:** Implement, installing `dexie`, `dexie-react-hooks` and the dev dependency `fake-indexeddb`, all `--save-exact`. `appendForAttempt` uses `db.transaction('rw', db.events, …)` and runs `decide` synchronously inside it.
-- [ ] **Step 4:** Run it again. Expected: PASS.
-- [ ] **Step 5:** Commit: `feat(storage): add Dexie schema, seeding and repositories`.
+- [x] **Step 2:** Run `npx vitest run src/storage`. Expected: FAIL.
+- [x] **Step 3:** Implement, installing `dexie`, `dexie-react-hooks` and the dev dependency `fake-indexeddb`, all `--save-exact`. `appendForAttempt` uses `db.transaction('rw', db.events, …)` and runs `decide` synchronously inside it.
+- [x] **Step 4:** Run it again. Expected: PASS.
+- [x] **Step 5:** Commit: `feat(storage): add Dexie schema, seeding and repositories`.
 
 ### Task 11: Design tokens
 
@@ -500,16 +500,16 @@ export function readExportData(db: ArohexisDB): Promise<ExportData>;
     - `:root[data-theme="dark"] { … }` holds the same dark values.
   - `contrastRatio(hexA: string, hexB: string): number` in `contrast.ts`.
 
-- [ ] **Step 1:** Write the failing tests in `tokens.test.ts`, reading `tokens.css` via `?raw`:
+- [x] **Step 1:** Write the failing tests in `tokens.test.ts`, reading `tokens.css` via `?raw`:
   - `contrastRatio matches WCAG`: `contrastRatio('#000000', '#ffffff')` is 21 to two decimals.
   - `text pairs meet 4.5:1 in both themes`: `[text, bg]`, `[text, surface]`, `[text-muted, bg]`, `[on-accent, accent]`.
   - `UI pairs meet 3:1 in both themes`: `[focus, bg]`, `[accent, bg]`, `[border, bg]`.
   - `the media-query dark block equals the data-theme dark block`.
   - `reduced motion zeroes transforms`: `global.css` contains a `prefers-reduced-motion: reduce` block that sets `--motion-calm` and `--motion-slow` to `0ms` and disables transforms.
-- [ ] **Step 2:** Run `npx vitest run src/design`. Expected: FAIL.
-- [ ] **Step 3:** Implement with ADR-018's values. Install the Fontsource packages `--save-exact` and import them in `fonts.ts`. Set body text to at least 17 px on mobile and use `font-variant-numeric: tabular-nums` for `.numeric`.
-- [ ] **Step 4:** Run it again. Expected: PASS.
-- [ ] **Step 5:** Commit: `feat(design): add design tokens, themes and contrast tests`.
+- [x] **Step 2:** Run `npx vitest run src/design`. Expected: FAIL.
+- [x] **Step 3:** Implement with ADR-018's values. Install the Fontsource packages `--save-exact` and import them in `fonts.ts`. Set body text to at least 17 px on mobile and use `font-variant-numeric: tabular-nums` for `.numeric`.
+- [x] **Step 4:** Run it again. Expected: PASS.
+- [x] **Step 5:** Commit: `feat(design): add design tokens, themes and contrast tests`.
 
 ### Task 12: App shell, data provider, Home, About, Playwright
 
@@ -543,34 +543,34 @@ export function useNow(intervalMs: number): number;
 - **`about.ts`:** the not-medical-advice note verbatim from spec §3, plus the evidence list from spec §3.
 - **`StorageError` copy:** title `"Can't save on this device"`, body `"Arohexis keeps your data in this browser's storage, and it isn't available right now. Private browsing or low storage can cause this. Your data isn't being recorded."`
 
-- [ ] **Step 1:** Install `react-router@8.5.x` and the dev dependencies `@playwright/test@1.65.x` and `@axe-core/playwright@4.14.x`, all `--save-exact`. Then run `npx playwright install chromium webkit`.
-- [ ] **Step 2:** Configure Playwright:
+- [x] **Step 1:** Install `react-router@8.5.x` and the dev dependencies `@playwright/test@1.65.x` and `@axe-core/playwright@4.14.x`, all `--save-exact`. Then run `npx playwright install chromium webkit`.
+- [x] **Step 2:** Configure Playwright:
   - **Projects:** `iphone` (`devices['iPhone 15']`), `android` (`devices['Pixel 7']`), `desktop` (`devices['Desktop Chrome']`).
   - **`webServer`:** `npm run build && npm run preview -- --port 4173 --strictPort`, with `baseURL` `http://localhost:4173`.
   - **`helpers.ts`:**
     - `expectAccessible(page)` runs an axe scan with WCAG 2.2 AA tags and asserts zero violations;
     - `setTheme(page, 'light' | 'dark')` uses `page.emulateMedia({ colorScheme })`.
-- [ ] **Step 3:** Write the failing E2E tests in `home.spec.ts`:
+- [x] **Step 3:** Write the failing E2E tests in `home.spec.ts`:
   - `home shows one large stuck button`: the button's role and name are `I'm stuck`, and its bounding box is at least 48×48.
   - `S opens the stuck flow` (desktop project only): pressing `s` lands on `/stuck`.
   - `S is ignored while typing`: an input on `/settings` (a placeholder field is fine) keeps the URL unchanged.
   - `about shows the not-medical-advice note`.
   - `home and about are accessible in light and dark`.
   - `storage failure shows a calm message` (Review Focus #5): use `page.addInitScript` to delete `window.indexedDB`, then expect the heading `Can't save on this device`.
-- [ ] **Step 4:** Run `npx playwright test tests/e2e/home.spec.ts`. Expected: FAIL.
-- [ ] **Step 5:** Implement:
+- [x] **Step 4:** Run `npx playwright test tests/e2e/home.spec.ts`. Expected: FAIL.
+- [x] **Step 5:** Implement:
   - the shell: a single column at most `34rem` wide, the primary action in the bottom thumb zone, and a persistent `StuckButton` everywhere except `/stuck*` and `/started*`;
   - the global `s` key handler, skipped when `event.target` is an input, textarea, select or contenteditable;
   - the data provider, hooks and screens;
   - `Settings`, a list with links to `Data` and `About`.
-- [ ] **Step 6:** Run it again. Expected: PASS on all three projects.
-- [ ] **Step 7:** Add the `e2e` job to `ci.yml`:
+- [x] **Step 6:** Run it again. Expected: PASS on all three projects.
+- [x] **Step 7:** Add the `e2e` job to `ci.yml`:
   - `needs: check`;
   - run `npx playwright install --with-deps chromium webkit` and `npx playwright test`;
   - upload `playwright-report/` when the job fails.
 
   Push and confirm both jobs pass with `gh run watch`.
-- [ ] **Step 8:** Commit: `feat(app): add app shell, data provider, home and about`.
+- [x] **Step 8:** Commit: `feat(app): add app shell, data provider, home and about`.
 
 ### Task 13: Stuck-flow actions
 
@@ -591,16 +591,16 @@ export function finishTimer(d: AppDeps, attemptId: string, outcome: 'kept-going'
 export function notNow(d: AppDeps, attemptId: string): Promise<void>;
 ```
 
-- [ ] **Step 1:** Write the failing tests against a real `openStorage('test-…')` with fake-indexeddb, `testDeps()` and a `persist` spy:
+- [x] **Step 1:** Write the failing tests against a real `openStorage('test-…')` with fake-indexeddb, `testDeps()` and a `persist` spy:
   - `full flow records one counted start`.
   - `double start counts once` (Review Focus #2): `Promise.all([start(d,id), start(d,id)])` leaves `startsThisWeek` at 1.
   - `requests persistent storage once`: two separate attempts, each started, call `persist` once and set `settings.persistRequested` to true.
   - `chooseFeeling uses rotation across attempts`: three anxious attempts get `anxious.name`, `anxious.shrink`, `anxious.kind`.
   - `notNow after start does nothing`.
-- [ ] **Step 2:** Run `npx vitest run src/app/actions`. Expected: FAIL.
-- [ ] **Step 3:** Implement. Each action is: read inputs, then `appendForAttempt(attemptId, evts => command(...))`.
-- [ ] **Step 4:** Run it again. Expected: PASS.
-- [ ] **Step 5:** Commit: `feat(app): wire stuck-flow actions to storage`.
+- [x] **Step 2:** Run `npx vitest run src/app/actions`. Expected: FAIL.
+- [x] **Step 3:** Implement. Each action is: read inputs, then `appendForAttempt(attemptId, evts => command(...))`.
+- [x] **Step 4:** Run it again. Expected: PASS.
+- [x] **Step 5:** Commit: `feat(app): wire stuck-flow actions to storage`.
 
 ### Task 14: Stuck-flow screens
 
@@ -622,7 +622,7 @@ export function notNow(d: AppDeps, attemptId: string): Promise<void>;
   - `/started/:id` without a counted start redirects to `/`.
   - Opening `/stuck` calls `beginStuck` once per mount.
 
-- [ ] **Step 1:** Write the failing E2E tests in `stuck-flow.spec.ts`:
+- [x] **Step 1:** Write the failing E2E tests in `stuck-flow.spec.ts`:
   - `reaches the timer in three taps without scrolling`:
     - setup: `test.use({ viewport: { width: 375, height: 667 } })`;
     - taps: `I'm stuck`, then `Anxious`, then `Start`;
@@ -639,14 +639,14 @@ export function notNow(d: AppDeps, attemptId: string): Promise<void>;
   - `keyboard-only flow` (desktop project only): `s`, then `1`, then `Enter`, ends at Started.
   - `reduced motion has no transforms`: with `emulateMedia({ reducedMotion: 'reduce' })`, no `getAnimations()` keyframe on the reward element contains `transform`.
   - `stuck screens are accessible in light and dark`.
-- [ ] **Step 2:** Run `npx playwright test tests/e2e/stuck-flow.spec.ts`. Expected: FAIL.
-- [ ] **Step 3:** Implement the screens:
+- [x] **Step 2:** Run `npx playwright test tests/e2e/stuck-flow.spec.ts`. Expected: FAIL.
+- [x] **Step 3:** Implement the screens:
   - number keys `1`–`9` pick a feeling and `Enter` triggers the primary action;
   - Start is disabled after the first tap;
   - the timer reads `timerState(start.at, useNow(250))` and announces through `aria-live="polite"` only at 60 s remaining and at 0;
   - the reward motion uses `--motion-calm`.
-- [ ] **Step 4:** Run it again. Expected: PASS on all projects.
-- [ ] **Step 5:** Commit: `feat(app): add the stuck flow screens with reward, timer, undo and tags`.
+- [x] **Step 4:** Run it again. Expected: PASS on all projects.
+- [x] **Step 5:** Commit: `feat(app): add the stuck flow screens with reward, timer, undo and tags`.
 
 ### Task 15: PWA, offline, persistence, iOS install note
 
@@ -666,7 +666,7 @@ export function isIosSafariNonStandalone(env: { userAgent: string; maxTouchPoint
   - `updateReady`: `"A new version is ready."`, with the action `"Reload"`.
 - **Manifest:** `name` and `short_name` `"Arohexis"`, `start_url` and `scope` `"/"`, `display: "standalone"`, `background_color` and `theme_color` from ADR-018, icons at 192, 512 and 512 maskable, plus `apple-touch-icon` 180.
 
-- [ ] **Step 1:** Write the failing tests:
+- [x] **Step 1:** Write the failing tests:
   - `platform.test.ts`, three cases:
     - an iPhone Safari user agent with standalone false gives true;
     - with standalone true, it gives false;
@@ -675,15 +675,15 @@ export function isIosSafariNonStandalone(env: { userAgent: string; maxTouchPoint
   - `offline.spec.ts` (Chromium projects; skip `iphone`):
     - `works offline after first load`: load `/`, wait for `navigator.serviceWorker.ready`, `context.setOffline(true)`, reload, complete the stuck flow, and expect `1 start this week`.
     - `data survives reload and a new page`.
-- [ ] **Step 2:** Run `npx vitest run src/app/platform.test.ts && npx playwright test tests/e2e/offline.spec.ts`. Expected: FAIL.
-- [ ] **Step 3:** Implement:
+- [x] **Step 2:** Run `npx vitest run src/app/platform.test.ts && npx playwright test tests/e2e/offline.spec.ts`. Expected: FAIL.
+- [x] **Step 3:** Implement:
   - install `vite-plugin-pwa@2.0.x` and `@vite-pwa/assets-generator`, `--save-exact`;
   - configure `registerType: 'prompt'`, `injectRegister: 'script'`, `strategies: 'generateSW'`, with `workbox.navigateFallback: '/index.html'`;
   - `UpdateCard` uses `useRegisterSW` from `virtual:pwa-register/react` and is hidden while the path starts with `/stuck` or `/started`;
   - the `installNote` card appears on Home only when `isIosSafariNonStandalone` is true;
   - the icon is drawn from ADR-018's palette.
-- [ ] **Step 4:** Run `npx vitest run src/app/platform.test.ts && npx playwright test tests/e2e/offline.spec.ts tests/e2e/manifest.spec.ts`. Expected: PASS.
-- [ ] **Step 5:** Commit: `feat(pwa): make Arohexis installable and offline-first`.
+- [x] **Step 4:** Run `npx vitest run src/app/platform.test.ts && npx playwright test tests/e2e/offline.spec.ts tests/e2e/manifest.spec.ts`. Expected: PASS.
+- [x] **Step 5:** Commit: `feat(pwa): make Arohexis installable and offline-first`.
 
 ### Task 16: Backup export screen
 
@@ -705,16 +705,16 @@ export function exportBackup(d: AppDeps, share: { canShareFiles: boolean; share(
   - `"Your data lives only on this device. Save a backup to Files now and then."`;
   - `lastBackup(days)`: `"Last backup: today"`, `"Last backup: 1 day ago"`, `` `Last backup: ${n} days ago` ``, or `"No backup yet"`.
 
-- [ ] **Step 1:** Write the failing tests in `export.spec.ts` (Chromium projects):
+- [x] **Step 1:** Write the failing tests in `export.spec.ts` (Chromium projects):
   - `exports a valid backup`: tap `Export backup`, catch `page.waitForEvent('download')`, check the file name matches `/^arohexis-export-\d{4}-\d{2}-\d{2}\.json$/`, and confirm `parseExport(JSON.parse(contents)).ok === true` with one counted start present after a stuck flow.
   - `shows last backup today`.
   - `data screen is accessible`.
-- [ ] **Step 2:** Run `npx playwright test tests/e2e/export.spec.ts`. Expected: FAIL.
-- [ ] **Step 3:** Implement:
+- [x] **Step 2:** Run `npx playwright test tests/e2e/export.spec.ts`. Expected: FAIL.
+- [x] **Step 3:** Implement:
   - use `navigator.canShare?.({ files: [file] })` to choose `navigator.share({ files })` (iOS → Files), otherwise download through an object URL;
   - `build` is `import.meta.env.VITE_BUILD_SHA ?? 'dev'`, and CI sets `VITE_BUILD_SHA=${{ github.sha }}`.
-- [ ] **Step 4:** Run it again. Expected: PASS.
-- [ ] **Step 5:** Commit: `feat(app): add backup export`.
+- [x] **Step 4:** Run it again. Expected: PASS.
+- [x] **Step 5:** Commit: `feat(app): add backup export`.
 
 ### Task 17: Deploy to Cloudflare
 
@@ -735,30 +735,30 @@ export function exportBackup(d: AppDeps, share: { canShareFiles: boolean; share(
   - `/`, `/index.html`, `/sw.js`, `/manifest.webmanifest`: `Cache-Control: no-cache`;
   - `/assets/*`: `Cache-Control: public, max-age=31536000, immutable`.
 
-- [ ] **Step 1:** Write the failing tests in `tests/config/headers.test.ts`:
+- [x] **Step 1:** Write the failing tests in `tests/config/headers.test.ts`:
   - parse `public/_headers` into a path-to-headers map;
   - assert the exact CSP string on `/*`;
   - assert `no-cache` on all four paths;
   - assert `immutable` on `/assets/*`.
-- [ ] **Step 2:** Run `npx vitest run tests/config/headers.test.ts`. Expected: FAIL. Then implement both files. Expected: PASS.
-- [ ] **Step 3: Owner step.**
+- [x] **Step 2:** Run `npx vitest run tests/config/headers.test.ts`. Expected: FAIL. Then implement both files. Expected: PASS.
+- [x] **Step 3: Owner step.**
   - create or sign in to a free Cloudflare account;
   - create an API token from the "Edit Cloudflare Workers" template;
   - add the GitHub secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
 
   Offer the `wizard` skill to walk through this.
-- [ ] **Step 4:** Check the current Wrangler docs for the preview-URL command (expected: `wrangler versions upload --preview-alias <branch>`) and record it in ADR-020. Then add the CI jobs:
+- [x] **Step 4:** Check the current Wrangler docs for the preview-URL command (expected: `wrangler versions upload --preview-alias <branch>`) and record it in ADR-020. Then add the CI jobs:
   - **`deploy`:** on `push` to `main`, `needs: [check, e2e]`, run `npx wrangler deploy`;
   - **`preview`:** on pull requests, run the verified preview command and post the URL in the job summary.
-- [ ] **Step 5:** Push, open a PR from `m1-stuck-flow`, and confirm the preview URL loads. Run `curl -sI <preview-url> | grep -i content-security-policy` and expect the exact CSP.
-- [ ] **Step 6:** Commit: `ci: deploy to Cloudflare Workers with branch previews`.
+- [x] **Step 5:** Push, open a PR from `m1-stuck-flow`, and confirm the preview URL loads. Run `curl -sI <preview-url> | grep -i content-security-policy` and expect the exact CSP.
+- [x] **Step 6:** Commit: `ci: deploy to Cloudflare Workers with branch previews`.
 
 ### Task 18: README, acceptance, review, merge
 
 **Files:**
 - Create: `README.md`
 
-- [ ] **Step 1:** Write `README.md`:
+- [x] **Step 1:** Write `README.md`:
   - what Arohexis is and isn't (spec §1);
   - "Why it works", taken from spec §3: the claims, citations, caveats and the correction note;
   - the not-medical-advice note verbatim;
@@ -769,7 +769,7 @@ export function exportBackup(d: AppDeps, share: { canShareFiles: boolean; share(
   - links to `docs/decisions.md` and `docs/plan.md`.
 
   Then add a test `README prose passes copy rules` to `src/copy/copy.test.ts`. It reads `README.md`, drops fenced code blocks and every line containing `http` or `doi:`, and checks the rest with `checkCopy`. Run `npx vitest run src/copy`. Expected: PASS.
-- [ ] **Step 2:** Request a whole-branch review with `superpowers:requesting-code-review` (or the `pr-review-toolkit:code-reviewer` agent) against spec §5–8 and this milestone. Fix the findings and commit.
+- [x] **Step 2:** Request a whole-branch review with `superpowers:requesting-code-review` (or the `pr-review-toolkit:code-reviewer` agent) against spec §5–8 and this milestone. Fix the findings and commit.
 - [ ] **Step 3: Owner acceptance on iPhone** (preview URL):
   - add to Home Screen;
   - airplane mode, then stuck flow, timing it at under 30 s;
