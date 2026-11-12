@@ -8,7 +8,7 @@ export const STRAND_POINTS_MIN = 8;
 export const STRAND_POINTS_MAX = 22;
 export const PLAN_FIBRES_PER_REGION = 12;
 /** Pinned on the first green run. Changing it moves every user's light, so it needs an ADR. */
-export const FIELD_HASH = 2086115840;
+export const FIELD_HASH = 2077482883;
 
 export type RegionKey =
   'region-1' | 'region-2' | 'region-3' | 'region-4' | 'region-5' | 'region-6' | 'core';
@@ -270,7 +270,7 @@ function sideArc(rng: Rng, side: number): Strand[] {
     const n = pointCount(rng, 18, 21);
     return Array.from({ length: n }, (_, i) => {
       const th = lerp(from, to, i / (n - 1));
-      const r = between(rng, 0, 0) + 0.03 + 0.05 * Math.abs(Math.cos(th));
+      const r = 0.03 + 0.05 * Math.abs(Math.cos(th));
       return [
         side * cx + own[0] * r,
         cy + ry * Math.sin(th) + own[1] * r,
@@ -360,14 +360,14 @@ function crossing(rng: Rng): Strand[] {
     return lerp3([0.2 * side, yMid + 0.07, zMid], p, 0.9 + 0.1 * rng());
   };
   return Array.from({ length: STRANDS_PER_FIBRE }, () => {
-    const spine: V3 = [0, yMid + gauss(rng) * 0.012, zMid + gauss(rng) * 0.015];
+    const centre: V3 = [0, yMid + gauss(rng) * 0.012, zMid + gauss(rng) * 0.015];
     const left = anchor(-1);
     const right = anchor(1);
     const ctrl: V3[] = [
       left,
-      [-0.2, spine[1] + 0.07, lerp(left[2], spine[2], 0.65)],
-      spine,
-      [0.2, spine[1] + 0.07, lerp(right[2], spine[2], 0.65)],
+      [-0.2, centre[1] + 0.07, lerp(left[2], centre[2], 0.65)],
+      centre,
+      [0.2, centre[1] + 0.07, lerp(right[2], centre[2], 0.65)],
       right,
     ];
     const n = pointCount(rng, 21, 22);

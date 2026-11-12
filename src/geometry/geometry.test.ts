@@ -246,9 +246,10 @@ describe('assignFibres', () => {
       order: i,
       waiting: false,
     }));
-    const kinds = lines.map((l) => run(lines).get(l.id)!.kind);
-    expect(kinds.filter((k) => k === 'fibre')).toHaveLength(PLAN_FIBRES_PER_REGION);
-    expect(kinds.slice(-2)).toEqual(['none', 'none']);
+    const placed = run(lines);
+    const all = lines.map((l) => placed.get(l.id)!);
+    expect(all.filter((p) => p.kind === 'fibre')).toHaveLength(PLAN_FIBRES_PER_REGION);
+    expect(all.slice(-2)).toEqual([{ kind: 'none' }, { kind: 'none' }]);
   });
 
   it('places waiting lines after non-waiting ones, in order then id', () => {

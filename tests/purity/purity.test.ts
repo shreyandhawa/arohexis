@@ -74,3 +74,29 @@ it('eslint rejects geometry imports inside the domain', async () => {
     ),
   ).toContain('no-restricted-imports');
 });
+
+it('eslint rejects geometry imports of the app entry', async () => {
+  expect(
+    await rulesFor("import { m } from '../main';\nexport const o = m;\n", 'src/geometry/x.ts'),
+  ).toContain('no-restricted-imports');
+});
+
+it('eslint rejects bare package imports inside geometry', async () => {
+  for (const spec of ['valibot', 'date-fns', '@date-fns/tz', 'node:fs']) {
+    expect(
+      await rulesFor(`import * as p from '${spec}';\nexport const o = p;\n`, 'src/geometry/x.ts'),
+    ).toContain('no-restricted-imports');
+  }
+});
+
+it('eslint lets geometry tests use test libraries but still rejects react', async () => {
+  expect(
+    await rulesFor("import { it } from 'vitest';\nit('x', () => {});\n", 'src/geometry/x.test.ts'),
+  ).not.toContain('no-restricted-imports');
+  expect(
+    await rulesFor(
+      "import React from 'react';\nexport const x = React;\n",
+      'src/geometry/x.test.ts',
+    ),
+  ).toContain('no-restricted-imports');
+});

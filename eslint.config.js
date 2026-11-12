@@ -54,7 +54,33 @@ export default tseslint.config(
               message: 'Geometry stays free of UI and storage libraries.',
             },
             {
-              group: ['../storage*', '../app*', '../copy*', '../design*', '../../*'],
+              group: ['../storage*', '../app*', '../copy*', '../design*', '../main*', '../../*'],
+              message: 'Geometry may import from src/domain only.',
+            },
+            {
+              regex: '^[^.]',
+              message:
+                'Geometry takes no packages; it imports relative paths into src/domain only.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    // Tests may use the test libraries; their relative imports stay inside geometry and the domain.
+    files: ['src/geometry/**/*.test.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['react', 'react/*', 'react-*', 'dexie', 'dexie-*'],
+              message: 'Geometry stays free of UI and storage libraries.',
+            },
+            {
+              group: ['../storage*', '../app*', '../copy*', '../design*', '../main*', '../../*'],
               message: 'Geometry may import from src/domain only.',
             },
           ],
