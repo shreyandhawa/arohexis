@@ -6,7 +6,7 @@ When you are stuck, you tap one button and name the feeling. Arohexis shows a sh
 
 ## What it is and isn't
 
-Arohexis is a stuck button with a timer, a reward and a record of what helped. Later milestones add if-then plans, insights and a weekly check-in.
+Arohexis is a stuck button with a timer, a reward and a record of what helped. Later milestones add Brain space, if-then plans, insights and a weekly check-in.
 
 It is not a task manager. It has no task lists, due dates or completion tracking. It has no accounts, no cloud sync, no AI chat, no social features and no app or site blocking.
 
@@ -16,7 +16,7 @@ It is not a task manager. It has no task lists, due dates or completion tracking
 
 Milestone 1 is built: Home, feeling, matched response, Start, reward, a two-minute timer, Undo, a task tag, offline use as an installable PWA, backup export, and Cloudflare deploy configuration. The first deploy has not happened yet, so there is no public URL.
 
-Demo: coming in M4.
+Demo: coming in M5.
 
 ## Why it works
 

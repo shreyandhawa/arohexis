@@ -55,5 +55,5 @@ export type Config = {
   plans: Plan[];
   settings: Settings;
 };
-/** Extended in M2 and M5. */
+/** Extended by later milestones: parts (M2), plans (M3), import (M5). */
 export type ConfigPatch = { settings?: Partial<Settings> };
