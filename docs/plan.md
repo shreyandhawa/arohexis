@@ -78,7 +78,12 @@
 | 6 | Undo or re-tag during the reveal on Started | Undo removes only that start's light. A re-tag moves only that light, and the reveal carries on to the new place. No other light moves | M2 Task 4 (properties), Task 10 (E2E) |
 | 7 | The phone locks or the page reloads mid-reveal | The reveal resumes at the right progress, and Home shows the light whole | M2 Task 8, Task 10 |
 | 8 | The renderer chunk fails to load (blocked, or offline on a first visit) | The plate shows the text equivalent, and **I'm stuck** and every Brain space action still work | M2 Task 10 |
-| 9 | 375×667 with the tallest card and the Demo ribbon | Home doesn't scroll and the plate is at least 200 px. Started doesn't scroll with six parts | M2 Task 10 |
+| 9 | 375×667 with the tallest card and the Demo ribbon | Home doesn't scroll and the plate is at least 200 px. Started doesn't scroll with six parts | M2 Task 7B, Task 8, Task 10 |
+| 10 | An M1 database opens in M2, with starts tagged Writing, Other and nothing, and one undone | Every counted start still counts. Writing starts light the Writing part, Other and untagged become core sparks, and nothing is lost | M2 Task 3 (`migrate.test.ts`) |
+| 11 | The phone rotates or the window resizes while Brain space is on screen | The canvas fits its box at a pixel ratio of at most 2, keeps the camera and the selection, and never stretches | M2 Task 7A |
+| 12 | Rapid repeated taps on Zoom in or Turn | Zoom stays within `ZOOM_MIN`–`ZOOM_MAX` and each tap is one step | M2 Task 7A (`camera.test.ts`) |
+| 13 | A 24-character part name at 320 px wide | Chips, the card and the text equivalent wrap or truncate with no sideways page scroll | M2 Task 9 |
+| 14 | A part is disabled while it has light | Its light, its Home chip and its card stay. It leaves "What is it?" | M2 Task 9, Task 7B |
 
 ---
 
@@ -800,7 +805,7 @@ export function exportBackup(d: AppDeps, share: { canShareFiles: boolean; share(
 
 ## Milestone 2: Brain space
 
-> **Approved** by the owner on 2026-11-12, with spec §16 and ADR-021 to ADR-034. Expanded to M1's level of detail at milestone start, once M1 has merged.
+> **Approved** by the owner on 2026-11-12, with spec §16 and ADR-021 to ADR-034. **Expanded** on 2026-11-12. The choices this expansion makes where §16 is open are in ADR-035.
 
 **You can:**
 - see your starts as light in Brain space on Home: every start since M1, in the part you tagged it with;
@@ -810,55 +815,728 @@ export function exportBackup(d: AppDeps, share: { canShareFiles: boolean; share(
 
 Everything works without the canvas, and offline.
 
-**Branch:** `m2-brain-space`. It holds this amendment, and is rebased onto `main` once M1 merges. **Spec:** §16. **Decisions:** ADR-021 to ADR-034.
+**Branch:** `m2-brain-space`, PR shreyandhawa/arohexis#2, rebased onto `main` once M1 merged. **Spec:** §16. **Decisions:** ADR-021 to ADR-035.
 
-**Tasks** (expanded at milestone start):
-1. **Setup.**
-   - **Owner steps:** run the design-skill commands in ADR-031, approve the project subagents in ADR-032, and put the reference stills and the prototype in `docs/reference/brain-space/`.
-   - **Lead:**
-     - create `.claude/agents/` and copy unslop per ADR-031;
-     - update mentions of the old milestone numbers in `README.md` ("coming in M4"), `src/copy/home.ts` and `src/domain/config.ts`.
-2. **Renderer check on the iPhone.**
-   - **Subagent:** rebuild ADR-029's canvas 2D test page as a throwaway, outside the repo (the spike's files were session scratch), and serve it on the local network under the exact CSP.
-   - **Owner step:** open it on the iPhone and drag it for a few seconds.
-   - **Lead:**
-     - confirm ADR-029, or record a switch to WebGL2 in a new ADR;
-     - set the frame-time guard threshold from the first CI run, with 2× headroom;
-     - keep the chunk budget at 30 kB.
-3. **Parts:**
-   - domain types;
-   - the Dexie version 2 migration from `taskTypes` (`other-task` maps to no part), with a fixture test;
-   - export version 2, with version 1 migrated in `parseExport`;
-   - the default parts;
-   - "What is it?" lists parts;
-   - the new banned words and the anatomy-term ban test.
-4. **`brainSpace.ts` and `focus.ts`:** the projection and focus rules from spec §16.4 and §16.9, with the property tests in §16.13. Plans are an empty list until M3.
-5. **`src/geometry`:**
-   - the seeded field, `assignFibres`, line shades and pull-apart directions;
-   - its own tsconfig and lint purity;
-   - tests for determinism, bounds, stability and overflow.
-6. **Plate tokens and part colours:** `--plate-*`, the six part colours, and the contrast and colour-vision checks in spec §16.7.
-7. **Renderer and Home:**
-   - the lazy chunk: the dim field, additive light, signals, labels on zoom, the camera, render on demand, Still, reduced motion and the fallback;
-   - the Home layout to spec §16.10's budget: the heading visually hidden; the summary line, controls and parts row on the plate; turn and zoom buttons; and the text equivalent.
+**How M2 runs** (in addition to "How this plan is used"):
+- **Agents:** builders and reviewers are the project subagents from Task 1 (ADR-032). Each task names its builder. The reviewer is always `code-reviewer`, and screens also go to `design-critic`. A builder leaves its work uncommitted; the lead commits after review.
+- **Tests stay with the builder:** each builder writes the tests its task names, test first, even when they sit outside its ADR-032 scope (ADR-035).
+- **Order:** 1 → 3 → (4 ∥ 5 ∥ 6) → (7A ∥ 7B) → 7C (owner gate) → 8 → 9 → 10 → 11. Task 2 runs any time before 7A. Parallel tasks use separate worktrees, merged by the lead. Tasks 3, 4 and 6 don't need the reference; Tasks 5 and 7 do.
+- **The gate**, which every task passes before its commit: `npm run lint && npm run format:check && npm run typecheck && npm test -- --coverage && npm run build && node scripts/check-bundle-size.mjs` exit 0, plus the E2E specs the task names, on all three projects unless a test says otherwise.
+- **Push** after each reviewed task.
 
-   **Owner gate (ADR-021):** the design critic reviews the build against the stills first. Then the owner reviews the built Home screen on the preview URL, on the iPhone, in light and dark. Later tasks wait for a yes.
-8. **Part card and Started:**
-   - the part card sheet: starts, lines by strength, and the focus line;
-   - the strip plate on Started: at most 80 px, decided by measurement, down to 64 px; anything smaller goes back to the owner. It carries the burst, the reveal and **Still**, and "What is it?" becomes one sideways row.
-9. **Settings and About:** Settings → Parts (rename, colour, enable, add up to six) and Preferences → Still. The About paragraph and a README note.
-10. **E2E and guards:**
-    - spec §16.13's scenarios on all three projects;
-    - axe on Home and Started;
-    - the WebKit frame-time guard;
-    - the chunk budget in `scripts/check-bundle-size.mjs`;
-    - offline with the chunk precached;
-    - zero CSP violations.
-11. **Review and acceptance:**
-    - a whole-branch review by a subagent that didn't write the code;
-    - the unslop audit against the running preview;
-    - owner acceptance on the iPhone;
-    - merge, then tick the ledger.
+**Files** (new unless marked):
+
+```
+src/domain/config.ts        (mod) Part, ColourId, RegionId; Config.parts; Settings.brainStill; Plan.partId
+src/domain/parts.ts         migrateTaskTypes, addPart, editPart, validateParts
+src/domain/attempts.ts      (mod) Attempt.part and Attempt.tags
+src/domain/brainSpace.ts    the projection (§16.4)
+src/domain/focus.ts         focusFor, recentLapses (§16.9)
+src/domain/random.ts        mulberry32, hash32
+src/geometry/               field.ts, assign.ts, shade.ts, tsconfig.json: pure, seeded
+src/storage/db.ts           (mod) Dexie version 2
+src/design/partColours.ts   PART_COLOURS and PLATE, mirrored by tokens.css
+src/design/colour.ts        hslToHex, ciede2000, simulateCvd
+src/app/brain/              the lazy renderer chunk: brain.ts (entry), camera.ts, draw.ts, constants.ts
+src/app/plate/              plate chrome in the initial bundle: Plate, Strip, PlateControls, PartsRow, TextEquivalent, PartCard, Sheet, useRenderer
+src/app/hooks/              useBrainSpace.ts, useStill.ts
+src/app/actions/            parts.ts, preferences.ts
+src/app/screens/            SettingsParts.tsx; Home, Started, Settings, About (mod)
+src/copy/                   brain.ts, parts.ts
+tests/purity/               anatomy.ts, anatomy.test.ts, geometry fixture
+tests/e2e/                  brain-home, brain-started, parts, brain-guards, brain-perf specs; fixtures/brain.ts
+```
+
+### Task 1: Setup
+
+**Builder:** the lead, plus owner steps.
+
+**Files:**
+- Create:
+  - `.claude/agents/{researcher,domain,renderer,ui,design-critic,accessibility,qa-webkit,code-reviewer}.md`
+  - `.claude/skills/unslop/**`, from `heydamir/unslop` at `97daa3eb365670ea3f87ed85356cbfcee18105a5`, path `skills/unslop`, without `scripts/`
+  - `.claude/skills/unslop/LICENSE` and `.claude/skills/unslop/ATTRIBUTION.md`
+  - `docs/reference/brain-space/` (owner)
+- Modify:
+  - `.gitignore` (add `.claude/settings.local.json`), `.prettierignore` (add `.claude/skills`), `eslint.config.js` ignores (add `docs/reference`)
+  - `README.md:9,17,19`, `src/copy/home.ts:9`, `src/domain/config.ts:58` (milestone numbers)
+
+- [ ] **Step 1: Owner step.** Ask the owner to:
+  - run `claude plugin install frontend-design@claude-plugins-official --scope project`;
+  - put the reference stills and the canvas prototype in `docs/reference/brain-space/`, ideally with a line per still saying what it shows.
+  Wait for both.
+- [ ] **Step 2:** Read every file the owner added. The repository is public, so check the prototype carries no secrets and no third-party code whose licence forbids publishing. Ask the owner if anything does. The prototype's anatomy-named identifiers are fine there, because the anatomy scan covers `src/**` and `tests/**` only.
+- [ ] **Step 3:** Write the eight agent files.
+  - **Frontmatter:** `name`, `description`, `tools` and `model`, per ADR-032's table. The read-only agents get `tools: Read, Grep, Glob`. `researcher` adds `WebSearch, WebFetch`. `code-reviewer` adds `Bash`, and its body limits it to `git` reads and test commands.
+  - **Body:**
+    - the job;
+    - the files it may touch, plus the test files its task names;
+    - the Global Constraints it must quote;
+    - it never talks to the owner, never commits or pushes, and never edits `.github/`;
+    - it returns under 200 words, plus paths and command output.
+  - **If the new agent types don't load in the running session**, brief a `general-purpose` agent with the agent file's body and its model.
+- [ ] **Step 4:** Copy unslop.
+  - Clone `heydamir/unslop` into the session scratchpad, check out `97daa3e`, and copy `skills/unslop` without `scripts/` to `.claude/skills/unslop/`. Copy the repository's `LICENSE` (CC BY 4.0) beside it. Read every copied file before committing.
+  - `ATTRIBUTION.md`: "unslop by heydamir, https://github.com/heydamir/unslop, commit 97daa3eb365670ea3f87ed85356cbfcee18105a5, licensed CC BY 4.0. Changes: `scripts/` removed." List any `SKILL.md` steps that call `scripts/` as unavailable here.
+- [ ] **Step 5:** Update the milestone mentions:
+  - `README.md:19` becomes "Demo: coming in M5.";
+  - `README.md:9` becomes "Later milestones add Brain space, if-then plans, insights and a weekly check-in.";
+  - the `home.ts:9` comment names M3 for Plans and M4 for Insights;
+  - the `config.ts:58` comment becomes `/** Extended by later milestones: parts (M2), plans (M3), import (M5). */`.
+- [ ] **Step 6:** Update the ignore files, then run the gate. Expected: exit 0.
+- [ ] **Step 7:** Commit and push.
+
+```bash
+git add .claude .gitignore .prettierignore eslint.config.js README.md src/copy/home.ts src/domain/config.ts docs/reference
+git commit -m "chore: add the project subagents, unslop, the Brain space reference and new milestone numbers"
+```
+
+### Task 2: Renderer check on the iPhone
+
+**Builder:** `renderer`, outside the repo. **Files:** none in the repo; `docs/decisions.md` (ADR-029).
+
+- [ ] **Step 1:** In the session scratchpad, rebuild ADR-029's canvas 2D test page.
+  - **Counts:** 670 fibres of 8 strands, each strand 8 to 22 points, with a point at each strand end.
+  - **Drawing:** the dim field with normal blending into an offscreen cache, additive light (`lighter`) on top, and signals on 30 lines.
+  - **Interaction:** drag turns (yaw and pitch), and pinch or the wheel zooms.
+  - **Canvas:** 358×340 CSS px, device pixel ratio capped at 2.
+  - **Readout:** mean and p95 draw time over the last 120 frames, on screen.
+  - **Server:** a small static server on the local network that sends the exact CSP from Global Constraints. Print the `http://<lan-ip>:<port>/` URL.
+
+  Return the URL, plus Playwright WebKit (`devices['iPhone 15']`) idle and drag draw times, the median of 3 runs.
+- [ ] **Step 2: Owner step.** On the iPhone, on the same Wi-Fi, open the URL, drag for a few seconds and pinch. Report any stutter, and the readout's mean and p95 while dragging.
+- [ ] **Step 3:** Decide.
+  - **No visible stutter:** add a line to ADR-029's consequences: "Confirmed on the owner's iPhone on <date>: drag mean <x> ms, p95 <y> ms."
+  - **Stutter:** write a new ADR that switches to raw WebGL2, then re-plan Task 7A before it starts.
+
+  The frame-time guard's threshold is set in Task 10, from the first CI run of the real renderer (ADR-035). Stop the server and commit: `docs: confirm the canvas 2D renderer on the iPhone`.
+
+### Task 3: Parts
+
+**Builder:** `domain` for Steps 1–7, `ui` for Steps 8–10.
+
+**Files:**
+- Create: `src/domain/parts.ts`, `src/domain/parts.test.ts`, `src/storage/migrate.test.ts`, `tests/purity/anatomy.ts`, `tests/purity/anatomy.test.ts`
+- Modify:
+  - domain: `config.ts`, `attempts.ts`, `commands.ts`, `defaults.ts` (remove `DEFAULT_TASK_TYPES`), `exportFormat.ts`, `testing/arbitraries.ts`, and their tests
+  - storage: `db.ts`, `seed.ts`, `configStore.ts`, `exportData.ts`, `storage.test.ts`
+  - app and copy: `src/app/actions/stuck.ts` (+ test), `src/app/screens/Started.tsx` and `.module.css`, `src/copy/rules.ts`, `src/copy/copy.test.ts`
+  - E2E: `tests/e2e/stuck-flow.spec.ts` (`Writing` becomes `Work`)
+
+**Interfaces:**
+- Produces:
+
+```ts
+// config.ts
+export type ColourId = 1 | 2 | 3 | 4 | 5 | 6;
+export type RegionId = 1 | 2 | 3 | 4 | 5 | 6;
+export type Part = { id: string; label: string; order: number; enabled: boolean; colour: ColourId; region: RegionId };
+export type Plan = { /* M1 fields */ partId?: string };                  // set from M3
+export type Settings = { /* M1 fields */ brainStill?: 'still' | 'moving' }; // unset = follow the system
+export type Config = { feelings: Feeling[]; responses: FeelingResponse[]; parts: Part[]; obstacles: ListItem[]; plans: Plan[]; settings: Settings };
+export type ConfigPatch = { settings?: Partial<Settings>; parts?: readonly Part[] }; // parts are upserted by id
+// parts.ts
+export const MAX_PARTS = 6;
+export const PART_LABEL_MAX = 24;
+export type PartError = 'limit' | 'label';
+export function migrateTaskTypes(taskTypes: readonly ListItem[]): Part[];   // spec §16.3
+export function addPart(parts: readonly Part[], input: { id: string; label: string }): Part[] | PartError;  // the records to upsert
+export function editPart(parts: readonly Part[], id: string, change: { label?: string; colour?: ColourId; enabled?: boolean }): Part[] | PartError;
+export function validateParts(parts: readonly Part[]): string[];            // [] when valid
+// attempts.ts: taskType is replaced by
+//   part?: { id: string; label: string };                        // latest tag
+//   tags: { id: string; label: string; at: number }[];           // every start.tagged, in order
+// commands.ts
+export function tagStart(deps: EventDeps, attemptEvents: readonly AppEvent[], attemptId: string, part: Pick<Part, 'id' | 'label'>): AppEvent[];
+// defaults.ts
+export const DEFAULT_PARTS: readonly Part[];   // work Work, study Study, health Health, home Home, money Money: order, colour and region 1–5, enabled
+// exportFormat.ts
+export const EXPORT_VERSION = 2;               // parseExport accepts 1 and 2 and returns a version 2 file
+// src/app/actions/stuck.ts
+export function tag(d: AppDeps, attemptId: string, partId: string): Promise<void>; // throws `Unknown part: ${partId}`
+```
+
+- **Rules:**
+  - labels are trimmed, 1 to 24 characters;
+  - `addPart` takes the lowest free region and colour, with `order` one past the highest;
+  - `editPart` never changes `region`, and a colour that another part holds is swapped with it (ADR-035);
+  - `validateParts` checks at most six parts, unique regions, unique colours and label length.
+
+- [ ] **Step 1:** Write the failing domain tests.
+  - **`parts.test.ts`:**
+    - `migrateTaskTypes maps M1's defaults`: the six M1 task types (writing, study, admin "Admin & email", chores, creative, other-task, orders 1–6) give five parts with the same ids and labels, regions and colours 1–5 in order, all enabled, with no `other-task`;
+    - `migrateTaskTypes skips disabled types and keeps the first six by order`;
+    - `addPart takes the lowest free region and colour`: adding "Portfolio" to `DEFAULT_PARTS` gives region 6, colour 6, order 6;
+    - `addPart refuses a seventh part`, which returns `'limit'`, and `refuses an empty or 25-character label`, which returns `'label'`;
+    - `editPart swaps a colour held by another part`: giving `work` colour 2 returns `work` with 2 and `study` with 1;
+    - `editPart never changes a region`;
+    - `validateParts` returns `[]` for `DEFAULT_PARTS`, and flags a duplicate colour, a duplicate region and a seventh part;
+    - **Property** `edits keep parts valid`: any sequence of `addPart` and `editPart` calls from `[]` keeps `validateParts` at `[]` and never changes an existing part's region.
+  - **Attempts and commands:** `latest tag wins` also asserts `tags` holds both tags with their `at`. `tagStart snapshots the part's label`.
+  - **`exportFormat.test.ts`:**
+    - `parseExport migrates a version 1 backup`: a version 1 file with M1's six task types and no `brainStill` is ok, `version` is 2, `parts` equals `migrateTaskTypes(taskTypes)`, and the events are unchanged;
+    - `rejects version 3`, with the newer-version message;
+    - **Property** round-trip over version 2 data, with a new `arbParts()` (valid sets only), `brainStill` sometimes set, and plans sometimes carrying `partId`.
+- [ ] **Step 2:** Write the failing storage tests in `migrate.test.ts`, using fake-indexeddb.
+  - `upgrades an M1 database` (Review Focus #10):
+    - **Setup:** open a raw `Dexie('test-…')` that declares only M1's `version(1)` schema. Add M1's six task types, kv `seeded`, and events for four counted starts tagged `writing`, `other-task` and none, and one undone. Close it.
+    - **Then:** `openStorage(name)`.
+    - **Expected:**
+      - `parts` equals `migrateTaskTypes` of the six;
+      - the `taskTypes` table is gone;
+      - events, feelings and responses are unchanged;
+      - no default parts were added.
+  - `a new database seeds the default parts`.
+  - `applyConfigPatch upserts parts and rejects an invalid set`: a patch that makes seven parts rejects and writes nothing.
+  - `brainStill round-trips`: after `applyConfigPatch({ settings: { brainStill: 'still' } })`, both `getConfig()` and `readExportData()` carry it.
+- [ ] **Step 3:** Run `npx vitest run src/domain src/storage`. Expected: FAIL.
+- [ ] **Step 4:** Implement the domain and storage changes.
+  - **Dexie:** `this.version(2).stores({ parts: 'id, order', taskTypes: null }).upgrade(…)` writes `migrateTaskTypes` of the old rows. If the upgrade can't read a table its own version deletes, keep `taskTypes` in version 2 and drop it in a version 3 with no upgrade. The fixture test decides.
+  - **Settings:** `brainStill` joins `configStore`'s optional keys, the export settings schema and `arbSettings`.
+  - **`applyConfigPatch`:** writes `kv` and `parts` in one transaction, and throws when `validateParts` of the merged set isn't `[]`.
+- [ ] **Step 5:** Run it again. Expected: PASS, with the domain coverage gate held.
+- [ ] **Step 6:** Write the copy guards, test first.
+  - **`rules.ts`:** `BANNED_WORDS` gains the 14 words of spec §16.9. The test asserts `checkCopy('Rewired by firing')` has length 2.
+  - **`anatomy.ts`:** exports `ANATOMY_WORDS`, the 32 words of spec §16.5.
+  - **`anatomy.test.ts`:**
+    - walks every file under `src/` and `tests/`, skipping `tests/purity/anatomy.ts`, `tests/purity/anatomy.test.ts` and `src/copy/rules.ts` (whose banned list shares four words), and expects no whole-word, case-insensitive match;
+    - a sanity case builds a sample from `ANATOMY_WORDS[0]` and expects the matcher to find it.
+  - Reword the "fire" comment at `tests/e2e/stuck-flow.spec.ts:156`.
+- [ ] **Step 7:** Run `npx vitest run src/copy tests/purity`. Expected: PASS.
+- [ ] **Step 8:** In `stuck.test.ts`, write `tag records the part's label` and `tag rejects an unknown part` (the error names the id), then switch `tag` to `config.parts`. In `Started.tsx`, list `config.parts` that are enabled, by `order`, with `pressed={attempt.part?.id === p.id}`. `.chips` becomes one row: `flex-wrap: nowrap; overflow-x: auto`, with chips `flex: none`. `copy.test.ts` pins the five default part labels.
+- [ ] **Step 9:** Update `stuck-flow.spec.ts` (`Writing` becomes `Work`) and add `the parts row is one line`: every chip shares one `offsetTop`. Run `npx playwright test tests/e2e/stuck-flow.spec.ts`. Expected: PASS.
+- [ ] **Step 10:** Run the gate. Then commit:
+
+```bash
+git commit -am "feat(parts): replace task types with parts (Dexie v2, export v2, copy guards)"
+```
+
+### Task 4: The projection and focus rules
+
+**Builder:** `domain`.
+
+**Files:**
+- Create: `src/domain/brainSpace.ts`, `src/domain/brainSpace.test.ts`, `src/domain/focus.ts`, `src/domain/focus.test.ts`
+- Modify: `src/domain/testing/arbitraries.ts` (add `arbFlow`)
+
+**Interfaces:**
+- Consumes: `Attempt` with `part` and `tags`, `Part`, `Plan.partId` (Task 3).
+- Produces: spec §16.4's code block exactly, plus:
+
+```ts
+// brainSpace.ts
+// BrainLine's plan kind gains two fields (ADR-035):
+//   everStarted: boolean   // some on-cue attempt has a start.made, undone or not
+//   hidden: boolean        // kept for its fibre, drawn as nothing
+export function lightPartOf(a: Attempt, settledAt: number | undefined): string | null;
+  // the latest tag with at <= settledAt; the latest tag when unsettled
+export function summaryLines(space: BrainSpace): number;
+  // plan lines that aren't waiting, plus start lines with a part that aren't undone
+// focus.ts
+export type FocusRule = 'lapse' | 'waiting' | 'stable-cue' | 'add-plan' | 'name-feeling'; // spec §16.9 rows 1–5
+export function recentLapses(events: readonly AppEvent[], now: number): ReadonlySet<string>; // plan ids, last 7 days
+export function focusFor(input: { partId: string; plans: readonly Plan[]; lines: readonly BrainLine[];
+  lapsedPlanIds: ReadonlySet<string>; plansAvailable: boolean }): FocusRule;
+```
+
+- **Projection rules this plan fixes** (ADR-035):
+  - **Settling:** an attempt settles at the `openedAt` of the next attempt in `foldAttempts` order. The last attempt is unsettled.
+  - **Part ids:** a part id that isn't a configured part is `null`. That covers M1's `other-task` and hand-edited imports. It applies to both `PartLight` and lines.
+  - **On-cue:** only the first counted start for a `(planId, occurrence)` is on cue. A later counted start for the same occurrence falls to rule 3, so light still adds up.
+  - **Plan line part:** the `lightPartOf` its on-cue attempts give. A waiting line takes `plan.partId`, and `id` is `` `${planId}:${partId ?? 'core'}` ``.
+  - **Plan line order:**
+    - with `everStarted`, the `start.at` of its earliest on-cue attempt with a `start.made`, undone or not;
+    - a line whose on-cue starts were all undone stays in `lines` with that order: `strength: 'waiting'` while its plan is active, and `hidden: true` while it is paused;
+    - a line with no `start.made` (`everStarted: false`) is a waiting line with `plan.createdAt` as its order. It exists only while the plan is active.
+  - **`parts`:** one `PartLight` per configured part, in `order`, then `{ partId: null }` last when it has starts.
+  - **`plansAvailable`:** `false` until M3, so rule 4 doesn't suggest a plan the app can't make yet.
+
+- [ ] **Step 1:** Write the failing unit tests in `brainSpace.test.ts`:
+  - `an M1 history becomes start lines and sparks`:
+    - **Input:** three counted starts tagged `work`, one untagged, one tagged `other-task`, and one undone and untagged.
+    - **Expected:**
+      - 3 start lines in `work`;
+      - 2 core sparks (start lines with `partId: null`);
+      - 1 line with `undone: true` and `partId: null`;
+      - `work` starts 3, `null` starts 2, `totalStarts` 5, and `summaryLines` 3.
+  - `strengthFor steps`: 0 gives `'waiting'`, 1 and 4 give 1, 5 and 14 give 2, 15 and 39 give 3, and 40 gives 4.
+  - `each occurrence counts once`.
+  - `an active plan with no on-cue start waits`, `a paused plan with no on-cue start shows nothing`, and `a paused plan keeps its line`.
+  - `changing a plan's part starts a new line`: on-cue starts tagged X and then Y give lines `p:X` and `p:Y`.
+  - `moving at exactly 48 hours, resting 1 ms later`, with a backfilled start counting.
+  - `two tabs: a tag on a settled attempt changes counts and not light` (spec §16.13).
+  - `undone on-cue starts keep the line, its order and everStarted`, and pausing that plan sets `hidden`.
+- [ ] **Step 2:** Write the failing properties over `arbFlow()`. It builds realistic flows: attempts in time order, each opened, sometimes started, and then only its own Started actions (tags, undo, timer), sometimes linked to a plan occurrence, with plans to match.
+  - **Light adds up:** the plan lines' `onCueStarts`, plus start lines not undone, equal `totalStarts`, which equals the count of `isCountedStart`.
+  - **Undone draws nothing and keeps its place:** every attempt with a `start.made` appears exactly once, as its own start line or inside a plan line's order.
+  - **Appending is stable:** for a flow F and F plus one more realistic step, every line of `project(F)` whose attempt is settled keeps its `id`, `partId` and `order`, and no plan line's `onCueStarts` falls, except when the step was an undo.
+  - **Only on-cue starts grow:** appending a start that isn't on cue leaves every plan line's `onCueStarts` unchanged.
+  - **Moving:** it is moving exactly when the newest counted start is at most `RESTING_AFTER_MS` before `now`.
+  - **Counts:** `PartLight.starts` equals an independent count by `partOfStart`, with unknown ids counted as `null`.
+- [ ] **Step 3:** Write the failing `focus.test.ts`:
+  - one test per rule that checks precedence;
+  - rule 4 is skipped when `plansAvailable` is false;
+  - `recentLapses` keeps a slip at exactly 7 days and drops one older by 1 ms.
+- [ ] **Step 4:** Run `npx vitest run src/domain/brainSpace.test.ts src/domain/focus.test.ts`. Expected: FAIL.
+- [ ] **Step 5:** Implement `brainSpace.ts` with the constants and signatures of spec §16.4, and `focus.ts`.
+- [ ] **Step 6:** Run it again. Expected: PASS. Then run the gate.
+- [ ] **Step 7:** Commit: `feat(domain): project Brain space lines, strength and focus`.
+
+### Task 5: Geometry
+
+**Builder:** `domain`. Needs the reference (Task 1). Runs in parallel with Tasks 4 and 6.
+
+**Files:**
+- Create:
+  - `src/domain/random.ts`, `src/domain/random.test.ts`
+  - `src/geometry/tsconfig.json`, `src/geometry/field.ts`, `src/geometry/assign.ts`, `src/geometry/shade.ts`, `src/geometry/geometry.test.ts`
+  - `tests/purity/geometry-fixture/uses-window.ts`, `tests/purity/geometry-fixture/tsconfig.json`
+- Modify: `eslint.config.js`, `vitest.config.ts`, `package.json` (the `typecheck` line only; this brief extends `domain`'s scope to it), `tests/purity/purity.test.ts`, `tsconfig.node.json` (exclude the new fixture)
+
+**Interfaces:**
+- Produces:
+
+```ts
+// src/domain/random.ts
+export function mulberry32(seed: number): () => number;  // floats in [0, 1)
+export function hash32(text: string): number;             // FNV-1a, unsigned 32-bit
+// src/geometry/field.ts
+export const BRAIN_SEED = 20261112;
+export const FIBRE_COUNT = 670;
+export const STRANDS_PER_FIBRE = 8;
+export const STRAND_POINTS_MIN = 8;
+export const STRAND_POINTS_MAX = 22;
+export const PLAN_FIBRES_PER_REGION = 12;
+export const FIELD_HASH: number;                          // pinned on first green run
+export type RegionKey = 'region-1' | 'region-2' | 'region-3' | 'region-4' | 'region-5' | 'region-6' | 'core';
+export type Fibre = { index: number; region: RegionKey; forPlans: boolean; strands: readonly Float32Array[] }; // x,y,z interleaved, within [-1, 1]
+export type Field = { fibres: readonly Fibre[]; byRegion: Readonly<Record<RegionKey, readonly number[]>>; vertexCount: number; endCount: number };
+export function buildField(seed?: number): Field;
+export function fieldHash(field: Field): number;
+export const PULL_DIRECTIONS: Readonly<Record<RegionKey, readonly [number, number, number]>>;
+export function regionKey(region: RegionId | null): RegionKey; // null → 'core'
+// src/geometry/assign.ts
+export type LineRef = { id: string; kind: 'plan' | 'start'; partId: string | null; order: number; waiting: boolean };
+  // waiting = a plan line with everStarted false. Hidden and undone lines are passed too, so they keep their fibres.
+export type Placement = { kind: 'fibre'; fibre: number } | { kind: 'end'; fibre: number; strand: number } | { kind: 'none' };
+export function assignFibres(lines: readonly LineRef[], field: Field, regionOfPart: (partId: string | null) => RegionKey): ReadonlyMap<string, Placement>;
+// src/geometry/shade.ts
+export type Hsl = { h: number; s: number; l: number };
+export function lineShade(lineId: string, base: Hsl): Hsl; // hue within ±8°, lightness within ±6 points
+```
+
+- **Assignment** (spec §16.5, with ADR-035's order):
+  - non-waiting lines are placed first, by `order` and then `id`, and waiting lines after them;
+  - plan lines take their region's plan fibres, and start lines take the rest;
+  - each line starts at the fibre `hash32(id)` picks and probes forward over free fibres;
+  - a start-line fibre lights strand 0's end;
+  - **Overflow:** once a region's start fibres are all used, each further start line lights the next unlit strand end (strand 1, 2, …) of the earliest-ordered start-line fibre that has one. When every end is lit, it gets `'none'`;
+  - **Core sparks** (start lines with `partId: null`) take core strand ends the same way.
+
+- [ ] **Step 1:** Write the failing purity tests in `purity.test.ts`:
+  - the geometry tsconfig rejects `window` (via the new fixture);
+  - ESLint rejects a `react` import in `src/geometry/x.ts`;
+  - ESLint rejects `../app/x` from `src/geometry/x.ts`, and allows `../domain/random`;
+  - ESLint rejects `../geometry/field` from `src/domain/x.ts`.
+- [ ] **Step 2:** Run `npx vitest run tests/purity`. Expected: FAIL. Then add the tooling:
+  - **`src/geometry/tsconfig.json`:** the same as the domain's;
+  - **ESLint:** a `src/geometry/**/*.ts` block with the domain's first group and `['../storage*', '../app*', '../copy*', '../design*', '../../*']`. The domain's second group gains `'../geometry*'`;
+  - **`typecheck`:** appends `&& tsc -p src/geometry/tsconfig.json`;
+  - **Coverage:** include `src/geometry/**/*.ts`, with thresholds `{ 'src/domain/**': { lines: 95, branches: 90 }, 'src/geometry/**': { lines: 90 } }`.
+
+  Run it again. Expected: PASS.
+- [ ] **Step 3:** Write the failing `random.test.ts`:
+  - the first three values of `mulberry32(1)` are pinned, taken from the reference algorithm;
+  - every value is in [0, 1);
+  - `hash32('')` is `2166136261` and `hash32('a')` is `0xe40c292c`.
+- [ ] **Step 4:** Write the failing `geometry.test.ts`:
+  - `same seed, same field`: `fieldHash(buildField())` is the same twice and equals `FIELD_HASH`. Changing that constant later moves every user's light, so it needs an ADR;
+  - `counts`:
+    - `FIBRE_COUNT` fibres;
+    - every strand has 8 to 22 points;
+    - `vertexCount` is within 75,000–90,000;
+    - `endCount` is `FIBRE_COUNT × STRANDS_PER_FIBRE`;
+  - `regions`: all seven keys have fibres, each with exactly `PLAN_FIBRES_PER_REGION` plan fibres, and every coordinate is within [-1, 1];
+  - `shape`:
+    - the core's centroid is within 0.2 of the origin;
+    - each region's fibres sit on its half;
+    - the six region centroids are pairwise apart by at least 0.3;
+  - **Property** `assignment is stable when lines are appended`: the placements of a prefix's non-waiting lines are unchanged by any suffix whose lines all have a greater `order` than every prefix line;
+  - `waiting lines never displace non-waiting lines`;
+  - `plan lines use plan fibres and start lines never do`;
+  - `overflow lights ends in order and removes nothing`;
+  - `core sparks take core ends`;
+  - `lineShade stays within range and is stable per id`;
+  - `PULL_DIRECTIONS are unit vectors, and the core's is zero`.
+- [ ] **Step 5:** Run `npx vitest run src/domain/random.test.ts src/geometry`. Expected: FAIL.
+- [ ] **Step 6:** Implement.
+  - **Layout:** lay the six regions and the core out like the reference: two halves, a central core and a lower rear area. Write the table of regions to areas as a comment in `field.ts`, with neutral names only.
+  - **Shape from placement only**, with no outline data.
+- [ ] **Step 7:** Run it again. Expected: PASS. Pin `FIELD_HASH`, then run the gate.
+- [ ] **Step 8:** Commit: `feat(geometry): seeded Brain space field and stable fibre assignment`.
+
+### Task 6: Plate tokens and part colours
+
+**Builder:** `ui`. Runs in parallel with Tasks 4 and 5.
+
+**Files:**
+- Create: `src/design/partColours.ts`, `src/design/colour.ts`, `src/design/colour.test.ts`
+- Modify: `src/design/tokens.css`, `src/design/tokens.test.ts`, `src/design/global.css` (add `.visually-hidden`)
+
+**Interfaces:**
+- Produces:
+
+```ts
+export type Hsl = { h: number; s: number; l: number };
+export type Lab = { L: number; a: number; b: number };   // CIELAB, D65
+export const PART_COLOURS: Readonly<Record<ColourId, Hsl>>; // spec §16.7; id 6 decided here
+export const PLATE: { bg: '#05060A'; dimPoint: '#8E98AC'; dimTrace: '#7C8598'; waiting: '#EEF1F6'; core: '#9AA3B5' };
+export function hslToHex(c: Hsl): string;
+export function ciede2000(a: string, b: string): number;   // hex in
+export function ciede2000Lab(a: Lab, b: Lab): number;
+export function simulateCvd(hex: string, kind: 'protanopia' | 'deuteranopia' | 'tritanopia'): string;
+  // Machado et al. (2009) matrices at severity 1.0, applied in linear RGB
+```
+
+- **CSS:**
+  - `--plate-bg`, `--plate-dim-point`, `--plate-dim-trace`, `--plate-waiting`, `--plate-core` and `--part-1`…`--part-6` are declared once, outside the theme blocks, so they are the same in both themes;
+  - a `.plate-scope` block redeclares every semantic colour token with the dark theme's values (ADR-026).
+
+- [ ] **Step 1:** Write the failing tests:
+  - `ciede2000 matches Sharma, Wu and Dalal (2005)`: pair 1, (50, 2.6772, −79.7751) against (50, 0, −82.7485), gives 2.0425 to four decimals, plus two more rows from that table;
+  - `simulateCvd leaves greys unchanged`, and pure red under protanopia matches the matrix applied by hand;
+  - `part colours meet spec §16.7`:
+    - every base colour is at least 4.5:1 against `PLATE.bg`;
+    - the four shade corners (h ± 8, l ± 6) are at least 3:1;
+    - `PLATE.waiting` is at least 3:1;
+    - every pair is at least ΔE00 12 in normal vision and at least 6 under each simulation;
+    - no hue lies within 15° of red;
+  - `tokens.css mirrors partColours.ts`, and `.plate-scope equals the dark block`;
+  - `global.css has a .visually-hidden class`.
+- [ ] **Step 2:** Run `npx vitest run src/design`. Expected: FAIL.
+- [ ] **Step 3:** Implement. For id 6, try blue `hsl(225 90% 70%)` first, then lime `hsl(85 80% 55%)`. Lightness may move in steps of 2 points to pass (the review's estimate: blue fails deuteranopia at 70% and passes near 76%). If neither candidate passes within ±10 points, stop and report the closest pairs to the lead. The lead writes the chosen value into spec §16.7.
+- [ ] **Step 4:** Run it again. Expected: PASS. Then run the gate.
+- [ ] **Step 5:** Commit: `feat(design): plate tokens and part colours with contrast and colour-vision checks`.
+
+### Task 7: Renderer and Home
+
+7A and 7B run in parallel worktrees after Tasks 3–6. Before they start, the lead commits a stub `src/app/brain/brain.ts` that exports 7A's types and a `createRenderer` that throws `new Error('renderer not built')`, so 7B's typecheck and build pass. 7C is the owner gate (ADR-021).
+
+#### 7A: The renderer
+
+**Builder:** `renderer`.
+
+**Files:**
+- Create: `src/app/brain/brain.ts` (the lazy entry), `camera.ts`, `camera.test.ts`, `draw.ts`, `constants.ts`
+- Modify: `vite.config.ts` (`build.manifest: true`), `scripts/check-bundle-size.mjs`
+
+**Interfaces:**
+- Consumes: `BrainSpace`, `BrainLine` (Task 4); `buildField`, `assignFibres`, `lineShade`, `regionKey`, `PULL_DIRECTIONS` (Task 5); `PART_COLOURS`, `PLATE` (Task 6); `Part` (Task 3).
+- Produces:
+
+```ts
+// constants.ts: spec §16.8
+export const EXPLODE_FROM_ZOOM = 1.1, UNSELECTED_ALPHA = 0.15, ZOOM_MIN = 0.8, ZOOM_MAX = 3.2, BURST_MS = 1800, TURN_STEP_RAD = Math.PI / 8;
+// camera.ts
+export type Camera = { yaw: number; pitch: number; zoom: number };
+export function turnBy(c: Camera, step: -1 | 1): Camera;
+export function zoomBy(c: Camera, step: -1 | 1): Camera;      // ×1.25 per step, clamped
+export function explodeAmount(zoom: number): number;          // 0 at or below EXPLODE_FROM_ZOOM, 1 at ZOOM_MAX
+// brain.ts: the only module the app imports dynamically
+export type RenderState = {
+  space: BrainSpace; parts: readonly Part[]; selected: string | null; still: boolean;
+  reveal?: { lineId: string; startAt: number }; burstAt?: number;    // used from Task 8
+};
+export interface BrainRenderer { update(state: RenderState): void; turn(step: -1 | 1): void; zoom(step: -1 | 1): void; destroy(): void }
+export function createRenderer(canvas: HTMLCanvasElement,
+  opts: { variant: 'plate' | 'strip'; now: () => number; onPartTap: (partId: string | null) => void }): BrainRenderer;
+```
+
+- **The canvas reports its state for tests:**
+  - `data-loop` is `running` or `idle`;
+  - `data-yaw` and `data-zoom` are given to 2 decimal places;
+  - `data-draw-mean` is the mean draw time in ms over the last 120 frames, updated once a second while the loop runs.
+
+- [ ] **Step 1:** Write the failing `camera.test.ts`:
+  - `turn steps by TURN_STEP_RAD`;
+  - `zoom stays within ZOOM_MIN and ZOOM_MAX after 20 taps either way` (Review Focus #12);
+  - `explodeAmount is 0 at EXPLODE_FROM_ZOOM and 1 at ZOOM_MAX`.
+- [ ] **Step 2:** Change `check-bundle-size.mjs`.
+  - It reads `dist/.vite/manifest.json`, finds the dynamic entry whose `src` is `src/app/brain/brain.ts`, and gzips it with the static imports that aren't in the initial set.
+  - It prints both totals, and exits 1 if the chunk is over `30 * 1024`.
+  - Confirm it fails with the budget set to 1 kB, then restore it.
+- [ ] **Step 3:** Implement to spec §16.6–16.8.
+  - **Draw order:**
+    - the dim field, with normal blending, cached offscreen;
+    - lines in `lighter` mode, in their shade, using `assignFibres` over the projection's lines;
+    - waiting lines, dashed in `--plate-waiting` with a ring.
+  - **Widths:** strength 1 is 0.6 CSS px, 2 is 1.0, 3 is 1.6 with a faint halo, and 4 is 2.4 with a halo and a white core. Start lines are hairlines fainter than strength 1, and core sparks are points in `--plate-core`.
+  - **States:**
+    - resting scales lit alpha by `RESTING_BRIGHTNESS`;
+    - a selection fades the rest to `UNSELECTED_ALPHA`;
+    - past `EXPLODE_FROM_ZOOM`, regions pull apart along `PULL_DIRECTIONS`, labelled in Atkinson Hyperlegible Next 600 at step −1 on an opaque `--plate-bg` backing;
+    - signals run on strength 2+ lines only while moving and not Still.
+  - **The loop:**
+    - it renders on demand and pauses while the page is hidden;
+    - the device pixel ratio is `min(devicePixelRatio, 2)`;
+    - a `ResizeObserver` resizes the canvas and keeps the camera and selection (Review Focus #11);
+    - `touch-action` is `none` unless the page scrolls, in which case it is `pan-y`.
+  - **Input:** a pointer drag sets yaw and pitch. Pinch and the wheel zoom. A tap hit-tests the nearest lit region within 24 px and calls `onPartTap`.
+  - **Still:** camera moves snap instead of easing over `--motion-slow`.
+- [ ] **Step 4:** Run `npx vitest run src/app/brain`, then the gate. Expected: PASS, with the chunk at most 30 kB.
+- [ ] **Step 5:** Commit: `feat(brain): canvas 2D renderer as a lazy chunk`.
+
+#### 7B: The plate on Home
+
+**Builder:** `ui`. Until 7A is merged, the stub throws and the plate shows its fallback, which is itself a requirement.
+
+**Files:**
+- Create:
+  - `src/app/plate/Plate.tsx` (+ `.module.css`), `PlateControls.tsx`, `PartsRow.tsx`, `TextEquivalent.tsx`, `useRenderer.ts`
+  - `src/app/hooks/useBrainSpace.ts`, `src/app/hooks/useStill.ts`, `src/app/hooks/useStill.test.ts`
+  - `src/app/actions/preferences.ts` (+ test), `src/copy/brain.ts`
+  - `tests/e2e/fixtures/brain.ts`, `tests/e2e/brain-home.spec.ts`
+- Modify:
+  - `src/app/screens/Home.tsx`, `src/app/layout/Shell.tsx` (+ css, adding `data-slot="ribbon"`)
+  - `tests/e2e/helpers.ts`: `seedEvents(page, events)`, `seedParts(page, parts)` and `seedPlans(page, plans)`. Each one opens the `arohexis` database without a version number, after the app has loaded and created it, writes the rows, then reloads
+  - specs that expect a visible `h1`: `home.spec.ts:16,24,56`, `update.spec.ts:66`, `offline.spec.ts:30`
+  - `tests/e2e/update.spec.ts` (the worst case above), and `src/app/components/UpdateCard.tsx` if it needs a slot prop
+
+**Interfaces:**
+- Consumes: `projectBrainSpace`, `summaryLines` (Task 4); `createRenderer` (7A, by dynamic import of `../brain/brain`).
+- Produces:
+
+```ts
+export function useBrainSpace(): { space: BrainSpace; parts: readonly Part[] } | undefined;  // now from useNow(60_000)
+export function effectiveStill(setting: 'still' | 'moving' | undefined, prefersReduced: boolean): boolean;
+export function useStill(): { still: boolean; toggle(): void };
+export function setStill(d: AppDeps, value: 'still' | 'moving'): Promise<void>;
+export function Plate(props: { selected: string | null; onSelect(partId: string | null): void }): JSX.Element;
+```
+
+- **Exact copy** (`brain.ts`, spec §16.9):
+  - `regionLabel: 'Brain space'` and `empty: 'Your starts will light up here.'`;
+  - `summary(starts, lines)`, per §16.9;
+  - `strength: { waiting: 'Waiting', 1: 'New', 2: 'Repeated', 3: 'Steady', 4: 'Well-worn' }`;
+  - counts:
+    - `starts(n)`: "1 start" or "n starts";
+    - `onCue(n)`: "1 start on cue" or "n starts on cue";
+    - `startLines(n)`: "1 start line" or "n start lines";
+  - `noPart: 'No part'`;
+  - `moving: 'Signals are moving.'` and `resting: 'Signals are resting. One start sets them moving again.'`;
+  - `controls`: `Still`, `Zoom in`, `Zoom out`, `Turn left`, `Turn right`, `All`.
+  - **Text equivalent per part:**
+    - `` `${label}: ${starts(n)}.` ``;
+    - then, if it has plan lines, `` ` Plan lines: ${items.join('; ')}.` ``, where each item is `` `${strength}, ${onCue(k)}` ``;
+    - then, if it has start lines, `` ` ${startLines(m)}.` ``.
+
+  `copy.test.ts` checks every function's output for sample inputs, because the glob only reads string values.
+- **Which parts show:** the parts row and the text equivalent list every part that is enabled or has light (Review Focus #14).
+
+- [ ] **Step 1:** Write the failing layout test first, in `brain-home.spec.ts` at 375×667:
+  - **Setup:** inject a 180 px block into `[data-slot="card"]` and a 40 px block into `[data-slot="ribbon"]`, with the week line showing;
+  - **Expected:** no scroll, the plate at least 200 px tall, and **I'm stuck** fully in view.
+
+  **Risk:** by M1's CSS (page padding 16 and 24, main padding 16 and 16, main gap 24, a 177.5 px thumb zone), this leaves about 150 px. So on Home:
+  - the plate runs from the top edge (no page or main top padding, with `env(safe-area-inset-top)` inside the plate);
+  - the gaps between the plate, the card and the thumb zone are `--space-4`;
+  - the page's bottom padding is `--space-4`.
+
+  That gives about 206 px. If it still measures under 200 px, move the week line into the nav row. If that isn't enough either, stop and report the measurements to the lead, who takes it to the owner.
+- **Home's one card** (spec §8.1, ADR-035): `[data-slot="card"]` shows at most one card. In M2 the update card comes first, then the iOS install note, and Shell no longer renders `UpdateCard` above `<main>` on `/`. The "Start removed." notice shows on the plate's bottom edge, in plate tokens. `update.spec.ts`'s worst case becomes the update card plus the notice, with the install note waiting.
+- [ ] **Step 2:** Write the other failing E2E tests in `brain-home.spec.ts`:
+  - `the text equivalent matches known events`:
+    - **Seed:** 3 Work, 2 Study, 1 untagged, 1 undone;
+    - **Expected:** the summary reads `6 starts · 5 lines`, and the region contains `Work: 3 starts. 3 start lines.`, `Study: 2 starts. 2 start lines.`, `No part: 1 start.` and `Signals are moving.`;
+  - `a new user sees the empty line`;
+  - `Still toggles, survives a reload and stops the loop`:
+    - `aria-pressed` becomes true, `data-motion="still"` is set, and the canvas has `data-loop="idle"` within 1 s;
+    - after a reload it is still pressed;
+  - `reduced motion with nothing set starts Still`;
+  - `turn and zoom buttons work without a drag`: `data-yaw` and `data-zoom` change. While a plate control has focus, ← → and + − do the same;
+  - `a part chip selects its part, and All clears it`;
+  - `the stuck flow is still three taps` with the placeholders;
+  - `with the chunk blocked, the plate shows its text and Still works`: `test.use({ serviceWorkers: 'block' })`, because `page.route` doesn't see requests the service worker answers, then `page.route('**/assets/brain-*.js', r => r.abort())`;
+  - `Home is accessible with the plate`, in light and dark.
+- [ ] **Step 3:** Write the failing unit tests:
+  - `effectiveStill`: unset with reduce gives true; unset alone gives false; `'moving'` with reduce gives false; `'still'` gives true;
+  - `setStill writes the setting`.
+- [ ] **Step 4:** Run `npx vitest run src/app && npx playwright test tests/e2e/brain-home.spec.ts`. Expected: FAIL.
+- [ ] **Step 5:** Implement, with frontend-design's guidance, the reference stills and ADR-018.
+  - **Home:** the plate on top (flex 1, `min-height: 200px`), then `[data-slot="card"]`, then the thumb zone as in M1. The `h1` is visually hidden.
+  - **Plate:** a `section` with `role="region"`, `aria-label="Brain space"`, the classes `plate` and `plate-scope`, and `data-motion` (`still`, `moving` or `resting`). It holds:
+    - the visible summary line;
+    - the visually hidden text equivalent;
+    - the canvas, with `aria-hidden="true"` and never focusable;
+    - **Still** in a top corner, and zoom and turn as 48 px buttons;
+    - the parts row along the bottom edge: **All** plus a chip with a swatch per part, 48 px tall, scrolling sideways.
+  - **`useRenderer`:** after the first paint (`requestAnimationFrame`, then `setTimeout(0)`), it imports `../brain/brain`. On failure it keeps the text and doesn't retry.
+- [ ] **Step 6:** Run them again, then the gate. Expected: PASS.
+- [ ] **Step 7:** Commit: `feat(home): the Brain space plate on Home`.
+
+#### 7C: The owner's Home review (gate)
+
+- [ ] **Step 1:** Merge 7A and 7B into the branch, run the gate, and push. Wait for the PR's preview URL.
+- [ ] **Step 2:** `qa-webkit` takes screenshots into the scratchpad: iPhone WebKit at 375×667 and desktop, in light and dark chrome. It seeds three fixtures from `tests/e2e/fixtures/brain.ts` with `seedEvents`, `seedParts` and `seedPlans`:
+  - a new user;
+  - an M1-like history;
+  - the full fixture: every strength, a waiting line, six parts, zoomed past `EXPLODE_FROM_ZOOM`, and one part selected.
+- [ ] **Step 3:** `design-critic` judges them against `docs/reference/brain-space/`, ADR-018, ADR-021 and spec §16.6–16.7, and returns ranked findings. The lead accepts or rejects each one. The builders fix the accepted ones, and a reviewer checks the fixes.
+- [ ] **Step 4: Owner step.** The owner reviews Home on the preview URL on the iPhone, in light and dark, plus the full-fixture screenshots.
+  - The preview is its own origin, so it starts empty. A few starts there show real light.
+  - Ask about: the plate's weight in the light theme (ADR-026), the parts row over the plate (ADR-030), and how resting looks (ADR-024).
+
+  Iterate until the owner says yes. Later tasks wait for that yes.
+- [ ] **Step 5:** Add a line to ADR-021's consequences: "Home review passed on <date>", plus any changes. Commit and push.
+
+### Task 8: Part card and Started
+
+**Builders:** `renderer` (strip framing, burst, reveal, settle ring) and `ui` (the sheet, the card, the strip chrome and the Started layout), one after the other.
+
+**Files:**
+- Create: `src/app/plate/Sheet.tsx`, `src/app/plate/PartCard.tsx`, `src/app/plate/Strip.tsx` (+ css), `tests/e2e/brain-started.spec.ts`
+- Modify: `src/app/brain/*`, `src/app/screens/Started.tsx` and `.module.css`, `src/app/plate/Plate.tsx` (opens the card), `src/copy/brain.ts`
+
+**Interfaces:**
+- Consumes: `RenderState.reveal` and `burstAt` (7A); `focusFor`, `recentLapses` (Task 4); `timerState`, `TIMER_SECONDS` (M1).
+- Produces:
+
+```ts
+export function Sheet(props: { open: boolean; onClose(): void; labelledBy: string; opener: HTMLElement | null; children: ReactNode }): JSX.Element;
+  // a native <dialog> opened with showModal(). Esc and a 48 px Close button close it, and focus returns to `opener`
+  // (Safari doesn't focus a tapped button, so the opener is passed). M3's lapse sheet reuses it.
+export function PartCard(props: { partId: string; onClose(): void }): JSX.Element;
+export function Strip(props: { attempt: Attempt }): JSX.Element;
+```
+
+- **Burst:** its phase is `(now − start.at) / BURST_MS`, like the reveal, so a reload continues the one burst and never starts a second flash. After `BURST_MS` it is over (ADR-035). Under Still, it is a fade of 120 ms or less.
+- **Reveal:**
+  - progress is `min(1, (now − start.at) / (TIMER_SECONDS × 1000))`;
+  - for an on-cue start, it is a bright pass along the plan's line, and the new strength shows at progress 1;
+  - under Still, the light is whole;
+  - the canvas reports `data-reveal` (0–1, 2 decimal places) and `data-reveal-part`.
+- **Card copy:**
+  - the heading is the part's label in `--color-text`, with a swatch;
+  - `starts(n)`;
+  - each plan line as `` `${strength} · ${onCue(k)}` ``;
+  - `startLines(m)`;
+  - the title "What to focus on", the focus line for `focusFor(…)` (the five lines of §16.9, verbatim), and a link to About (`/about#brain-space`);
+  - `close: 'Close'`.
+
+- [ ] **Step 1:** Measure.
+  - **Setup:** at 375×667 with six parts (seed a sixth).
+  - **Measure:** the free height on Started between the parts row and **Done for now**.
+  - **Decide:** the strip is `min(80, free)` px. Under 64 px, stop and report to the lead, who takes it to the owner. It never falls back to playing the reveal on Home.
+- [ ] **Step 2:** Write the failing tests in `brain-started.spec.ts`:
+  - `Started doesn't scroll with six parts and the strip`;
+  - `the strip reveals the new light over two minutes`: with `page.clock`, `data-reveal` is 0.5 ± 0.02 at 60 s and 1 at 120 s;
+  - `a reload mid-reveal resumes at the right progress` (Review Focus #7);
+  - `a re-tag mid-reveal moves only that light` (Review Focus #6): tag Work, then Study. `data-reveal-part` is `study`, Home shows Study one higher, and Work is unchanged;
+  - `undo removes only that start's light` (Review Focus #6);
+  - `Still on the strip shows the light whole and idles the loop`;
+  - `leaving Started early shows the light whole on Home`: the text equivalent counts it, and Home's canvas has no `data-reveal`;
+  - `a part chip opens its card with focus trapped; Esc and Close each return focus to the chip`;
+  - `the card shows counts and the focus line`: in M2, rule 5's line;
+  - `Started and the card are accessible`, in light and dark.
+- [ ] **Step 3:** Run `npx playwright test tests/e2e/brain-started.spec.ts`. Expected: FAIL.
+- [ ] **Step 4:** Implement: the renderer work first, then the UI. The strip sits between "What is it?" and the timer's actions, with **Still** in its corner. Under a blocked chunk it shows the summary line at the same height.
+- [ ] **Step 5:** Run it again, then the gate. Expected: PASS.
+- [ ] **Step 6:** Commit each builder's part after its review: `feat(brain): burst and reveal on the Started strip` and `feat(app): part card and the Started strip`.
+
+### Task 9: Settings and About
+
+**Builder:** `ui`.
+
+**Files:**
+- Create: `src/app/screens/SettingsParts.tsx` (+ css), `src/app/actions/parts.ts`, `src/app/actions/parts.test.ts`, `src/copy/parts.ts`, `tests/e2e/parts.spec.ts`
+- Modify: `src/app/routes.tsx` (`/settings/parts`), `src/app/screens/Settings.tsx`, `src/app/screens/About.tsx`, `src/copy/about.ts`, `src/copy/settings.ts` (or the module that holds Settings copy), `README.md`
+
+**Interfaces:**
+- Consumes: `addPart`, `editPart` (Task 3); `setStill`, `useStill` (7B).
+- Produces:
+
+```ts
+export function addPart(d: AppDeps, label: string): Promise<PartError | undefined>;
+export function renamePart(d: AppDeps, id: string, label: string): Promise<PartError | undefined>;
+export function recolorPart(d: AppDeps, id: string, colour: ColourId): Promise<PartError | undefined>;
+export function setPartEnabled(d: AppDeps, id: string, enabled: boolean): Promise<void>;
+```
+
+- **Exact copy** (`parts.ts`, US English):
+  - `title: 'Parts'`, `intro: 'Up to six. Renaming or recoloring a part never moves its light.'`;
+  - `add: 'Add a part'`, `name: 'Name'`, `color: 'Color'`, `save: 'Save'`;
+  - `enabled: 'Show after a start'`, `limit: 'You have six parts, the most there can be.'`, `labelHint: '1 to 24 characters'`.
+- **Preferences** is a section on `/settings` (ADR-035), headed `Preferences`, with a **Still** switch whose hint is `'Stops all motion in Brain space.'`.
+- **About** gains the §16.9 paragraph verbatim, under a heading with `id="brain-space"`. The README gains the same paragraph under "Brain space".
+
+- [ ] **Step 1:** Write the failing unit tests in `parts.test.ts`, with fake-indexeddb:
+  - adding a sixth part gives region 6;
+  - a seventh returns `'limit'` and writes nothing;
+  - recoloring to a colour another part holds swaps the two;
+  - disabling a part keeps its starts in `projectBrainSpace`.
+- [ ] **Step 2:** Write the failing E2E tests in `parts.spec.ts`:
+  - `a new part appears in What is it? and on Home`;
+  - `renaming changes the chip and card, and the light count stays`;
+  - `a disabled part leaves What is it?, and its chip and light stay on Home` (Review Focus #14);
+  - `a 24-character name causes no sideways scroll at 320 px` on Home, Started, the card and Settings → Parts (Review Focus #13);
+  - `Still in Preferences matches the plate`;
+  - `About shows the Brain space paragraph`;
+  - `Settings and Parts are accessible`, in light and dark.
+- [ ] **Step 3:** Run `npx vitest run src/app/actions && npx playwright test tests/e2e/parts.spec.ts`. Expected: FAIL.
+- [ ] **Step 4:** Implement. Lazy-load `/settings/parts` with `React.lazy` if the initial bundle passes 145 kB.
+- [ ] **Step 5:** Run it again, then the gate. Expected: PASS.
+- [ ] **Step 6:** Commit: `feat(app): Settings → Parts, Still in Preferences, and the About paragraph`.
+
+### Task 10: E2E and guards
+
+**Builders:** `qa-webkit` (performance, offline, CSP) and `accessibility` (axe and keyboard).
+
+**Files:**
+- Create: `tests/e2e/brain-guards.spec.ts`, `tests/e2e/brain-perf.spec.ts`
+- Modify: `tests/e2e/offline.spec.ts`, `tests/e2e/csp.spec.ts`, `docs/decisions.md` (ADR-029)
+
+- [ ] **Step 1:** Write `brain-guards.spec.ts`:
+  - `with the renderer chunk blocked, every Brain space action works` (Review Focus #8), with `serviceWorkers: 'block'` as in 7B:
+    - **Actions:** Still, zoom and turn, a part chip opening its card, Settings → Parts edits, and the stuck flow to Started with the strip's text;
+    - **Expected:** no console errors except the blocked request;
+  - `keyboard only` (desktop project):
+    - Tab reaches every chip and plate control;
+    - ← → turn and + − zoom;
+    - Enter opens a card and Esc closes it;
+    - `S` still opens the stuck flow;
+  - an axe sweep of Home, Started, the card and Settings → Parts, in light and dark.
+- [ ] **Step 2:** Extend the existing specs:
+  - **`offline.spec.ts`** (Chromium projects): `offline, the chunk is precached and Brain space draws`. Load the app, wait for the service worker to be ready, go offline and reload. The canvas has `data-loop`;
+  - **`csp.spec.ts`:** the walk adds Home with the canvas running, zoom, a part card and the Started strip, with zero `securitypolicyviolation` events.
+- [ ] **Step 3:** Write `brain-perf.spec.ts` (`iphone` project only).
+  - **Setup:** seed the full fixture.
+  - **Action:** drag across the plate for 5 s with moves every 16 ms.
+  - **Read:** `data-draw-mean`, then assert it is at most `DRAW_MEAN_BUDGET_MS`.
+- [ ] **Step 4:** Push. On the first CI run, the lead reads the logged mean and sets `DRAW_MEAN_BUDGET_MS` to twice it, rounded up to 0.5 ms. Record it in ADR-029's consequences, then push again.
+- [ ] **Step 5:** Confirm CI is green on every job, and `check-bundle-size.mjs` prints the initial JS at most 150 kB and the chunk at most 30 kB. Commit: `test(e2e): Brain space guards for blocked chunk, offline, CSP and frame time`.
+
+### Task 11: Review and acceptance
+
+**Builder:** the lead, with `code-reviewer` and the unslop audit.
+
+- [ ] **Step 1:** Retitle PR #2 "Milestone 2: Brain space" and write its body with the `pr` skill:
+  - the summary;
+  - the evidence: the gates, the bundle and chunk sizes, the draw mean, and the Review Focus rows 6–14;
+  - the owner checklist below.
+- [ ] **Step 2:** Run a whole-branch review with `code-reviewer`, against spec §16, ADR-021 to ADR-035 and this milestone.
+  - Triage the findings with superpowers:receiving-code-review.
+  - The builders fix the accepted ones, and the reviewer re-checks the fixes.
+- [ ] **Step 3:** Run the unslop audit against the preview URL, from Playwright screenshots of every M2 screen. `ui` fixes the accepted findings. None may override the tokens, ADR-018, the spec's copy or the approved look.
+- [ ] **Step 4: Owner acceptance on iPhone,** recorded in the PR body.
+  - **On the preview URL:**
+    - a start fires the burst and draws its line during the timer;
+    - turning doesn't stutter;
+    - **Still** stops all motion;
+    - VoiceOver reads each part's counts;
+    - it all works in airplane mode.
+  - **After the merge, in the installed app** (once Reload is tapped on the update card): the M1 starts show as light in their parts. The preview is a separate origin, so it can't show them.
+- [ ] **Step 5: Owner step.** The owner merges. Confirm the `deploy` job succeeds, and run `curl -sI https://arohexis.arohexis.workers.dev | grep -i content-security-policy` to confirm the exact CSP. Then the owner confirms the last acceptance item.
+- [ ] **Step 6:** Tick M2 in the ledger on `m3-plans`, the next branch, and commit: `docs: mark milestone 2 done`.
 
 **Acceptance (owner):**
 - your M1 starts show as light in their parts;

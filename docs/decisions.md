@@ -665,3 +665,29 @@ Statuses:
   - **Plans:** the 3 plans, started in weeks 1, 3 and 6, reach Well-worn, Steady and Repeated.
   - **Moving:** the generator places a start on `endDate`.
 - **Consequences:** every part has light and every strength appears, so a visitor sees the full range on the same projection as real data.
+
+## ADR-035: Choices made while expanding the M2 plan
+
+- Date: 2026-11-12 · Status: **Proposed** (sent to the owner with the expanded M2 plan)
+- **Context:** Expanding Milestone 2 to M1's level of detail found details that spec §16 leaves open, and one rule that, read literally, would move light. Each choice below is the smallest one that keeps §16's stated intent.
+- **Decision:**
+  - **Fibre order for plan lines:**
+    - **Problem:** §16.4 orders a plan line by its first on-cue start, or by the plan's `createdAt` while it waits. When a waiting plan gets its first on-cue start, its order jumps, and it can take another plan line's fibre.
+    - **Fix:** a plan line's order is the `start.at` of its earliest on-cue start, undone or not. A line whose on-cue starts were all undone stays in the projection with that order, drawn as waiting, or as nothing while its plan is paused, so its fibre stays reserved. Waiting lines that never had a start get fibres after every other line, so no solid light moves.
+  - **Settling uses tag times.** `Attempt` keeps every tag with its time (`tags`). Light uses the latest tag made at or before the moment the next attempt opened, so a stale second tab changes counts and not light (§16.4 rule 4).
+  - **One on-cue start per occurrence.** A second counted start for the same occurrence leaves a start line, so on-cue starts plus start lines plus core sparks still equal counted starts.
+  - **Unknown part ids are core light.** A tag whose id isn't a configured part counts and draws as "No part". That covers M1's `other-task` and hand-edited imports.
+  - **Export version 2 is final for v1.** It already carries `plans[].partId` and `settings.brainStill`, so M3 needs no version 3.
+  - **Recolouring to a colour another part holds swaps the two,** so a full set of six can still be recoloured.
+  - **Preferences** is a section on `/settings`, not a new route. It holds Still now, and theme, week start and check-in day in M6.
+  - **A disabled part with light** keeps its chip on Home and its card. It leaves only "What is it?" and the plan editor.
+  - **The burst's phase** comes from `start.at`, like the reveal, so reloading Started continues the one burst and never adds a second flash.
+  - **Home's one card:** the card slot above **I'm stuck** holds the update card or the iOS install note, never both, and the "Start removed." notice moves onto the plate. That keeps Home within §16.10's budget.
+  - **Home's spacing:** on Home the plate runs from the top edge and the gaps tighten to `--space-4`, because M1's spacing leaves the plate about 150 px at 375×667 with the tallest card and the Demo ribbon.
+  - **Focus rule 4** ("An if-then plan… may help") is off until M3, when plans can be made.
+  - **Tests stay with the builder.** Each builder subagent writes the tests its task names, even outside its ADR-032 file scope, so test-first stays in one hand.
+  - **The frame-time threshold** is set in M2 Task 10, from the first CI run of the real renderer, because Task 2's page is a throwaway outside CI.
+- **Consequences:**
+  - the projection's property tests can assert that appending events never moves settled light;
+  - `Attempt` grows one field (`tags`), and §16.4's `BrainLine` plan kind grows two (`everStarted`, `hidden`);
+  - the owner can redirect any of these at the plan summary, before Task 1 starts.
