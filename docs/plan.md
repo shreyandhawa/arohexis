@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. **The checkboxes in this file are the progress ledger:** tick them as you go and commit the ticks with the work.
 
-**Goal:** Ship Arohexis v1, a local-first PWA that trains the moment of starting, in six milestones that each end in something the owner can use on their iPhone. (Five until the Brain space amendment of 2026-11-12, which is proposed; see spec §16 and ADR-021 to ADR-032.)
+**Goal:** Ship Arohexis v1, a local-first PWA that trains the moment of starting, in six milestones that each end in something the owner can use on their iPhone. (Five until the Brain space amendment of 2026-11-12, which is proposed; see spec §16 and ADR-021 to ADR-034.)
 
 **Architecture:**
 - **Domain:** pure TypeScript in `src/domain` (events, projections, rules), with no DOM, React or Dexie.
@@ -60,6 +60,11 @@
 - Never compute or display completions, streaks, or comparisons between weeks.
 - Coverage gate on `src/domain/**` (excluding `src/domain/testing/**`): lines ≥ 95%, branches ≥ 90%.
 - Initial JS is at most **150 kB gzip**.
+- **From M2, once the Brain space amendment is approved** (spec §16):
+  - **Banned words** gain rewire, rewires, rewired, rewiring, neural, neuron, neurons, synapse, synapses, plasticity, neuroplasticity, fire, fired and firing. The anatomy list in `tests/purity/anatomy.ts` is banned across `src/**` and `tests/**`.
+  - **One motion exception:** Brain space's signals, which stop with Still, while resting, and under reduced motion unless the user turned Still off.
+  - **Purity:** `src/geometry/**` follows the domain's purity rules and may import `src/domain` only.
+  - **Budget:** the lazy Brain space chunk is at most **30 kB gzip**. The CSP is unchanged.
 
 ## Review Focus
 
@@ -70,6 +75,10 @@
 | 3 | Reloading on the Started screen, or browser Back from Started | Same attempt and same single start after reload; Back goes Home, not to the Response | Task 14 (E2E) |
 | 4 | A start near midnight at a week boundary, or made in a different time zone from the current one | It counts in the week of its own local time | Task 6 |
 | 5 | IndexedDB unavailable or failing to open (blocked, quota, private mode) | A calm "Can't save on this device" screen, not a blank page or silently dropped starts | Task 10 (`openStorage`), Task 12 (E2E) |
+| 6 | Undo or re-tag during the reveal on Started | Undo removes only that start's light. A re-tag moves only that light, and the reveal carries on to the new place. No other light moves | M2 Task 4 (properties), Task 10 (E2E) |
+| 7 | The phone locks or the page reloads mid-reveal | The reveal resumes at the right progress, and Home shows the light whole | M2 Task 8, Task 10 |
+| 8 | The renderer chunk fails to load (blocked, or offline on a first visit) | The plate shows the text equivalent, and **I'm stuck** and every Brain space action still work | M2 Task 10 |
+| 9 | 375×667 with the tallest card and the Demo ribbon | Home doesn't scroll and the plate is at least 200 px. Started doesn't scroll with six parts | M2 Task 10 |
 
 ---
 
@@ -791,7 +800,7 @@ export function exportBackup(d: AppDeps, share: { canShareFiles: boolean; share(
 
 ## Milestone 2: Brain space
 
-> **Proposed** on 2026-11-12 with spec §16 and ADR-021 to ADR-032, waiting for owner review. Expanded to M1's level of detail at milestone start.
+> **Proposed** on 2026-11-12 with spec §16 and ADR-021 to ADR-034, waiting for owner review. Expanded to M1's level of detail at milestone start.
 
 **You can:**
 - see your starts as light in Brain space on Home: every start since M1, in the part you tagged it with;
@@ -801,12 +810,14 @@ export function exportBackup(d: AppDeps, share: { canShareFiles: boolean; share(
 
 Everything works without the canvas, and offline.
 
-**Branch:** `m2-brain-space`. It holds this amendment, and is rebased onto `main` once M1 merges. **Spec:** §16. **Decisions:** ADR-021 to ADR-032.
+**Branch:** `m2-brain-space`. It holds this amendment, and is rebased onto `main` once M1 merges. **Spec:** §16. **Decisions:** ADR-021 to ADR-034.
 
 **Tasks** (expanded at milestone start):
 1. **Setup.**
    - **Owner steps:** run the design-skill commands in ADR-031, approve the project subagents in ADR-032, and put the reference stills and the prototype in `docs/reference/brain-space/`.
-   - **Lead:** create `.claude/agents/` and copy unslop per ADR-031.
+   - **Lead:**
+     - create `.claude/agents/` and copy unslop per ADR-031;
+     - update mentions of the old milestone numbers in `README.md` ("coming in M4"), `src/copy/home.ts` and `src/domain/config.ts`.
 2. **Renderer check on the iPhone.**
    - **Subagent:** rebuild ADR-029's canvas 2D test page as a throwaway, outside the repo (the spike's files were session scratch), and serve it on the local network under the exact CSP.
    - **Owner step:** open it on the iPhone and drag it for a few seconds.
@@ -816,7 +827,7 @@ Everything works without the canvas, and offline.
      - keep the chunk budget at 30 kB.
 3. **Parts:**
    - domain types;
-   - the Dexie version 2 migration from `taskTypes`, with a fixture test;
+   - the Dexie version 2 migration from `taskTypes` (`other-task` maps to no part), with a fixture test;
    - export version 2, with version 1 migrated in `parseExport`;
    - the default parts;
    - "What is it?" lists parts;
@@ -829,12 +840,12 @@ Everything works without the canvas, and offline.
 6. **Plate tokens and part colours:** `--plate-*`, the six part colours, and the contrast and colour-vision checks in spec §16.7.
 7. **Renderer and Home:**
    - the lazy chunk: the dim field, additive light, signals, labels on zoom, the camera, render on demand, Still, reduced motion and the fallback;
-   - the Home layout, the parts row and the text equivalent.
+   - the Home layout to spec §16.10's budget: the heading visually hidden; the summary line, controls and parts row on the plate; turn and zoom buttons; and the text equivalent.
 
    **Owner gate (ADR-021):** the design critic reviews the build against the stills first. Then the owner reviews the built Home screen on the preview URL, on the iPhone, in light and dark. Later tasks wait for a yes.
 8. **Part card and Started:**
    - the part card sheet: starts, lines by strength, and the focus line;
-   - the compact plate on Started with the burst and the reveal, or the ADR-030 fallback.
+   - the strip plate on Started: at most 80 px, decided by measurement, down to 64 px; anything smaller goes back to the owner. It carries the burst, the reveal and **Still**, and "What is it?" becomes one sideways row.
 9. **Settings and About:** Settings → Parts (rename, colour, enable, add up to six) and Preferences → Still. The About paragraph and a README note.
 10. **E2E and guards:**
     - spec §16.13's scenarios on all three projects;
@@ -871,7 +882,8 @@ Everything works without the canvas, and offline.
 5. Plans list and editor screens, with the live sentence preview, an optional part, and Add to calendar (one-time import help text).
 6. Home plan-due card (Start now, "I'm stuck on this") and the lapse repair sheet (focus trap, every step skippable, closing records `slipped`).
 7. **Brain space with plans** (spec §16.4, §16.9):
-   - plans feed `projectBrainSpace`: waiting lines are dashed with a ring, and growth comes from on-cue starts only, with strengths and labels;
+   - plans feed `projectBrainSpace`: waiting lines are dashed with a ring, and growth comes from on-cue starts only (distinct occurrences), with strengths and labels;
+   - a start made from a plan is tagged with the plan's part in the same transaction;
    - the part card lists the part's plans, with Start now while an occurrence is open and "Next: …" otherwise;
    - focus rules 1 to 4.
 8. E2E: spec §13 scenarios 6 and 7, an on-cue start brightening its line, an off-cue start leaving a start line, plus axe on the new screens. Then the unslop audit.
@@ -892,7 +904,7 @@ Everything works without the canvas, and offline.
 2. `checkin.ts`: SRBAI items, the period and `weekOf` rules, `isCheckinDue`, scoring and trend.
 3. SVG chart components (columns, hour strip, bars, line), each with a visually hidden table and a one-sentence summary.
 4. Insights screen with an empty state for fewer than 3 starts and neutral colors. Parts are shown in neutral colors, not part colours.
-5. Check-in screen and Home card (7-point radio groups, Skip this week, attribution).
+5. Check-in screen and Home card (7-point radio groups, Skip this week, attribution). About gains the sentence naming the check-in (spec §16.9).
 6. E2E: spec §13 scenarios 3 and 8, plus axe. Then the unslop audit.
 
 **Acceptance (owner):** the first Sunday check-in shows in the trend. Insights match a hand count of a week's starts.
@@ -904,9 +916,9 @@ Everything works without the canvas, and offline.
 **Branch:** `m5-demo-data`. **Spec:** §7.3–7.5, §8.10 (Data), §8.11, §16.11.
 
 **Tasks:**
-1. `demo.ts`: `generateDemoData(seed, endDate, tz)` using mulberry32, with 5 named parts, 5 plans and about 80% of starts tagged (spec §16.11). Tests:
+1. `demo.ts`: `generateDemoData(seed, endDate, tz)` using mulberry32, with 5 named parts, §7.4's 3 plans started in weeks 1, 3 and 6, and about 80% of starts tagged (spec §16.11). Tests:
    - deterministic for a seed, 10 weeks, and the shape bands from spec §7.4;
-   - every region has light, at least two plan lines reach Well-worn, and a fresh demo is moving.
+   - every part has light, every strength from New to Well-worn appears, and a demo entered today is moving.
 2. Demo database switching (`localStorage['arohexis:db']`), the Demo ribbon with Exit and Reset, and isolation from the main database.
 3. Import:
    - parse and migrate (export versions 1 and 2);

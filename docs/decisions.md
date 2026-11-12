@@ -65,7 +65,7 @@ Statuses:
 
 ## ADR-005: Task type is tagged after the start
 
-- Date: 2026-11-11 · Status: **Accepted**
+- Date: 2026-11-11 · Status: **Accepted** · Amended by ADR-023 (proposed): the tag is now a part
 - **Context:** Insights break starts down by task type, but every tap before Start adds friction at the hardest moment.
 - **Options:**
   - an optional tag after the start;
@@ -230,7 +230,7 @@ Statuses:
 
 ## ADR-018: Visual direction C "Contrast"
 
-- Date: 2026-11-11 · Status: **Accepted**
+- Date: 2026-11-11 · Status: **Accepted** · Amended by ADR-021 (proposed): "no hue" applies to chrome; Brain space's plate carries part colours
 - **Context:** Task 1 produced three mockups (`.superpowers/sdd/plan/design/`) for the owner to choose between. Task 11 turns this ADR into the CSS tokens, so the values below are exact. Spec §11.1 describes one accent reserved for the primary action and the "Started." moment.
 - **Options:**
   - A "Paper": warm cream, sepia and blue ink with serif display. Not chosen as-is: the owner asked for higher contrast (an off-white background with jet-black text, inverted in dark mode) and kept Paper's typefaces and layout rhythm as the base for C.
@@ -372,14 +372,14 @@ Statuses:
   - Brain space adds a plate that is always black, part colours as data, hairlines with additive light, no outlines around strokes or parts, no pastel, no gradients on UI, and labels in Atkinson Hyperlegible Next.
   - The gate for the look is the owner's review of the built Home screen on a preview URL, during M2 and before M2's later screens are built (plan M2, Task 7).
 - **Consequences:**
-  - ADR-018's "no hue" now reads "no hue in chrome";
+  - ADR-018 is amended, not superseded: its "no hue" now reads "no hue in chrome";
   - the reference is matched in look and behaviour, and none of its code is reused;
   - the prototype's outline around a selected part, its Inter labels, its auto-rotation, its line added only when the timer ends, and its anatomy-named identifiers are not adopted.
 
 ## ADR-022: Brain space is Milestone 2
 
-- Date: 2026-11-12 · Status: **Proposed** (the owner chose the order on 2026-11-12)
-- **Context:** Brain space depends on parts (new) and on plans (M2 as planned) for its growing lines. Because it is a pure projection over events, every start recorded before it ships still appears once it lands.
+- Date: 2026-11-12 · Status: **Accepted** (the owner chose the order on 2026-11-12)
+- **Context:** Brain space depends on parts (new) and on plans (M2 as first planned) for its growing lines. Because it is a pure projection over events, every start recorded before it ships still appears once it lands.
 - **Options:**
   - right after M1, as the new M2, with Plans moving to M3;
   - after Plans, so plan lines grow from day one.
@@ -387,44 +387,52 @@ Statuses:
 - **Consequences:**
   - the riskiest parts (frame rate on the iPhone, the look) are proven first, and the Home review gates the screens that follow;
   - until M3, only faint start lines and core sparks appear, because only on-cue plan starts grow lines (ADR-024);
-  - branch names shift: `m2-brain-space`, `m3-plans`, `m4-insights`, `m5-demo-data`, `m6-config-v1`.
+  - branch names shift: `m2-brain-space`, `m3-plans`, `m4-insights`, `m5-demo-data`, `m6-config-v1`;
+  - mentions of the old milestone numbers in the README and in code comments are updated in M2 Task 1.
 
 ## ADR-023: Part replaces Task type
 
-- Date: 2026-11-12 · Status: **Proposed** (the owner chose "replace" on 2026-11-12)
+- Date: 2026-11-12 · Status: **Accepted** for the choice (the owner chose "replace" on 2026-11-12); the details below are **Proposed**
 - **Context:** An unplanned start has to land in a part. The only place to choose one without adding a tap is the optional "What is it?" row after the start (ADR-005).
 - **Options:**
   - Part replaces Task type in that row;
   - Part sits beside it, as two chip rows on Started;
   - parts come only from plans, and task types stay.
 - **Decision:** Part replaces Task type.
-  - **Events:** `start.tagged` keeps its shape. `taskTypeId` now holds a part id, so old events and backups need no rewrite.
-  - **Storage:** Dexie version 2 replaces `taskTypes` with `parts`, adding `colour` and `region`. Each existing task type becomes a part with the same id and label.
+  - **Events:** `start.tagged` keeps its shape. `taskTypeId` now holds a part id, so old events and backups need no rewrite. From M3, a start made from a plan gets a `start.tagged` with the plan's part in the same transaction.
+  - **Storage:** Dexie version 2 replaces `taskTypes` with `parts`, adding a colour id and a region, both 1 to 6. Every enabled task type except `other-task` becomes a part with the same id and label; `other-task` maps to no part.
   - **Export:** `version: 2` with `parts`. Version 1 files migrate on import.
-  - **Limits:** at most six parts, one region each, fixed at creation. Each colour from the fixed set is used once. Parts are disabled, never deleted.
+  - **Limits:** at most six parts, one region each, fixed at creation. Each colour id is used once. Parts are disabled, never deleted.
   - **Defaults for a new user:** Work, Study, Health, Home, Money.
+  - **One function attributes a start to a part:** `partOfStart`, the latest tag, serves both Brain space and Insights.
 - **Consequences:**
   - ADR-005 still holds: one optional tap after the start, and Stuck to timer stays at 3 taps;
+  - "What is it?" becomes one sideways-scrolling row, so six parts never push Started into scrolling;
   - Insights' "Task types" section becomes "Parts";
   - the stored field name `taskTypeId` no longer matches its meaning. One mapping in the fold hides that from the rest of the code.
 
 ## ADR-024: Lines grow only from on-cue starts, and nothing is removed
 
-- Date: 2026-11-12 · Status: **Proposed** (the owner chose "on-cue only" on 2026-11-12)
-- **Context:** The brief proposed that only plan lines grow past the first step, because a fixed cue is what the evidence supports (Gollwitzer & Sheeran 2006; Singh et al. 2024, where a stable cue "is thought to help but was not tested"). The brief also asked that nothing ever be removed, and that the signals stop and the lines dim slightly after 48 hours without a start.
+- Date: 2026-11-12 · Status: **Accepted** for "on-cue only" (the owner's choice on 2026-11-12); the details below are **Proposed**
+- **Context:** The brief proposed that only plan lines grow past the first step, because a fixed cue is what the evidence supports (Gollwitzer & Sheeran 2006; Singh et al. 2024, where a stable cue "is thought to help but was not tested"). The brief also asked that nothing ever be removed, and that the signals stop and the lines dim slightly after 48 hours without a start. The review found that tagging after the start, and Undo, would move or remove light.
 - **Options for growth:**
   - any start in the part;
   - any start from the plan, at any time;
   - only on-cue starts, linked to an occurrence.
 - **Decision:**
-  - **Growth:** only on-cue starts grow a plan line. Every other counted start leaves a faint start line in its part, or a core spark if it has no part.
+  - **On-cue is defined by data:** a counted start whose attempt carries `planId` and `occurrence`. That covers **Start now**, **I'm stuck on this** and **Yes, I started**. Each occurrence counts once.
+  - **Growth:** only on-cue starts grow a plan line. There is one line per plan and part. Every other counted start leaves a faint start line in its part, or a core spark if it has no part.
   - **Steps:** 1, 5, 15 and 40 on-cue starts. The top step sits near the review's median of about two months: a weekday plan started on most days reaches 40 in about nine to ten weeks.
+  - **Settling:** the newest light can move only when its own start is re-tagged.
+    - It settles when a later attempt opens, and settled light never moves.
+    - Undo removes that start's light, the one deliberate exception, because it corrects the record (ADR-004). The undone start keeps its fibre, so nothing else moves.
+    - Changing a plan's part starts a new line in the new part from its next on-cue start, and the old line stays.
   - **Resting:** after 48 hours without a counted start, signals stop and light dims by one fixed step to 85%. It never dims further, and one start ends it.
-  - **Nothing is removed:** no event ever removes a line, lowers a strength or moves a line.
+  - **What else removes light:** only Delete everything and importing a backup, which replace all data.
 - **Consequences:**
   - a line's strength honestly means "times you started on this cue";
-  - the part card shows **Start now** only while an occurrence is open, the same rule as the Home plan card;
-  - resting is a recency signal and could read as a streak by another name. It is mitigated by one fixed step, by copy that never names it as a loss, and by the text "One start sets them moving again." The owner judges it at the Home review;
+  - the part card shows **Start now** only while an occurrence is open, the same rule as the Home plan card. This narrows the brief's "any waiting plan with a Start button", and the owner is asked to confirm it;
+  - resting is a recency signal and could read as a streak by another name. It is mitigated by one fixed step, by copy that never names it as a loss, and by "One start sets them moving again." The owner judges it at the Home review;
   - Brain space is cumulative only: no weeks, comparisons, streaks or completions.
 
 ## ADR-025: Brain space copy: strength labels, focus lines, and no brain claim
@@ -444,9 +452,10 @@ Statuses:
   - counts only.
 - **Decision:**
   - **Labels:** New, Repeated, Steady, Well-worn, always with the count ("Steady · 18 starts on cue"). Waiting plans read "Waiting".
-  - **Focus lines:** "What to focus on" is a pure, state-based rule with five cases, each tied to an existing §3 row and linked to About (spec §16.9).
-  - **About:** a paragraph saying Brain space is a picture, not a scan, and that Arohexis makes no claim that your brain changes.
-  - **Banned words** gain rewire, rewires, rewired, neural, neuron, neurons and synapse.
+  - **Focus lines:** "What to focus on" is a pure, state-based rule with five cases (spec §16.9). Each case ties to an existing §3 row and links to About. Singh's line keeps the review's caveats: "a median of about two months", and "the range was wide".
+  - **The brief's "basis":** it is read as a §3 source. Three of the five lines are also `Basis` values. The other two use Gollwitzer & Sheeran and Singh et al., which are §3 rows but not bases.
+  - **About:** a paragraph saying Brain space is a picture, not a scan, and that Arohexis makes no claim that your brain changes. The sentence naming the check-in waits for M4, when the check-in exists.
+  - **Banned words** gain rewire, rewires, rewired, rewiring, neural, neuron, neurons, synapse, synapses, plasticity, neuroplasticity, fire, fired and firing. The anatomy list applies to copy too.
 - **Consequences:**
   - no new evidence rows are needed;
   - advice for a particular kind of task, such as study techniques, would need its own ADR and new §3 rows with caveats.
@@ -454,18 +463,17 @@ Statuses:
 ## ADR-026: The plate is always dark, with its own contrast checks
 
 - Date: 2026-11-12 · Status: **Proposed**
-- **Context:** Additive light only reads on black. The app has light and dark themes and a contrast rule of 4.5:1 for text and 3:1 for UI parts (spec §11.2).
+- **Context:** Additive light only reads on black. The app has light and dark themes and a contrast rule of 4.5:1 for text and 3:1 for UI parts (spec §11.2). The review measured that a part colour as text on the light theme fails (cyan is about 1.6:1), and that labels on a translucent backing over bright light drop below 4.5:1.
 - **Options:**
   - the plate is always dark, and chrome follows the theme;
   - the whole app turns dark by default once Brain space ships;
   - a light plate, which loses the additive look.
 - **Decision:** the plate is always dark, with the tokens in spec §16.7, which are the same in both themes. Chrome follows the theme setting (system by default), as today.
-  - **Controls on the plate** (zoom, Still) are scoped to the dark theme's tokens, including its focus ring.
-  - **Labels** use the part colour, at least 4.5:1 against the plate at both ends of its shade range.
-  - **Lines:** part lines and waiting lines are at least 3:1 against the plate.
-  - **The dim field** is texture with no information of its own; the text equivalent says when there are no starts.
-  - **Swatches** on the light theme's chips sit beside the part's name, so colour is never the only cue.
-  - **Distinctness:** the part colours stay distinguishable under simulated colour-vision deficiencies.
+  - **Controls on the plate** (**Still**, zoom, turn, the parts row and the summary line) are scoped to the dark theme's tokens, including its focus ring.
+  - **Labels** on the plate use the base part colour on an opaque `--plate-bg` backing, at least 4.5:1.
+  - **Outside the plate**, part colours are only swatches beside a name, and no text is ever set in a part colour.
+  - **Lines and points are supplementary.** Everything they convey is also in the text equivalent and the part card. Base colours and waiting lines meet 3:1, and start lines are fainter by design.
+  - **Distinctness:** base colours stay apart by CIEDE2000 ≥ 12 in normal vision, and ≥ 6 under simulated protanopia, deuteranopia and tritanopia (Machado et al. 2009, full severity). The reference's five colours measure 13.3, 9.0, 8.6 and 6.6 at their closest.
 - **Consequences:**
   - in the light theme, Home carries a black panel. The owner judges its weight at the Home review;
   - Insights stays neutral, with no part colours.
@@ -477,21 +485,24 @@ Statuses:
   - Spec §11.2 and ADR-018 say no motion is decorative or looping, and that the reward is one calm settle of 240 ms. §11.1 rules out confetti.
   - Brain space needs moving signals, a burst on the start and a two-minute reveal.
   - ADR-004 requires the reward to land on the tap. The prototype only added the line when the timer finished.
-  - WCAG 2.2.2 requires a way to pause moving content that starts on its own and lasts more than 5 s.
+  - WCAG 2.2.2 requires a way to pause moving content that starts on its own and lasts more than 5 s, and the reveal on Started runs for two minutes.
 - **Decision** (spec §16.8):
   - **State motion:** signals move on lines of strength 2 or more while Brain space is moving, and stop while it rests.
   - **Event motion:**
-    - a burst of at most 1.8 s, once per start, on the plate only;
-    - a reveal during the timer, driven by `timerState(start.at, now)`;
+    - a burst of at most 1.8 s, once per start, as a single rise and fall under WCAG 2.3.1's flash threshold;
+    - a reveal during the timer, driven by `timerState(start.at, now)`. It follows a re-tag to the new place, and on an on-cue start it is a bright pass along the existing line;
     - a ring that settles at the line's end.
+
+    Backfilled starts get neither burst nor reveal.
   - **The light exists from the tap.** The reveal only animates it, and Home always shows it whole.
   - **Never:** auto-rotation, drift or decoration.
-  - **Still:** a visible toggle on the plate, stored in `kv.brainStill` and mirrored in Settings, that stops all of it.
-  - **Reduced motion:** Brain space starts Still, and the user's own choice is kept.
+  - **Still** is on every plate, on Home and on Started, and in Settings.
+    - It is stored as `kv.brainStill`: `'still'`, `'moving'`, or unset to follow the system.
+    - Under reduced motion, unset means Still, and a user who turns it off is respected.
   - **Rendering:** the render loop runs only while something moves.
 - **Consequences:**
   - §11.2 gains one exception: Brain space's state motion, which stops with Still or while resting;
-  - the Started reward keeps its 240 ms settle in the chrome, and the burst is on the plate;
+  - the Started reward keeps its 240 ms settle in the chrome, and the burst is on the strip;
   - fewer frames rendered also means less battery.
 
 ## ADR-028: Geometry is generated locally from a seed, and the projection is pure
@@ -505,13 +516,15 @@ Statuses:
   - **Real tractography data** as a precached asset. Not chosen: published atlases carry data-use terms or share-alike licences and run to megabytes. A real scan would also make the picture read as someone's brain, which works against "not a scan". Licence and size weren't checked further, because the procedural option meets the brief.
   - **A hand-authored asset:** a fixed file to maintain, with no advantage over a seed.
 - **Decision:** procedural, in three layers:
-  - `src/domain/brainSpace.ts` and `focus.ts` are pure projections over events and config;
-  - `src/geometry/` is pure and seeded, with its own DOM-free tsconfig and the domain's lint bans, and may import domain types only;
+  - `src/domain/brainSpace.ts`, `focus.ts` and `random.ts` (mulberry32, shared with the M5 demo generator) are pure;
+  - `src/geometry/` is pure and seeded, with its own DOM-free tsconfig, the domain's lint bans, and a lines ≥ 90% coverage gate. It may import from `src/domain` only;
   - `src/app/brain/` renders, and is the only layer that touches the canvas.
+
+  **Field:** about 670 fibres and about 83,000 vertices, giving about 6,000 points of light at the strand ends. Each region keeps 12 fibres for plan lines, and overflow lights further strand ends in order.
 - **Consequences:**
   - the field is deterministic, so screenshots and geometry hashes can be tested;
   - nothing is downloaded;
-  - generating about 83,000 points costs some time on first draw. It is measured in the spike and cached in memory;
+  - generating about 83,000 vertices costs some time on first draw. It is cached in memory and measured in M2;
   - if the owner later wants real data, its licence and size get their own ADR.
 
 ## ADR-029: Renderer for Brain space
@@ -550,25 +563,36 @@ Statuses:
   - **Fallback:** raw WebGL2 (3 kB, already prototyped) is the fallback if the owner's iPhone check in M2 Task 2 shows stutter while turning. Its joints would then need handling to avoid hotspots, and that switch gets its own ADR.
   - **Spike files:** the throwaway spike stays out of the repo. Its results are recorded here.
 
-## ADR-030: Brain space sits on Home above the card, with a compact plate on Started
+
+## ADR-030: Brain space sits on Home above the card, with a strip on Started
 
 - Date: 2026-11-12 · Status: **Proposed**
 - **Context:**
   - The stuck flow must stay at most 3 taps, with no typing and no scrolling at 375×667 (spec §2).
   - Home shows at most one card above **I'm stuck** (spec §8.1).
   - The brief wants the line drawn during the two-minute timer. Its lean is Home, above **I'm stuck**.
+  - The review measured the M1 build at 375×667:
+    - about 372 px between Home's heading and **I'm stuck**;
+    - 80 to 94 px free on Started between the chips and **Done for now**.
 - **Options:**
   - **Home**, above the card and **I'm stuck**;
   - **its own route**, which adds a tap to see it, though not to the stuck flow;
   - **behind I'm stuck** as a backdrop, which puts text over additive light and makes contrast unpredictable.
-- **Decision:** Home, top to bottom: the plate, the parts row, the card, then **I'm stuck** (spec §16.10).
-  - **The plate flexes** to the height left, at least 200 px at 375×667 with a card showing.
-  - **Loading:** the renderer loads after **I'm stuck** paints.
-  - **Started** gets a compact plate of about 140 to 180 px above "Started.", for the burst and the reveal.
-  - **Fallback:** if Started can't fit the plate without scrolling with six parts, the plate leaves Started, and the burst and reveal play on Home's plate.
+
+  **For Started:**
+  - a strip plate;
+  - a full plate, which doesn't fit;
+  - no plate, with the reveal on Home, where the user isn't during the timer, so it breaks the brief's rule 2.
+- **Decision:**
+  - **Home**, top to bottom: the plate, the card, then **I'm stuck**.
+    - The visible heading becomes visually hidden.
+    - The summary line, the controls and the parts row sit on the plate, so they cost no height.
+    - The plate takes the rest, and at least 200 px with the tallest card (budget 180 px) and the Demo ribbon (40 px).
+    - The renderer loads after **I'm stuck** paints.
+  - **Started:** a strip plate of at most 80 px between "What is it?" and the timer's actions. It holds the burst, the reveal and **Still**. "What is it?" becomes one sideways-scrolling row of chips. Whether the strip fits is decided in M2 Task 8 by measurement: it may shrink to 64 px, and anything smaller goes back to the owner.
 - **Consequences:**
-  - the existing no-scroll E2E test guards both screens;
-  - the owner judges both layouts at the Home review.
+  - the existing no-scroll E2E test guards both screens, now run with the tallest card and the Demo ribbon;
+  - the owner judges both layouts at the Home review, and the parts row overlaying the plate is part of that review.
 
 ## ADR-031: Design skills are installed project-scoped, pinned, and never override the spec
 
@@ -603,15 +627,41 @@ Statuses:
 | Agent | Does | May touch | Model |
 |---|---|---|---|
 | `researcher` | sources, versions, licences; read-only | nothing | sonnet |
-| `domain` | pure domain and geometry, test first | `src/domain/**`, `src/geometry/**` | sonnet |
-| `renderer` | the lazy Brain space renderer | `src/app/brain/**` | sonnet |
-| `ui` | screens, components, copy, tokens | `src/app/**` except `brain/`, `src/copy/**`, `src/design/**` | sonnet |
+| `domain` | pure domain, geometry and storage, test first, plus the purity tooling | `src/domain/**`, `src/geometry/**`, `src/storage/**`, `tests/purity/**`, `eslint.config.js`, `tsconfig*.json`, `vitest.config.ts` | sonnet |
+| `renderer` | the lazy Brain space renderer and its build budget | `src/app/brain/**`, `vite.config.ts`, `scripts/check-bundle-size.mjs` | sonnet |
+| `ui` | screens, components, copy, tokens, docs for users | `src/app/**` except `brain/`, `src/copy/**`, `src/design/**`, `README.md` | sonnet |
 | `design-critic` | judges built screens against ADR-018, ADR-021 and the reference stills; read-only | nothing | opus |
-| `accessibility` | axe, keyboard, the text equivalent, 2.2.2 and contrast; read-only plus tests | `tests/e2e/**` | sonnet |
-| `qa-webkit` | runs Playwright on the WebKit iPhone preset, including frame-time guards | `tests/**` | sonnet |
+| `accessibility` | axe, keyboard, the text equivalent, 2.2.2, 2.5.7 and contrast | `tests/e2e/**` | sonnet |
+| `qa-webkit` | runs Playwright on the WebKit iPhone preset, including frame-time guards | `tests/**`, `playwright.config.ts` | sonnet |
 | `code-reviewer` | reviews a diff it did not write against the spec and plan | nothing | opus |
 
 - **Consequences:**
   - two writers that work in parallel use separate worktrees;
+  - CI workflow changes stay with the lead;
   - approval gates are never delegated;
   - model choices keep usage within the owner's Max plan.
+
+## ADR-033: Every Brain space action works without the canvas
+
+- Date: 2026-11-12 · Status: **Proposed**
+- **Context:** The brief requires every action to work without the canvas, a text equivalent listing parts and counts, and 48 px touch targets. The review found that turning worked only by dragging (WCAG 2.5.7), that the two-minute reveal on Started had no pause (2.2.2), and that `touch-action: none` could trap scrolling at 200% zoom.
+- **Decision** (spec §16.10):
+  - **The canvas is never needed.** It is `aria-hidden` and never focusable. Every action is a DOM control: part chips, **Still**, **Zoom in** and **Zoom out**, **Turn left** and **Turn right**, and the part card sheet with a focus trap.
+  - **Keyboard:** while a plate control has focus, ← and → turn, and + and − zoom.
+  - **Text equivalent:** each part with its starts, its plan lines with labels and counts, its start lines, then "No part", then the motion sentence.
+  - **Still on every plate.**
+  - **Touch:** `touch-action` falls back to `pan-y` whenever the page scrolls.
+- **Consequences:** E2E checks the controls without a pointer drag and with the renderer chunk blocked, and axe runs on Home and Started with the plate in both themes.
+
+## ADR-034: The demo fills the brain without faking data
+
+- Date: 2026-11-12 · Status: **Proposed**
+- **Context:** The brief asks for the 10-week demo to fill the brain. Spec §7.4 fixes the demo's shape: starts rising from about 6 to about 15 a week, 3 plans, and about 85% of occurrences started. The review found the first draft's 5 plans would break those bands.
+- **Options:**
+  - more plans and starts, which breaks §7.4's realism;
+  - keep §7.4's bands, with parts and staggered plans so every strength appears.
+- **Decision:** the second (spec §16.11).
+  - **Parts:** 5 named parts, with about 80% of starts tagged.
+  - **Plans:** the 3 plans, started in weeks 1, 3 and 6, reach Well-worn, Steady and Repeated.
+  - **Moving:** the generator places a start on `endDate`.
+- **Consequences:** every part has light and every strength appears, so a visitor sees the full range on the same projection as real data.
