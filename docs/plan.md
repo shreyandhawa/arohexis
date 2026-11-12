@@ -790,7 +790,7 @@ export function exportBackup(d: AppDeps, share: { canShareFiles: boolean; share(
 
   Then add a test `README prose passes copy rules` to `src/copy/copy.test.ts`. It reads `README.md`, drops fenced code blocks and every line containing `http` or `doi:`, and checks the rest with `checkCopy`. Run `npx vitest run src/copy`. Expected: PASS.
 - [x] **Step 2:** Request a whole-branch review with `superpowers:requesting-code-review` (or the `pr-review-toolkit:code-reviewer` agent) against spec §5–8 and this milestone. Fix the findings and commit.
-- [ ] **Step 3: Owner acceptance on iPhone** (preview URL):
+- [x] **Step 3: Owner acceptance on iPhone** (preview URL):
   - add to Home Screen;
   - airplane mode, then stuck flow, timing it at under 30 s;
   - Undo, then tag;
@@ -798,8 +798,8 @@ export function exportBackup(d: AppDeps, share: { canShareFiles: boolean; share(
   - VoiceOver: the stuck flow is operable.
 
   Record the results in the PR description.
-- [ ] **Step 4: Owner step.** Merge the PR. Confirm the `deploy` job succeeds and the production URL serves the app with the CSP header.
-- [ ] **Step 5:** Tick M1 in the ledger below and commit: `docs: mark milestone 1 done`.
+- [x] **Step 4: Owner step.** Merge the PR. Confirm the `deploy` job succeeds and the production URL serves the app with the CSP header.
+- [x] **Step 5:** Tick M1 in the ledger below and commit: `docs: mark milestone 1 done`.
 
 ---
 
@@ -1644,7 +1644,7 @@ export function setPartEnabled(d: AppDeps, id: string, enabled: boolean): Promis
 
 ## Ledger
 
-- [ ] M1: The stuck button, on the iPhone
+- [x] M1: The stuck button, on the iPhone
 - [ ] M2: Brain space
 - [ ] M3: If-then plans and reminders
 - [ ] M4: Insights and the weekly check-in
