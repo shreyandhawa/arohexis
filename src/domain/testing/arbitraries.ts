@@ -1,6 +1,6 @@
 import * as fc from 'fast-check';
 import type { AppEvent, Basis } from '../events';
-import type { Config, Settings, WeekDay } from '../config';
+import type { ColourId, Config, Part, RegionId, Settings, WeekDay } from '../config';
 
 const BASES: Basis[] = [
   'name-the-feeling',
@@ -143,6 +143,32 @@ const arbListItem = fc.record({
   enabled: fc.boolean(),
 });
 
+const ALL_SLOTS: readonly ColourId[] = [1, 2, 3, 4, 5, 6];
+
+/** Valid part sets only: up to six, with distinct regions and colours. */
+export function arbParts(): fc.Arbitrary<Part[]> {
+  return fc
+    .tuple(
+      fc.shuffledSubarray([...ALL_SLOTS]),
+      fc.shuffledSubarray([...ALL_SLOTS]),
+      fc.array(fc.tuple(arbText, fc.boolean()), { maxLength: 6 }),
+    )
+    .map(([regions, colours, texts]) => {
+      const n = Math.min(regions.length, colours.length, texts.length);
+      return Array.from({ length: n }, (_, i) => {
+        const [label, enabled] = texts[i] as [string, boolean];
+        return {
+          id: `part${i}`,
+          label: label.trim() === '' ? 'Part' : label.trim().slice(0, 24),
+          order: i + 1,
+          enabled,
+          colour: colours[i] as ColourId,
+          region: regions[i] as RegionId,
+        };
+      });
+    });
+}
+
 const arbFeeling = fc.record({
   id: arbText,
   label: arbText,
@@ -173,6 +199,7 @@ const arbPlan = fc.record(
     active: fc.boolean(),
     createdAt: fc.nat(),
     editCount: fc.nat({ max: 50 }),
+    partId: arbText,
   },
   {
     requiredKeys: [
@@ -198,6 +225,7 @@ const arbSettings = fc.record(
     lastExportAt: fc.nat(),
     persistRequested: fc.boolean(),
     onboarded: fc.boolean(),
+    brainStill: fc.constantFrom<'still' | 'moving'>('still', 'moving'),
   },
   { requiredKeys: ['theme', 'weekStartsOn', 'checkinDay', 'persistRequested', 'onboarded'] },
 );
@@ -207,7 +235,7 @@ export function arbConfig(): fc.Arbitrary<Config> {
   return fc.record({
     feelings: fc.array(arbFeeling, { maxLength: 4 }),
     responses: fc.array(arbResponse, { maxLength: 4 }),
-    taskTypes: fc.array(arbListItem, { maxLength: 4 }),
+    parts: arbParts(),
     obstacles: fc.array(arbListItem, { maxLength: 4 }),
     plans: fc.array(arbPlan, { maxLength: 4 }),
     settings: arbSettings,

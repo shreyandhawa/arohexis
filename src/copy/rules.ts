@@ -13,6 +13,20 @@ export const BANNED_WORDS: readonly string[] = [
   'should have',
   'must',
   'hurry',
+  'rewire',
+  'rewires',
+  'rewired',
+  'rewiring',
+  'neural',
+  'neuron',
+  'neurons',
+  'synapse',
+  'synapses',
+  'plasticity',
+  'neuroplasticity',
+  'fire',
+  'fired',
+  'firing',
 ];
 
 export function wordCount(text: string): number {

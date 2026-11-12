@@ -4,7 +4,7 @@ import {
   DEFAULT_FEELINGS,
   DEFAULT_OBSTACLES,
   DEFAULT_RESPONSES,
-  DEFAULT_TASK_TYPES,
+  DEFAULT_PARTS,
   GENERIC_RESPONSE_ID,
 } from '../domain/defaults';
 import { EXPORT_MESSAGES } from '../domain/exportFormat';
@@ -47,9 +47,14 @@ describe('copy rules', () => {
       expect(checkCopy(r.body)).toEqual([]);
       expect(wordCount(r.body)).toBeLessThanOrEqual(40);
     }
-    for (const t of DEFAULT_TASK_TYPES) expect(checkCopy(t.label)).toEqual([]);
+    for (const t of DEFAULT_PARTS) expect(checkCopy(t.label)).toEqual([]);
     for (const o of DEFAULT_OBSTACLES) expect(checkCopy(o.label)).toEqual([]);
     for (const s of Object.values(BASIS_SOURCES)) expect(checkCopy(s)).toEqual([]);
+  });
+
+  it('bans the neuroscience words', () => {
+    expect(checkCopy('Rewired by firing')).toHaveLength(2);
+    expect(BANNED_WORDS).toHaveLength(28);
   });
 
   it('export messages pass copy rules', () => {
@@ -82,14 +87,7 @@ describe('copy rules', () => {
       label: 'Something else',
       order: 99,
     });
-    expect(DEFAULT_TASK_TYPES.map((t) => t.label)).toEqual([
-      'Writing',
-      'Study',
-      'Admin & email',
-      'Chores',
-      'Creative',
-      'Other',
-    ]);
+    expect(DEFAULT_PARTS.map((t) => t.label)).toEqual(['Work', 'Study', 'Health', 'Home', 'Money']);
     expect(DEFAULT_OBSTACLES.map((o) => o.label)).toEqual([
       "Timing didn't fit",
       'Low energy',

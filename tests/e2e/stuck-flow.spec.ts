@@ -153,7 +153,7 @@ test('returning after the phone locks shows two minutes done', async ({ page }) 
   await page.clock.install();
   await toStarted(page);
   const attemptId = attemptIdFromUrl(page);
-  // Pause so no interval can fire; only the visibilitychange handler may refresh.
+  // Pause so no interval runs; only the visibilitychange handler may refresh.
   const before = await page.evaluate(() => Date.now());
   await page.clock.pauseAt(before + 1000);
   await page.clock.setSystemTime(before + 10 * 60 * 1000);

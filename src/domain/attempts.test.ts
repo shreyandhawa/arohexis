@@ -57,7 +57,8 @@ describe('foldAttempts', () => {
       response: { id: 'anxious.name', basis: 'name-the-feeling' },
       start: { at: t0 + 1000, tz: 'America/New_York', backfilled: false },
       undone: false,
-      taskType: { id: 'writing', label: 'Writing' },
+      part: { id: 'writing', label: 'Writing' },
+      tags: [{ id: 'writing', label: 'Writing', at: expect.any(Number) }],
       timer: { elapsedSec: 120, outcome: 'kept-going' },
       dismissed: false,
     });
@@ -113,16 +114,24 @@ describe('foldAttempts', () => {
 
   it('latest tag wins', () => {
     const { deps, open } = setup();
-    const evts: AppEvent[] = [
-      open(),
-      createEvent(deps, 'start.tagged', {
-        attemptId: 'a1',
-        taskTypeId: 'writing',
-        label: 'Writing',
-      }),
-      createEvent(deps, 'start.tagged', { attemptId: 'a1', taskTypeId: 'admin', label: 'Admin' }),
-    ];
-    expect(findAttempt(evts, 'a1')?.taskType).toEqual({ id: 'admin', label: 'Admin' });
+    const first = createEvent(deps, 'start.tagged', {
+      attemptId: 'a1',
+      taskTypeId: 'writing',
+      label: 'Writing',
+    });
+    deps.clock.advance(500);
+    const second = createEvent(deps, 'start.tagged', {
+      attemptId: 'a1',
+      taskTypeId: 'admin',
+      label: 'Admin',
+    });
+    const a = findAttempt([open(), first, second], 'a1');
+    expect(a?.part).toEqual({ id: 'admin', label: 'Admin' });
+    expect(a?.tags).toEqual([
+      { id: 'writing', label: 'Writing', at: first.at },
+      { id: 'admin', label: 'Admin', at: second.at },
+    ]);
+    expect(second.at).toBeGreaterThan(first.at);
   });
 
   it('a second start.made keeps the first start time', () => {

@@ -134,7 +134,7 @@ describe('storage', () => {
     expect(data.events).toEqual([opened]);
     expect(data.feelings).toHaveLength(6);
     expect(data.responses).toHaveLength(16);
-    expect(data.taskTypes.length).toBeGreaterThan(0);
+    expect(data.parts).toHaveLength(5);
     expect(data.obstacles.length).toBeGreaterThan(0);
     expect(data.plans).toEqual([]);
     expect(data.settings.weekStartsOn).toBe(0);

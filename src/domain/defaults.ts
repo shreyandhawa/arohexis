@@ -1,4 +1,4 @@
-import type { Feeling, FeelingResponse, ListItem } from './config';
+import type { Feeling, FeelingResponse, ListItem, Part } from './config';
 import type { Basis } from './events';
 
 export const OTHER_FEELING_ID = 'other';
@@ -160,13 +160,12 @@ export const DEFAULT_RESPONSES: readonly FeelingResponse[] = [
   },
 ];
 
-export const DEFAULT_TASK_TYPES: readonly ListItem[] = [
-  { id: 'writing', label: 'Writing', order: 1, enabled: true },
-  { id: 'study', label: 'Study', order: 2, enabled: true },
-  { id: 'admin', label: 'Admin & email', order: 3, enabled: true },
-  { id: 'chores', label: 'Chores', order: 4, enabled: true },
-  { id: 'creative', label: 'Creative', order: 5, enabled: true },
-  { id: 'other-task', label: 'Other', order: 6, enabled: true },
+export const DEFAULT_PARTS: readonly Part[] = [
+  { id: 'work', label: 'Work', order: 1, enabled: true, colour: 1, region: 1 },
+  { id: 'study', label: 'Study', order: 2, enabled: true, colour: 2, region: 2 },
+  { id: 'health', label: 'Health', order: 3, enabled: true, colour: 3, region: 3 },
+  { id: 'home', label: 'Home', order: 4, enabled: true, colour: 4, region: 4 },
+  { id: 'money', label: 'Money', order: 5, enabled: true, colour: 5, region: 5 },
 ];
 
 export const DEFAULT_OBSTACLES: readonly ListItem[] = [

@@ -42,7 +42,7 @@ export function Started() {
 
   const startAt = attempt.start.at;
   const { remainingSec, done } = timerState(startAt, now);
-  const taskTypes = (config?.taskTypes ?? [])
+  const taskTypes = (config?.parts ?? [])
     .filter((t) => t.enabled)
     .sort((a, b) => a.order - b.order);
 
@@ -101,11 +101,7 @@ export function Started() {
         <h2 className={styles['tagsTitle']}>{copy.tagsTitle}</h2>
         <div className={styles['chips']}>
           {taskTypes.map((t) => (
-            <Chip
-              key={t.id}
-              pressed={attempt.taskType?.id === t.id}
-              onClick={() => void onTag(t.id)}
-            >
+            <Chip key={t.id} pressed={attempt.part?.id === t.id} onClick={() => void onTag(t.id)}>
               {t.label}
             </Chip>
           ))}

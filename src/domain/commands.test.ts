@@ -9,7 +9,7 @@ import {
   tagStart,
   undoStart,
 } from './commands';
-import type { Feeling, FeelingResponse, ListItem } from './config';
+import type { Feeling, FeelingResponse, Part } from './config';
 import type { AppEvent, ResponseShown } from './events';
 import { testDeps } from './testing/fixtures';
 
@@ -24,7 +24,7 @@ const resp = (id: string, order: number): FeelingResponse => ({
   builtIn: true,
 });
 const responses = [resp('r1', 1), resp('r2', 2)];
-const taskType: ListItem = { id: 't1', label: 'Email', order: 1, enabled: true };
+const part: Pick<Part, 'id' | 'label'> = { id: 't1', label: 'Email' };
 
 function setup() {
   const deps = testDeps();
@@ -105,11 +105,11 @@ describe('undoStart', () => {
 });
 
 describe('tagStart', () => {
-  it('snapshots the label and needs a counted start', () => {
+  it("snapshots the part's label and needs a counted start", () => {
     const { deps, events, id } = setup();
-    expect(tagStart(deps, events, id, taskType)).toEqual([]);
+    expect(tagStart(deps, events, id, part)).toEqual([]);
     events.push(...makeStart(deps, events, id));
-    const [e] = tagStart(deps, events, id, taskType);
+    const [e] = tagStart(deps, events, id, part);
     expect(e).toMatchObject({ type: 'start.tagged', taskTypeId: 't1', label: 'Email' });
   });
 });

@@ -11,7 +11,10 @@ export type Attempt = {
   response?: { id: string; basis: Basis };
   start?: { at: number; tz: string; backfilled: boolean };
   undone: boolean;
-  taskType?: { id: string; label: string };
+  /** The latest tag. */
+  part?: { id: string; label: string };
+  /** Every start.tagged, in order. */
+  tags: { id: string; label: string; at: number }[];
   timer?: { elapsedSec: number; outcome: 'kept-going' | 'stopped' };
   dismissed: boolean;
 };
@@ -38,6 +41,7 @@ export function foldAttempts(events: readonly AppEvent[]): Attempt[] {
       ...(e.planId !== undefined && { planId: e.planId }),
       ...(e.occurrence !== undefined && { occurrence: e.occurrence }),
       undone: false,
+      tags: [],
       dismissed: false,
     });
   }
@@ -62,7 +66,8 @@ export function foldAttempts(events: readonly AppEvent[]): Attempt[] {
         a.undone = true;
         break;
       case 'start.tagged':
-        a.taskType = { id: e.taskTypeId, label: e.label };
+        a.part = { id: e.taskTypeId, label: e.label };
+        a.tags.push({ id: e.taskTypeId, label: e.label, at: e.at });
         break;
       case 'timer.closed':
         a.timer = { elapsedSec: e.elapsedSec, outcome: e.outcome };
