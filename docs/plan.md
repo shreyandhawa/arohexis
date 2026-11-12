@@ -1133,23 +1133,23 @@ export function lineShade(lineId: string, base: Hsl): Hsl; // hue within ±8°, 
   - **Overflow:** once a region's start fibres are all used, each further start line lights the next unlit strand end (strand 1, 2, …) of the earliest-ordered start-line fibre that has one. When every end is lit, it gets `'none'`;
   - **Core sparks** (start lines with `partId: null`) take core strand ends the same way.
 
-- [ ] **Step 1:** Write the failing purity tests in `purity.test.ts`:
+- [x] **Step 1:** Write the failing purity tests in `purity.test.ts`:
   - the geometry tsconfig rejects `window` (via the new fixture);
   - ESLint rejects a `react` import in `src/geometry/x.ts`;
   - ESLint rejects `../app/x` from `src/geometry/x.ts`, and allows `../domain/random`;
   - ESLint rejects `../geometry/field` from `src/domain/x.ts`.
-- [ ] **Step 2:** Run `npx vitest run tests/purity`. Expected: FAIL. Then add the tooling:
+- [x] **Step 2:** Run `npx vitest run tests/purity`. Expected: FAIL. Then add the tooling:
   - **`src/geometry/tsconfig.json`:** the same as the domain's;
   - **ESLint:** a `src/geometry/**/*.ts` block with the domain's first group and `['../storage*', '../app*', '../copy*', '../design*', '../../*']`. The domain's second group gains `'../geometry*'`;
   - **`typecheck`:** appends `&& tsc -p src/geometry/tsconfig.json`;
   - **Coverage:** include `src/geometry/**/*.ts`, with thresholds `{ 'src/domain/**': { lines: 95, branches: 90 }, 'src/geometry/**': { lines: 90 } }`.
 
   Run it again. Expected: PASS.
-- [ ] **Step 3:** Write the failing `random.test.ts`:
+- [x] **Step 3:** Write the failing `random.test.ts`:
   - the first three values of `mulberry32(1)` are pinned, taken from the reference algorithm;
   - every value is in [0, 1);
   - `hash32('')` is `2166136261` and `hash32('a')` is `0xe40c292c`.
-- [ ] **Step 4:** Write the failing `geometry.test.ts`:
+- [x] **Step 4:** Write the failing `geometry.test.ts`:
   - `same seed, same field`: `fieldHash(buildField())` is the same twice and equals `FIELD_HASH`. Changing that constant later moves every user's light, so it needs an ADR;
   - `counts`:
     - `FIBRE_COUNT` fibres;
@@ -1168,12 +1168,12 @@ export function lineShade(lineId: string, base: Hsl): Hsl; // hue within ±8°, 
   - `core sparks take core ends`;
   - `lineShade stays within range and is stable per id`;
   - `PULL_DIRECTIONS are unit vectors, and the core's is zero`.
-- [ ] **Step 5:** Run `npx vitest run src/domain/random.test.ts src/geometry`. Expected: FAIL.
-- [ ] **Step 6:** Implement.
+- [x] **Step 5:** Run `npx vitest run src/domain/random.test.ts src/geometry`. Expected: FAIL.
+- [x] **Step 6:** Implement.
   - **Layout:** lay the six regions and the core out like the reference: two halves, a central core and a lower rear area. Write the table of regions to areas as a comment in `field.ts`, with neutral names only.
   - **Shape from placement only**, with no outline data.
-- [ ] **Step 7:** Run it again. Expected: PASS. Pin `FIELD_HASH`, then run the gate.
-- [ ] **Step 8:** Commit: `feat(geometry): seeded Brain space field and stable fibre assignment`.
+- [x] **Step 7:** Run it again. Expected: PASS. Pin `FIELD_HASH`, then run the gate.
+- [x] **Step 8:** Commit: `feat(geometry): seeded Brain space field and stable fibre assignment`.
 
 ### Task 6: Plate tokens and part colours
 
