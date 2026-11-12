@@ -845,7 +845,7 @@ export function projectBrainSpace(attempts: readonly Attempt[], plans: readonly 
 - 4 amber `hsl(38 95% 60%)`
 - 5 violet `hsl(262 92% 72%)`
 
-Id 6 is whichever of blue `hsl(225 90% 70%)` or lime `hsl(85 80% 55%)` passes the checks below. The token task may adjust lightness to pass.
+Id 6 is blue `hsl(225 90% 76%)`. M2 Task 6 chose it from two candidates: blue at its starting lightness of 70% fails deuteranopia, and lime `hsl(85 80% 55%)` doesn't pass within ±10 points.
 
 **Checks** (unit tests on the token values):
 - every base part colour is at least 4.5:1 against `--plate-bg`, so labels pass as text;
@@ -855,7 +855,7 @@ Id 6 is whichever of blue `hsl(225 90% 70%)` or lime `hsl(85 80% 55%)` passes th
   - CIEDE2000 ΔE of at least 12 between every pair in normal vision;
   - at least 6 under each of protanopia, deuteranopia and tritanopia, simulated with Machado et al. (2009) at full severity.
 
-  The reference's five colours measure 13.3, 9.0, 8.6 and 6.6 at their closest. Shades within one part aren't compared;
+  The reference's five colours measure 19.8, 8.6, 8.7 and 6.6 at their closest, in that order (measured in M2 Task 6; an earlier estimate said 13.3, 9.0, 8.6 and 6.6). Shades within one part aren't compared;
 - colour is never the only cue: each part is named on its label, its chip, its card and in the text equivalent (WCAG 1.4.1).
 
 **What Brain space conveys, and where.** Everything Brain space conveys is also in DOM text: the text equivalent and the part card. So the canvas's lines and points are supplementary graphics, not the only carrier of information (WCAG 1.4.11). Start lines are drawn fainter than 3:1 by design. Controls on the plate meet 3:1, and their text meets 4.5:1.

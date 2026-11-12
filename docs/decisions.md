@@ -473,7 +473,7 @@ Statuses:
   - **Labels** on the plate use the base part colour on an opaque `--plate-bg` backing, at least 4.5:1.
   - **Outside the plate**, part colours are only swatches beside a name, and no text is ever set in a part colour.
   - **Lines and points are supplementary.** Everything they convey is also in the text equivalent and the part card. Base colours and waiting lines meet 3:1, and start lines are fainter by design.
-  - **Distinctness:** base colours stay apart by CIEDE2000 ≥ 12 in normal vision, and ≥ 6 under simulated protanopia, deuteranopia and tritanopia (Machado et al. 2009, full severity). The reference's five colours measure 13.3, 9.0, 8.6 and 6.6 at their closest.
+  - **Distinctness:** base colours stay apart by CIEDE2000 ≥ 12 in normal vision, and ≥ 6 under simulated protanopia, deuteranopia and tritanopia (Machado et al. 2009, full severity). The reference's five colours measure 19.8, 8.6, 8.7 and 6.6 at their closest, in normal vision, protanopia, deuteranopia and tritanopia (measured in M2 Task 6, which corrected this ADR's first figures of 13.3, 9.0, 8.6 and 6.6).
 - **Consequences:**
   - in the light theme, Home carries a black panel. The owner judges its weight at the Home review;
   - Insights stays neutral, with no part colours.

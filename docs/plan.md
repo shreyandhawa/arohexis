@@ -1202,7 +1202,7 @@ export function simulateCvd(hex: string, kind: 'protanopia' | 'deuteranopia' | '
   - `--plate-bg`, `--plate-dim-point`, `--plate-dim-trace`, `--plate-waiting`, `--plate-core` and `--part-1`…`--part-6` are declared once, outside the theme blocks, so they are the same in both themes;
   - a `.plate-scope` block redeclares every semantic colour token with the dark theme's values (ADR-026).
 
-- [ ] **Step 1:** Write the failing tests:
+- [x] **Step 1:** Write the failing tests:
   - `ciede2000 matches Sharma, Wu and Dalal (2005)`: pair 1, (50, 2.6772, −79.7751) against (50, 0, −82.7485), gives 2.0425 to four decimals, plus two more rows from that table;
   - `simulateCvd leaves greys unchanged`, and pure red under protanopia matches the matrix applied by hand;
   - `part colours meet spec §16.7`:
@@ -1213,10 +1213,10 @@ export function simulateCvd(hex: string, kind: 'protanopia' | 'deuteranopia' | '
     - no hue lies within 15° of red;
   - `tokens.css mirrors partColours.ts`, and `.plate-scope equals the dark block`;
   - `global.css has a .visually-hidden class`.
-- [ ] **Step 2:** Run `npx vitest run src/design`. Expected: FAIL.
-- [ ] **Step 3:** Implement. For id 6, try blue `hsl(225 90% 70%)` first, then lime `hsl(85 80% 55%)`. Lightness may move in steps of 2 points to pass (the review's estimate: blue fails deuteranopia at 70% and passes near 76%). If neither candidate passes within ±10 points, stop and report the closest pairs to the lead. The lead writes the chosen value into spec §16.7.
-- [ ] **Step 4:** Run it again. Expected: PASS. Then run the gate.
-- [ ] **Step 5:** Commit: `feat(design): plate tokens and part colours with contrast and colour-vision checks`.
+- [x] **Step 2:** Run `npx vitest run src/design`. Expected: FAIL.
+- [x] **Step 3:** Implement. For id 6, try blue `hsl(225 90% 70%)` first, then lime `hsl(85 80% 55%)`. Lightness may move in steps of 2 points to pass (the review's estimate: blue fails deuteranopia at 70% and passes near 76%). If neither candidate passes within ±10 points, stop and report the closest pairs to the lead. The lead writes the chosen value into spec §16.7.
+- [x] **Step 4:** Run it again. Expected: PASS. Then run the gate.
+- [x] **Step 5:** Commit: `feat(design): plate tokens and part colours with contrast and colour-vision checks`.
 
 ### Task 7: Renderer and Home
 
