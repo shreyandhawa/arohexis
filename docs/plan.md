@@ -866,7 +866,7 @@ tests/e2e/                  brain-home, brain-started, parts, brain-guards, brai
   - put the reference stills and the canvas prototype in `docs/reference/brain-space/`, ideally with a line per still saying what it shows.
   Wait for both.
 - [ ] **Step 2:** Read every file the owner added. The repository is public, so check the prototype carries no secrets and no third-party code whose licence forbids publishing. Ask the owner if anything does. The prototype's anatomy-named identifiers are fine there, because the anatomy scan covers `src/**` and `tests/**` only.
-- [ ] **Step 3:** Write the eight agent files.
+- [x] **Step 3:** Write the eight agent files.
   - **Frontmatter:** `name`, `description`, `tools` and `model`, per ADR-032's table. The read-only agents get `tools: Read, Grep, Glob`. `researcher` adds `WebSearch, WebFetch`. `code-reviewer` adds `Bash`, and its body limits it to `git` reads and test commands.
   - **Body:**
     - the job;
@@ -875,16 +875,16 @@ tests/e2e/                  brain-home, brain-started, parts, brain-guards, brai
     - it never talks to the owner, never commits or pushes, and never edits `.github/`;
     - it returns under 200 words, plus paths and command output.
   - **If the new agent types don't load in the running session**, brief a `general-purpose` agent with the agent file's body and its model.
-- [ ] **Step 4:** Copy unslop.
+- [x] **Step 4:** Copy unslop.
   - Clone `heydamir/unslop` into the session scratchpad, check out `97daa3e`, and copy `skills/unslop` without `scripts/` to `.claude/skills/unslop/`. Copy the repository's `LICENSE` (CC BY 4.0) beside it. Read every copied file before committing.
   - `ATTRIBUTION.md`: "unslop by heydamir, https://github.com/heydamir/unslop, commit 97daa3eb365670ea3f87ed85356cbfcee18105a5, licensed CC BY 4.0. Changes: `scripts/` removed." List any `SKILL.md` steps that call `scripts/` as unavailable here.
-- [ ] **Step 5:** Update the milestone mentions:
+- [x] **Step 5:** Update the milestone mentions:
   - `README.md:19` becomes "Demo: coming in M5.";
   - `README.md:9` becomes "Later milestones add Brain space, if-then plans, insights and a weekly check-in.";
   - the `home.ts:9` comment names M3 for Plans and M4 for Insights;
   - the `config.ts:58` comment becomes `/** Extended by later milestones: parts (M2), plans (M3), import (M5). */`.
-- [ ] **Step 6:** Update the ignore files, then run the gate. Expected: exit 0.
-- [ ] **Step 7:** Commit and push.
+- [x] **Step 6:** Update the ignore files, then run the gate. Expected: exit 0.
+- [x] **Step 7:** Commit and push.
 
 ```bash
 git add .claude .gitignore .prettierignore eslint.config.js README.md src/copy/home.ts src/domain/config.ts docs/reference
@@ -895,7 +895,7 @@ git commit -m "chore: add the project subagents, unslop, the Brain space referen
 
 **Builder:** `renderer`, outside the repo. **Files:** none in the repo; `docs/decisions.md` (ADR-029).
 
-- [ ] **Step 1:** In the session scratchpad, rebuild ADR-029's canvas 2D test page.
+- [x] **Step 1:** In the session scratchpad, rebuild ADR-029's canvas 2D test page.
   - **Counts:** 670 fibres of 8 strands, each strand 8 to 22 points, with a point at each strand end.
   - **Drawing:** the dim field with normal blending into an offscreen cache, additive light (`lighter`) on top, and signals on 30 lines.
   - **Interaction:** drag turns (yaw and pitch), and pinch or the wheel zooms.
@@ -962,7 +962,7 @@ export function tag(d: AppDeps, attemptId: string, partId: string): Promise<void
   - `editPart` never changes `region`, and a colour that another part holds is swapped with it (ADR-035);
   - `validateParts` checks at most six parts, unique regions, unique colours and label length.
 
-- [ ] **Step 1:** Write the failing domain tests.
+- [x] **Step 1:** Write the failing domain tests.
   - **`parts.test.ts`:**
     - `migrateTaskTypes maps M1's defaults`: the six M1 task types (writing, study, admin "Admin & email", chores, creative, other-task, orders 1–6) give five parts with the same ids and labels, regions and colours 1–5 in order, all enabled, with no `other-task`;
     - `migrateTaskTypes skips disabled types and keeps the first six by order`;
@@ -977,7 +977,7 @@ export function tag(d: AppDeps, attemptId: string, partId: string): Promise<void
     - `parseExport migrates a version 1 backup`: a version 1 file with M1's six task types and no `brainStill` is ok, `version` is 2, `parts` equals `migrateTaskTypes(taskTypes)`, and the events are unchanged;
     - `rejects version 3`, with the newer-version message;
     - **Property** round-trip over version 2 data, with a new `arbParts()` (valid sets only), `brainStill` sometimes set, and plans sometimes carrying `partId`.
-- [ ] **Step 2:** Write the failing storage tests in `migrate.test.ts`, using fake-indexeddb.
+- [x] **Step 2:** Write the failing storage tests in `migrate.test.ts`, using fake-indexeddb.
   - `upgrades an M1 database` (Review Focus #10):
     - **Setup:** open a raw `Dexie('test-…')` that declares only M1's `version(1)` schema. Add M1's six task types, kv `seeded`, and events for four counted starts tagged `writing`, `other-task` and none, and one undone. Close it.
     - **Then:** `openStorage(name)`.
@@ -989,23 +989,23 @@ export function tag(d: AppDeps, attemptId: string, partId: string): Promise<void
   - `a new database seeds the default parts`.
   - `applyConfigPatch upserts parts and rejects an invalid set`: a patch that makes seven parts rejects and writes nothing.
   - `brainStill round-trips`: after `applyConfigPatch({ settings: { brainStill: 'still' } })`, both `getConfig()` and `readExportData()` carry it.
-- [ ] **Step 3:** Run `npx vitest run src/domain src/storage`. Expected: FAIL.
-- [ ] **Step 4:** Implement the domain and storage changes.
+- [x] **Step 3:** Run `npx vitest run src/domain src/storage`. Expected: FAIL.
+- [x] **Step 4:** Implement the domain and storage changes.
   - **Dexie:** `this.version(2).stores({ parts: 'id, order', taskTypes: null }).upgrade(…)` writes `migrateTaskTypes` of the old rows. If the upgrade can't read a table its own version deletes, keep `taskTypes` in version 2 and drop it in a version 3 with no upgrade. The fixture test decides.
   - **Settings:** `brainStill` joins `configStore`'s optional keys, the export settings schema and `arbSettings`.
   - **`applyConfigPatch`:** writes `kv` and `parts` in one transaction, and throws when `validateParts` of the merged set isn't `[]`.
-- [ ] **Step 5:** Run it again. Expected: PASS, with the domain coverage gate held.
-- [ ] **Step 6:** Write the copy guards, test first.
+- [x] **Step 5:** Run it again. Expected: PASS, with the domain coverage gate held.
+- [x] **Step 6:** Write the copy guards, test first.
   - **`rules.ts`:** `BANNED_WORDS` gains the 14 words of spec §16.9. The test asserts `checkCopy('Rewired by firing')` has length 2.
   - **`anatomy.ts`:** exports `ANATOMY_WORDS`, the 32 words of spec §16.5.
   - **`anatomy.test.ts`:**
     - walks every file under `src/` and `tests/`, skipping `tests/purity/anatomy.ts`, `tests/purity/anatomy.test.ts` and `src/copy/rules.ts` (whose banned list shares four words), and expects no whole-word, case-insensitive match;
     - a sanity case builds a sample from `ANATOMY_WORDS[0]` and expects the matcher to find it.
   - Reword the "fire" comment at `tests/e2e/stuck-flow.spec.ts:156`.
-- [ ] **Step 7:** Run `npx vitest run src/copy tests/purity`. Expected: PASS.
-- [ ] **Step 8:** In `stuck.test.ts`, write `tag records the part's label` and `tag rejects an unknown part` (the error names the id), then switch `tag` to `config.parts`. In `Started.tsx`, list `config.parts` that are enabled, by `order`, with `pressed={attempt.part?.id === p.id}`. `.chips` becomes one row: `flex-wrap: nowrap; overflow-x: auto`, with chips `flex: none`. `copy.test.ts` pins the five default part labels.
-- [ ] **Step 9:** Update `stuck-flow.spec.ts` (`Writing` becomes `Work`) and add `the parts row is one line`: every chip shares one `offsetTop`. Run `npx playwright test tests/e2e/stuck-flow.spec.ts`. Expected: PASS.
-- [ ] **Step 10:** Run the gate. Then commit:
+- [x] **Step 7:** Run `npx vitest run src/copy tests/purity`. Expected: PASS.
+- [x] **Step 8:** In `stuck.test.ts`, write `tag records the part's label` and `tag rejects an unknown part` (the error names the id), then switch `tag` to `config.parts`. In `Started.tsx`, list `config.parts` that are enabled, by `order`, with `pressed={attempt.part?.id === p.id}`. `.chips` becomes one row: `flex-wrap: nowrap; overflow-x: auto`, with chips `flex: none`. `copy.test.ts` pins the five default part labels.
+- [x] **Step 9:** Update `stuck-flow.spec.ts` (`Writing` becomes `Work`) and add `the parts row is one line`: every chip shares one `offsetTop`. Run `npx playwright test tests/e2e/stuck-flow.spec.ts`. Expected: PASS.
+- [x] **Step 10:** Run the gate. Then commit:
 
 ```bash
 git commit -am "feat(parts): replace task types with parts (Dexie v2, export v2, copy guards)"
