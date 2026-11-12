@@ -65,7 +65,7 @@ Statuses:
 
 ## ADR-005: Task type is tagged after the start
 
-- Date: 2026-11-11 · Status: **Accepted** · Amended by ADR-023 (proposed): the tag is now a part
+- Date: 2026-11-11 · Status: **Accepted** · Amended by ADR-023: the tag is now a part
 - **Context:** Insights break starts down by task type, but every tap before Start adds friction at the hardest moment.
 - **Options:**
   - an optional tag after the start;
@@ -230,7 +230,7 @@ Statuses:
 
 ## ADR-018: Visual direction C "Contrast"
 
-- Date: 2026-11-11 · Status: **Accepted** · Amended by ADR-021 (proposed): "no hue" applies to chrome; Brain space's plate carries part colours
+- Date: 2026-11-11 · Status: **Accepted** · Amended by ADR-021: "no hue" applies to chrome; Brain space's plate carries part colours
 - **Context:** Task 1 produced three mockups (`.superpowers/sdd/plan/design/`) for the owner to choose between. Task 11 turns this ADR into the CSS tokens, so the values below are exact. Spec §11.1 describes one accent reserved for the primary action and the "Started." moment.
 - **Options:**
   - A "Paper": warm cream, sepia and blue ink with serif display. Not chosen as-is: the owner asked for higher contrast (an off-white background with jet-black text, inverted in dark mode) and kept Paper's typefaces and layout rhythm as the base for C.
@@ -362,7 +362,7 @@ Statuses:
 
 ## ADR-021: Brain space is the main visual, and the owner's review of the built Home is its gate
 
-- Date: 2026-11-12 · Status: **Proposed**
+- Date: 2026-11-12 · Status: **Accepted** (owner approval, 2026-11-12)
 - **Context:** The owner's brief of 2026-11-12 adds Brain space (spec §16), with reference stills and a canvas prototype in `docs/reference/brain-space/`. The brief asked for this to be recorded as ADR-018, replacing the A/B gate. But ADR-018 to ADR-020 already exist, and the gate already ran: three directions were built and Direction C was chosen (ADR-018). ADR-018 also defines the palette as ten neutral greys with no hue.
 - **Options:**
   - a new ADR that amends ADR-018 for Brain space only;
@@ -392,7 +392,7 @@ Statuses:
 
 ## ADR-023: Part replaces Task type
 
-- Date: 2026-11-12 · Status: **Accepted** for the choice (the owner chose "replace" on 2026-11-12); the details below are **Proposed**
+- Date: 2026-11-12 · Status: **Accepted** (the owner chose "replace" and approved the details on 2026-11-12)
 - **Context:** An unplanned start has to land in a part. The only place to choose one without adding a tap is the optional "What is it?" row after the start (ADR-005).
 - **Options:**
   - Part replaces Task type in that row;
@@ -413,7 +413,7 @@ Statuses:
 
 ## ADR-024: Lines grow only from on-cue starts, and nothing is removed
 
-- Date: 2026-11-12 · Status: **Accepted** for "on-cue only" (the owner's choice on 2026-11-12); the details below are **Proposed**
+- Date: 2026-11-12 · Status: **Accepted** (the owner chose "on-cue only" and approved the details on 2026-11-12)
 - **Context:** The brief proposed that only plan lines grow past the first step, because a fixed cue is what the evidence supports (Gollwitzer & Sheeran 2006; Singh et al. 2024, where a stable cue "is thought to help but was not tested"). The brief also asked that nothing ever be removed, and that the signals stop and the lines dim slightly after 48 hours without a start. The review found that tagging after the start, and Undo, would move or remove light.
 - **Options for growth:**
   - any start in the part;
@@ -431,13 +431,13 @@ Statuses:
   - **What else removes light:** only Delete everything and importing a backup, which replace all data.
 - **Consequences:**
   - a line's strength honestly means "times you started on this cue";
-  - the part card shows **Start now** only while an occurrence is open, the same rule as the Home plan card. This narrows the brief's "any waiting plan with a Start button", and the owner is asked to confirm it;
+  - the part card shows **Start now** only while an occurrence is open, the same rule as the Home plan card. This narrows the brief's "any waiting plan with a Start button", and the owner confirmed it on 2026-11-12;
   - resting is a recency signal and could read as a streak by another name. It is mitigated by one fixed step, by copy that never names it as a loss, and by "One start sets them moving again." The owner judges it at the Home review;
   - Brain space is cumulative only: no weeks, comparisons, streaks or completions.
 
 ## ADR-025: Brain space copy: strength labels, focus lines, and no brain claim
 
-- Date: 2026-11-12 · Status: **Proposed**
+- Date: 2026-11-12 · Status: **Accepted** (owner approval, 2026-11-12)
 - **Context:**
   - The reference labels lines Faint, Steady and Automatic. "Automatic" overclaims, because the weekly SRBAI check-in is the measure of automaticity (spec §6.4).
   - The reference's focus lines fail spec §3 and §9.5:
@@ -462,7 +462,7 @@ Statuses:
 
 ## ADR-026: The plate is always dark, with its own contrast checks
 
-- Date: 2026-11-12 · Status: **Proposed**
+- Date: 2026-11-12 · Status: **Accepted** (owner approval, 2026-11-12)
 - **Context:** Additive light only reads on black. The app has light and dark themes and a contrast rule of 4.5:1 for text and 3:1 for UI parts (spec §11.2). The review measured that a part colour as text on the light theme fails (cyan is about 1.6:1), and that labels on a translucent backing over bright light drop below 4.5:1.
 - **Options:**
   - the plate is always dark, and chrome follows the theme;
@@ -480,7 +480,7 @@ Statuses:
 
 ## ADR-027: Motion that carries state, and the Still control
 
-- Date: 2026-11-12 · Status: **Proposed**
+- Date: 2026-11-12 · Status: **Accepted** (owner approval, 2026-11-12)
 - **Context:**
   - Spec §11.2 and ADR-018 say no motion is decorative or looping, and that the reward is one calm settle of 240 ms. §11.1 rules out confetti.
   - Brain space needs moving signals, a burst on the start and a two-minute reveal.
@@ -507,7 +507,7 @@ Statuses:
 
 ## ADR-028: Geometry is generated locally from a seed, and the projection is pure
 
-- Date: 2026-11-12 · Status: **Proposed**
+- Date: 2026-11-12 · Status: **Accepted** (owner approval, 2026-11-12)
 - **Context:**
   - No network requests are allowed after load (spec §12), and the domain must stay pure (spec §5.2).
   - The brief asked for geometry from a seed or a precached asset, and asked that the licence and size be checked first if real tractography data is proposed.
@@ -529,7 +529,7 @@ Statuses:
 
 ## ADR-029: Renderer for Brain space
 
-- Date: 2026-11-12 · Status: **Proposed**
+- Date: 2026-11-12 · Status: **Accepted** (owner approval, 2026-11-12)
 - **Context:**
   - Brain space draws about 670 fibres and about 6,000 points, with additive light and hairlines, in a 358×340 CSS px canvas at device pixel ratio 2.
   - The CSP stays exactly as written (no `unsafe-eval`, no inline scripts or styles, no `blob:` workers). The initial bundle must stay at most 150 kB gzip, and it was 128.9 kB at the end of M1.
@@ -566,7 +566,7 @@ Statuses:
 
 ## ADR-030: Brain space sits on Home above the card, with a strip on Started
 
-- Date: 2026-11-12 · Status: **Proposed**
+- Date: 2026-11-12 · Status: **Accepted** (owner approval, 2026-11-12)
 - **Context:**
   - The stuck flow must stay at most 3 taps, with no typing and no scrolling at 375×667 (spec §2).
   - Home shows at most one card above **I'm stuck** (spec §8.1).
@@ -596,7 +596,7 @@ Statuses:
 
 ## ADR-031: Design skills are installed project-scoped, pinned, and never override the spec
 
-- Date: 2026-11-12 · Status: **Proposed**
+- Date: 2026-11-12 · Status: **Accepted** (owner approval, 2026-11-12)
 - **Context:** The brief asks for frontend-design, unslop and impeccable, installed project-scoped once a subagent has read each one's SKILL.md and scripts, confirmed its licence, and pinned its commit. The vetting ran on 2026-11-12, read-only through `gh api`.
 - **Findings:**
 
@@ -620,7 +620,7 @@ Statuses:
 
 ## ADR-032: Project subagents
 
-- Date: 2026-11-12 · Status: **Proposed** (none is created before the owner's OK)
+- Date: 2026-11-12 · Status: **Accepted** (owner approval, 2026-11-12; the agents are created in M2 Task 1)
 - **Context:** The brief makes the lead the only agent that talks to the owner, owning decisions, the ledger, branches, commits and merges. Subagents do exploration, research, implementation, review and test runs, and a reviewer never sees the work being written.
 - **Decision:** define these in `.claude/agents/`, each with a narrow brief, the files it may touch, and a return of under 200 words plus paths and command output:
 
@@ -643,7 +643,7 @@ Statuses:
 
 ## ADR-033: Every Brain space action works without the canvas
 
-- Date: 2026-11-12 · Status: **Proposed**
+- Date: 2026-11-12 · Status: **Accepted** (owner approval, 2026-11-12)
 - **Context:** The brief requires every action to work without the canvas, a text equivalent listing parts and counts, and 48 px touch targets. The review found that turning worked only by dragging (WCAG 2.5.7), that the two-minute reveal on Started had no pause (2.2.2), and that `touch-action: none` could trap scrolling at 200% zoom.
 - **Decision** (spec §16.10):
   - **The canvas is never needed.** It is `aria-hidden` and never focusable. Every action is a DOM control: part chips, **Still**, **Zoom in** and **Zoom out**, **Turn left** and **Turn right**, and the part card sheet with a focus trap.
@@ -655,7 +655,7 @@ Statuses:
 
 ## ADR-034: The demo fills the brain without faking data
 
-- Date: 2026-11-12 · Status: **Proposed**
+- Date: 2026-11-12 · Status: **Accepted** (owner approval, 2026-11-12)
 - **Context:** The brief asks for the 10-week demo to fill the brain. Spec §7.4 fixes the demo's shape: starts rising from about 6 to about 15 a week, 3 plans, and about 85% of occurrences started. The review found the first draft's 5 plans would break those bands.
 - **Options:**
   - more plans and starts, which breaks §7.4's realism;

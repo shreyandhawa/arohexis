@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. **The checkboxes in this file are the progress ledger:** tick them as you go and commit the ticks with the work.
 
-**Goal:** Ship Arohexis v1, a local-first PWA that trains the moment of starting, in six milestones that each end in something the owner can use on their iPhone. (Five until the Brain space amendment of 2026-11-12, which is proposed; see spec §16 and ADR-021 to ADR-034.)
+**Goal:** Ship Arohexis v1, a local-first PWA that trains the moment of starting, in six milestones that each end in something the owner can use on their iPhone. (Five until the Brain space amendment, approved on 2026-11-12: spec §16, ADR-021 to ADR-034.)
 
 **Architecture:**
 - **Domain:** pure TypeScript in `src/domain` (events, projections, rules), with no DOM, React or Dexie.
@@ -60,7 +60,7 @@
 - Never compute or display completions, streaks, or comparisons between weeks.
 - Coverage gate on `src/domain/**` (excluding `src/domain/testing/**`): lines ≥ 95%, branches ≥ 90%.
 - Initial JS is at most **150 kB gzip**.
-- **From M2, once the Brain space amendment is approved** (spec §16):
+- **From M2** (spec §16, approved 2026-11-12):
   - **Banned words** gain rewire, rewires, rewired, rewiring, neural, neuron, neurons, synapse, synapses, plasticity, neuroplasticity, fire, fired and firing. The anatomy list in `tests/purity/anatomy.ts` is banned across `src/**` and `tests/**`.
   - **One motion exception:** Brain space's signals, which stop with Still, while resting, and under reduced motion unless the user turned Still off.
   - **Purity:** `src/geometry/**` follows the domain's purity rules and may import `src/domain` only.
@@ -800,7 +800,7 @@ export function exportBackup(d: AppDeps, share: { canShareFiles: boolean; share(
 
 ## Milestone 2: Brain space
 
-> **Proposed** on 2026-11-12 with spec §16 and ADR-021 to ADR-034, waiting for owner review. Expanded to M1's level of detail at milestone start.
+> **Approved** by the owner on 2026-11-12, with spec §16 and ADR-021 to ADR-034. Expanded to M1's level of detail at milestone start, once M1 has merged.
 
 **You can:**
 - see your starts as light in Brain space on Home: every start since M1, in the part you tagged it with;
