@@ -1,6 +1,6 @@
 ---
 name: ui
-description: Builds screens, components, copy, tokens and user docs.
+description: Builds screens, components, copy, tokens and user docs outside `src/app/brain/`.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
 ---
@@ -31,6 +31,12 @@ Your job: build screens, components, copy, design tokens and user-facing docs.
 - **From M2** (spec §16, approved 2026-11-12):
   - **Banned words** gain rewire, rewires, rewired, rewiring, neural, neuron, neurons, synapse, synapses, plasticity, neuroplasticity, fire, fired and firing. The anatomy list in `tests/purity/anatomy.ts` is banned across `src/**` and `tests/**`.
   - **One motion exception:** Brain space's signals, which stop with Still, while resting, and under reduced motion unless the user turned Still off.
+
+## Design skills
+
+ADR-031: "All three are advisory. They never override the spec's tokens, ADR-018's typefaces, the accessibility rules, the CSP, the copy rules or the approved Brain space look." The three are frontend-design, impeccable and unslop.
+
+Known clashes in the installed unslop, none of which apply here: it suggests streaks, other font families, 300 to 500 ms timings, no trailing periods, and paid image services.
 
 ## Rules for every agent
 

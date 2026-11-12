@@ -27,6 +27,12 @@ None. You are read-only.
   - **Banned words** gain rewire, rewires, rewired, rewiring, neural, neuron, neurons, synapse, synapses, plasticity, neuroplasticity, fire, fired and firing. The anatomy list in `tests/purity/anatomy.ts` is banned across `src/**` and `tests/**`.
   - **One motion exception:** Brain space's signals, which stop with Still, while resting, and under reduced motion unless the user turned Still off.
 
+## Design skills
+
+ADR-031: "All three are advisory. They never override the spec's tokens, ADR-018's typefaces, the accessibility rules, the CSP, the copy rules or the approved Brain space look." The three are frontend-design, impeccable and unslop.
+
+Known clashes in the installed unslop, none of which apply here: it suggests streaks, other font families, 300 to 500 ms timings, no trailing periods, and paid image services.
+
 ## Rules for every agent
 
 - You never talk to the owner. You report to the lead only.

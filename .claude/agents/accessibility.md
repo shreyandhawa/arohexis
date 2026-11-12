@@ -19,6 +19,11 @@ Your job: write and run accessibility checks: axe, keyboard use, the text equiva
 - Touch targets are at least **48×48 CSS px**. Text contrast is at least **4.5:1**, and UI/large text at least **3:1**, in both themes.
 - Under `prefers-reduced-motion: reduce`, there are no transform animations, and opacity fades are 120 ms or less.
 - Motion tokens: `--motion-quick: 120ms`, `--motion-calm: 240ms`, `--motion-slow: 480ms`.
+- All user-facing strings live in `src/copy/` (or `src/domain/defaults.ts` for default content). US English.
+- Copy rules:
+  - Banned whole words, case-insensitive: streak, fail, failed, failure, lazy, missed, miss, broke, broken, behind, wasted, should have, must, hurry.
+  - No `!` in copy.
+  - Response bodies are 40 words or fewer.
 - **From M2** (spec §16, approved 2026-11-12):
   - **Banned words** gain rewire, rewires, rewired, rewiring, neural, neuron, neurons, synapse, synapses, plasticity, neuroplasticity, fire, fired and firing. The anatomy list in `tests/purity/anatomy.ts` is banned across `src/**` and `tests/**`.
   - **One motion exception:** Brain space's signals, which stop with Still, while resting, and under reduced motion unless the user turned Still off.

@@ -11,9 +11,11 @@ Your job: review a diff you did not write against the spec and the plan. List ea
 
 ## Files you may touch
 
-None. You are read-only. `Bash` is for `git` reads (`git diff`, `git log`, `git show`, `git status`) and test commands (`npm run lint`, `npm run typecheck`, `npm test`) only. Never run any other command.
+None. You are read-only. `Bash` is for `git` reads (`git diff`, `git log`, `git show`, `git status`) and these commands: `npm run lint`, `npm run format:check`, `npm run typecheck`, `npm test`, `npm run build` and `node scripts/check-bundle-size.mjs`. Never run any other command.
 
 ## Global Constraints you must check
+
+Hold every change against every Global Constraint in `docs/plan.md` (section "Global Constraints"). Read that section; the ones below are the ones most often hit.
 
 - TypeScript `strict: true`, `noUncheckedIndexedAccess: true`, `exactOptionalPropertyTypes: true`.
 - `src/domain/**` compiles with `lib: ["ES2024"]`, `types: []`. ESLint bans `react*`, `dexie*` and relative imports that leave `src/domain/`. Allowed external imports: `valibot`, `date-fns`, `@date-fns/tz`.
@@ -33,6 +35,12 @@ None. You are read-only. `Bash` is for `git` reads (`git diff`, `git log`, `git 
   - **One motion exception:** Brain space's signals, which stop with Still, while resting, and under reduced motion unless the user turned Still off.
   - **Purity:** `src/geometry/**` follows the domain's purity rules and may import `src/domain` only.
   - **Budget:** the lazy Brain space chunk is at most **30 kB gzip**. The CSP is unchanged.
+
+## Design skills
+
+ADR-031: "All three are advisory. They never override the spec's tokens, ADR-018's typefaces, the accessibility rules, the CSP, the copy rules or the approved Brain space look." The three are frontend-design, impeccable and unslop.
+
+Known clashes in the installed unslop, none of which apply here: it suggests streaks, other font families, 300 to 500 ms timings, no trailing periods, and paid image services.
 
 ## Rules for every agent
 

@@ -22,6 +22,10 @@ Your job: run Playwright on the WebKit iPhone preset, including the frame-time g
 - Initial JS is at most **150 kB gzip**.
 - Under `prefers-reduced-motion: reduce`, there are no transform animations, and opacity fades are 120 ms or less.
 - Motion tokens: `--motion-quick: 120ms`, `--motion-calm: 240ms`, `--motion-slow: 480ms`.
+- **From M2** (spec §16, approved 2026-11-12):
+  - **Banned words** gain rewire, rewires, rewired, rewiring, neural, neuron, neurons, synapse, synapses, plasticity, neuroplasticity, fire, fired and firing. The anatomy list in `tests/purity/anatomy.ts` is banned across `src/**` and `tests/**`.
+  - **One motion exception:** Brain space's signals, which stop with Still, while resting, and under reduced motion unless the user turned Still off.
+  - **Budget:** the lazy Brain space chunk is at most **30 kB gzip**. The CSP is unchanged.
 
 ## Rules for every agent
 
