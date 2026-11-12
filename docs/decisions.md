@@ -227,3 +227,135 @@ Statuses:
   - "9:00 at my desk" keeps meaning 9:00 after travel;
   - nonexistent times (spring-forward gaps) move to the next valid minute, and ambiguous times use the first instance;
   - the calendar export uses the time zone at export time.
+
+## ADR-018: Visual direction C "Contrast"
+
+- Date: 2026-11-11 · Status: **Accepted**
+- **Context:** Task 1 produced three mockups (`.superpowers/sdd/plan/design/`) for the owner to choose between. Task 11 turns this ADR into the CSS tokens, so the values below are exact. Spec §11.1 describes one accent reserved for the primary action and the "Started." moment.
+- **Options:**
+  - A "Paper": warm cream, sepia and blue ink with serif display. Not chosen as-is: the owner asked for higher contrast (an off-white background with jet-black text, inverted in dark mode) and kept Paper's typefaces and layout rhythm as the base for C.
+  - B "Dusk": a dark, hued direction with a lamp-style Started moment. Not chosen: the owner preferred Paper's type and layout as the base.
+  - C "Contrast": Paper's typefaces and layout rhythm, re-coloured as one neutral scale with no hue.
+- **Decision:** Direction C. Jet black `#0A0A0A` on off-white `#F5F5F2` in light mode, inverted in dark mode with softened body text `#E6E6E2` (the owner's choice, to avoid halation on a black screen).
+
+**Typefaces** (verified with `npm view` on 2026-11-11)
+- Display: Newsreader, `@fontsource-variable/newsreader` **5.3.0** (italic, opsz 6–72, wght 200–800). Fallback stack: "Iowan Old Style", "Palatino Linotype", Georgia, serif.
+- Text: Atkinson Hyperlegible Next, `@fontsource-variable/atkinson-hyperlegible-next` **5.3.0** (italic, wght 200–800). Fallback stack: "Segoe UI", "Helvetica Neue", Arial, sans-serif.
+- Newsreader is used for the timer (weight 300, tabular lining figures), "Started." (italic 400) and headings. Atkinson is used for body text and controls.
+
+**Palette primitives** (one neutral scale, no hue)
+
+| Primitive | Hex | Light theme | Dark theme |
+| --- | --- | --- | --- |
+| `--mono-0` | `#FBFBF9` | surface | – |
+| `--mono-50` | `#F5F5F2` | background, text on accent, text on selected | – |
+| `--mono-100` | `#E6E6E2` | hover tint | text, accent, focus, selected |
+| `--mono-200` | `#D6D6D2` | – | pressed fill |
+| `--mono-400` | `#A3A39F` | – | muted text, border, rule |
+| `--mono-600` | `#4F4F4C` | muted text, border, rule | – |
+| `--mono-800` | `#2B2B2B` | pressed fill | – |
+| `--mono-850` | `#1F1F1F` | – | hover tint |
+| `--mono-900` | `#141414` | – | surface |
+| `--mono-950` | `#0A0A0A` | text, accent, focus, selected | background, text on accent, text on selected |
+
+**Semantic tokens**
+
+| Token | Light | Dark |
+| --- | --- | --- |
+| `--color-bg` | `#F5F5F2` | `#0A0A0A` |
+| `--color-surface` | `#FBFBF9` | `#141414` |
+| `--color-hover` | `#E6E6E2` | `#1F1F1F` |
+| `--color-text` | `#0A0A0A` | `#E6E6E2` |
+| `--color-text-muted` | `#4F4F4C` | `#A3A39F` |
+| `--color-border` | `#4F4F4C` | `#A3A39F` |
+| `--color-rule` | `#4F4F4C` | `#A3A39F` |
+| `--color-accent` (primary fill, "Started.") | `#0A0A0A` | `#E6E6E2` |
+| `--color-accent-pressed` | `#2B2B2B` | `#D6D6D2` |
+| `--color-on-accent` | `#F5F5F2` | `#0A0A0A` |
+| `--color-focus` | `#0A0A0A` | `#E6E6E2` |
+| `--color-selected` (selected chip, pressed feeling) | `#0A0A0A` | `#E6E6E2` |
+| `--color-on-selected` | `#F5F5F2` | `#0A0A0A` |
+
+**Accent and focus**
+- There is no accent hue. The inverted text-colour fill takes the accent role: the primary button and the "Started." word are the text colour, and selected chips and pressed feelings use the same inversion. The primary button and a selected chip never share a screen with "Started.".
+- This deliberately departs from the accent described in spec §11.1. The role is kept (one emphasis reserved for the primary action and the "Started." moment); the hue is dropped.
+- Focus is a 2px ring in the text colour with a 3px offset, so the gap separates the ring from the element it surrounds.
+
+**Type scale.** Ratio 1.333 (perfect fourth). Base 17px on a phone and 18px on desktop, fluid with `clamp()` between 375 and 1280px. Steps in use, phone → desktop:
+- −1: 12.8 → 13.5px (key hints)
+- 0: 17 → 18px (body, controls)
+- 1: 22.7 → 24px (feelings, response, primary label, wordmark)
+- 2: 30.2 → 32px (headings, "Two minutes done.")
+- 3: 40.3 → 42.6px (timer)
+- 5: 71.6 → 75.8px ("Started.")
+
+**Motion character: settle into focus.** Calm and quick, with one easing and no decoration. Things answer a tap at once, then come to rest gently. Tokens: `--motion-quick: 120ms`, `--motion-calm: 240ms`, `--motion-slow: 480ms`, `--ease-standard: cubic-bezier(0.23, 1, 0.32, 1)`.
+- Press feedback on buttons, feelings and chips: `scale(0.97)` plus a fill change over `--motion-quick`.
+- Screen change after a tap: the incoming screen fades in over `--motion-quick`. A change from the keyboard is instant.
+- "Started.": a single 240ms settle (`--motion-calm`), opacity 0→1 with a 6px drop into place and a 3px blur coming into focus. The reward lines appear with it, with no stagger (spec §8.4: one calm settle). The mockup's 60ms and 120ms stagger is not adopted.
+- Undo → "Remove this start", "Two minutes done." and Home notices: opacity fade over `--motion-calm`.
+- Timer digits, loops and decoration are never animated.
+- Under `prefers-reduced-motion: reduce`: no transforms and no blur; every fade is opacity only and at most 120ms (`--motion-quick`). Press feedback is the fill change alone.
+
+**Shape and layout**
+- Radius: `--radius-s` 6px (chips), `--radius-m` 10px (buttons and feelings), `--radius-pill` 999px (unused).
+- Lines are 1px.
+- Touch targets are at least 48×48px. The primary button is 64px tall and full width on a phone; feelings are 56px tall.
+- Layout: 24px phone gutter. On desktop, a 34rem column offset 15% from the left.
+
+**Contrast** (WCAG 2.x relative luminance, ratio = (L1 + 0.05) / (L2 + 0.05), computed from the hex values above). Text needs 4.5:1; UI parts and large text need 3:1. Every pair passes, and every text pair clears 6.5:1.
+
+| Pair | Light | Dark | Min |
+| --- | --- | --- | --- |
+| Text on bg | 18.13 | 15.82 | 4.5 |
+| Text on surface | 19.11 | 14.72 | 4.5 |
+| Text on hover tint | 15.82 | 13.17 | 4.5 |
+| Muted on bg | 7.52 | 7.82 | 4.5 |
+| Muted on surface | 7.93 | 7.28 | 4.5 |
+| Muted on hover tint | 6.57 | 6.51 | 4.5 |
+| "Started." (accent) on bg | 18.13 | 15.82 | 4.5 |
+| Primary label on primary fill | 18.13 | 15.82 | 4.5 |
+| Primary label on pressed fill | 12.96 | 13.58 | 4.5 |
+| Selected label on selected fill | 18.13 | 15.82 | 4.5 |
+| Control border on bg (UI) | 7.52 | 7.82 | 3 |
+| Control border on surface (UI) | 7.93 | 7.28 | 3 |
+| Focus ring on bg (UI) | 18.13 | 15.82 | 3 |
+| Focus ring on surface (UI) | 19.11 | 14.72 | 3 |
+| Primary fill on bg (UI) | 18.13 | 15.82 | 3 |
+| Selected fill on bg (UI) | 18.13 | 15.82 | 3 |
+| Selected fill on surface (UI) | 19.11 | 14.72 | 3 |
+
+- **Consequences:**
+  - the whole palette is ten neutral greys with no hue to manage, so contrast can be unit-tested straight from the token values;
+  - hierarchy comes from fill inversion, size and italic instead of colour;
+  - focus shares the text colour, so it relies on the 3px offset to read as a ring; a focus-only hue stays available as the smallest exception if device testing shows confusion;
+  - Atkinson draws a slashed zero by design, so counts such as "10 starts this week" show it, while the timer uses Newsreader;
+  - the 3px blur on "Started." has not been tested on an iPhone; if it stutters there, drop the blur and keep the settle;
+  - spoken lines ("1:00 left", "Two minutes done.") and instant keyboard screen changes go beyond the spec's wording and are recorded here.
+
+## ADR-019: TypeScript stays on 6.0.3 at scaffold
+
+- Date: 2026-11-11 · Status: **Accepted**
+- **Context:** ADR-012 says to switch to TypeScript 7 at scaffold only if both typescript-eslint and the Vite tooling support it. The Vite template now ships `typescript ~7.0.2`, and TypeScript 7.0.2 is the latest release.
+- **Options:**
+  - TypeScript 7.0.2;
+  - TypeScript 6.0.3, the last 6.0 release.
+- **Decision:** TypeScript 6.0.3. `typescript-eslint@8.72.2` declares the peer range `typescript >=4.8.4 <6.1.0`, so it does not support 7. Vite 8.3 and vite-plugin-pwa 2.0 declare no TypeScript peer, so the lint tooling is what blocks the switch.
+- **Consequences:**
+  - `npm run lint` and the ESLint purity tests keep working on a supported compiler;
+  - the template's `~7.0.2` pin is replaced with exact `6.0.3`;
+  - revisit once typescript-eslint widens its peer range to include 7.
+
+## ADR-020: Preview deploys
+
+- Date: 2026-11-11 · Status: **Accepted**
+- **Context:** Arohexis is hosted as static assets on a Cloudflare Worker. Every pull request needs a live URL that carries the production headers, and only `main` may reach production.
+- **Options:**
+  - `wrangler deploy` for every branch under a separate Worker name;
+  - `wrangler versions upload --preview-alias <alias>`, which uploads a version without deploying it and gives it a stable alias URL.
+- **Decision:** the second. The `preview` job runs on pull requests from the same repository only, because forks receive no secrets, and uses the alias `pr-<number>`. The verified command is `npx wrangler versions upload --preview-alias pr-<number>`, giving `https://pr-<number>-arohexis.<subdomain>.workers.dev`. `wrangler.jsonc` sets `preview_urls` and `workers_dev` to `true`, since Version URLs run only on `workers.dev`. The `deploy` job runs `npx wrangler deploy` on `push` to `refs/heads/main`, after `check` and `e2e`. Source: https://developers.cloudflare.com/workers/configuration/previews/ (checked 2026-11-11).
+- **Consequences:**
+  - aliases may use only lowercase letters, digits and dashes, start with a letter, and keep alias plus worker name within 63 characters, which `pr-<number>` satisfies;
+  - Version URLs are public unless protected with Cloudflare Access, which is acceptable because the app holds no server data;
+  - only the 1,000 most recent aliases are kept;
+  - `public/_headers` is the single source of the CSP: Cloudflare serves it in production and `vite preview` serves its `/*` block, so the E2E suite runs under the real CSP.
