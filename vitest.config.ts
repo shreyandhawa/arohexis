@@ -7,9 +7,12 @@ export default defineConfig({
     include: ['src/**/*.test.ts', 'tests/**/*.test.ts'],
     coverage: {
       provider: 'v8',
-      include: ['src/domain/**/*.ts'],
+      include: ['src/domain/**/*.ts', 'src/geometry/**/*.ts'],
       exclude: ['src/domain/testing/**', 'src/domain/index.ts'],
-      thresholds: { lines: 95, branches: 90 },
+      thresholds: {
+        'src/domain/**': { lines: 95, branches: 90 },
+        'src/geometry/**': { lines: 90 },
+      },
     },
   },
 });

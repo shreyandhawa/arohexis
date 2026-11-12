@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format:check": "prettier --check .",
-    "typecheck": "tsc -b && tsc -p src/domain/tsconfig.json",
+    "typecheck": "tsc -b && tsc -p src/domain/tsconfig.json && tsc -p src/geometry/tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test"

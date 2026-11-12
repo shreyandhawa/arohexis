@@ -9,6 +9,7 @@ export default tseslint.config(
       'coverage',
       'node_modules',
       'tests/purity/fixture',
+      'tests/purity/geometry-fixture',
       'docs/reference',
     ],
   },
@@ -26,8 +27,35 @@ export default tseslint.config(
               message: 'The domain stays free of UI and storage libraries.',
             },
             {
-              group: ['../storage*', '../app*', '../copy*', '../design*', '../../*'],
+              group: [
+                '../storage*',
+                '../app*',
+                '../copy*',
+                '../design*',
+                '../geometry*',
+                '../../*',
+              ],
               message: 'The domain may not import outside src/domain.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['src/geometry/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['react', 'react/*', 'react-*', 'dexie', 'dexie-*'],
+              message: 'Geometry stays free of UI and storage libraries.',
+            },
+            {
+              group: ['../storage*', '../app*', '../copy*', '../design*', '../../*'],
+              message: 'Geometry may import from src/domain only.',
             },
           ],
         },

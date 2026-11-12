@@ -1,0 +1,4 @@
+{
+  "extends": "../../../src/geometry/tsconfig.json",
+  "include": ["./uses-window.ts"]
+}
