@@ -712,7 +712,7 @@ Push notifications (v1.1 candidate, §10), merging imports, multiple devices and
 
 Status: **approved** by the owner on 2026-11-12. Decisions: ADR-021 to ADR-034 in [decisions.md](decisions.md). The changes listed in §16.12 have been folded into the sections they name.
 
-Reference material: `docs/reference/brain-space/` (stills and a canvas prototype; the owner adds them in M2 Task 1). Brain space matches the reference's look and behaviour. None of its code is reused.
+Reference material: `docs/reference/brain-space/` (stills and a canvas prototype; the owner adds them in M2 Task 1). Brain space matches the reference's look and behaviour. Its field geometry, the seeded layout of fibres and strands, is reused with neutral names in `src/geometry/field.ts` (the owner's decision on 2026-11-12). None of its other code is reused.
 
 ### 16.1 What it is
 

@@ -1,6 +1,6 @@
 # Brain space reference
 
-The owner supplied these on 2026-11-12 for M2 (spec §16, ADR-021). Brain space matches the reference's look and behaviour. None of its code is reused.
+The owner supplied these on 2026-11-12 for M2 (spec §16, ADR-021). Brain space matches the reference's look and behaviour. Its field geometry is reused with neutral names in `src/geometry/field.ts` (the owner's decision on 2026-11-12). None of its other code is reused.
 
 ## Stills
 

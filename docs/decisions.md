@@ -373,7 +373,7 @@ Statuses:
   - The gate for the look is the owner's review of the built Home screen on a preview URL, during M2 and before M2's later screens are built (plan M2, Task 7).
 - **Consequences:**
   - ADR-018 is amended, not superseded: its "no hue" now reads "no hue in chrome";
-  - the reference is matched in look and behaviour, and none of its code is reused;
+  - the reference is matched in look and behaviour. Its field geometry is reused with neutral names in `src/geometry/field.ts`, and none of its other code is reused. (Amended on 2026-11-12, in M2 Task 5: the owner chose to allow reusing the prototype's geometry, their own code, over a clean-room rewrite.);
   - the prototype's outline around a selected part, its Inter labels, its auto-rotation, its line added only when the timer ends, and its anatomy-named identifiers are not adopted.
 
 ## ADR-022: Brain space is Milestone 2
