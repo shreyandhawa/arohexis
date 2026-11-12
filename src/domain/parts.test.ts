@@ -63,6 +63,23 @@ describe('migrateTaskTypes', () => {
   });
 });
 
+describe('migrateTaskTypes on hand-edited data', () => {
+  it('keeps the first type per id, trims labels and skips unusable labels', () => {
+    const parts = migrateTaskTypes([
+      { id: 'a', label: ' Alpha ', order: 1, enabled: true },
+      { id: 'a', label: 'Again', order: 2, enabled: true },
+      { id: 'b', label: '   ', order: 3, enabled: true },
+      { id: 'c', label: 'c'.repeat(30), order: 4, enabled: true },
+      { id: 'd', label: 'Delta', order: 5, enabled: true },
+    ]);
+    expect(parts.map((p) => [p.id, p.label, p.region])).toEqual([
+      ['a', 'Alpha', 1],
+      ['d', 'Delta', 2],
+    ]);
+    expect(validateParts(parts)).toEqual([]);
+  });
+});
+
 describe('addPart', () => {
   it('takes the lowest free region and colour', () => {
     const r = assertParts(addPart(DEFAULT_PARTS, { id: 'portfolio', label: 'Portfolio' }));
@@ -121,6 +138,14 @@ describe('editPart', () => {
       );
       for (const c of r) expect(c.region).toBe(DEFAULT_PARTS.find((d) => d.id === c.id)?.region);
     }
+    // The swap path: take a colour another part holds.
+    for (const p of DEFAULT_PARTS) {
+      for (const other of DEFAULT_PARTS.filter((o) => o.id !== p.id)) {
+        const r = assertParts(editPart(DEFAULT_PARTS, p.id, { colour: other.colour }));
+        expect(r).toHaveLength(2);
+        for (const c of r) expect(c.region).toBe(DEFAULT_PARTS.find((d) => d.id === c.id)?.region);
+      }
+    }
   });
 
   it('refuses a bad label and ignores an unknown id', () => {
@@ -139,6 +164,7 @@ describe('validateParts', () => {
     const [a, b, ...rest] = DEFAULT_PARTS as [Part, Part, ...Part[]];
     expect(validateParts([a, { ...b, colour: a.colour }, ...rest])).toHaveLength(1);
     expect(validateParts([a, { ...b, region: a.region }, ...rest])).toHaveLength(1);
+    // Only six colours and regions exist, so the seventh part must repeat one; the count rule shows too.
     const seven: Part[] = Array.from({ length: 7 }, (_, i) => ({
       id: `p${i}`,
       label: 'P',
@@ -147,7 +173,9 @@ describe('validateParts', () => {
       colour: ((i % 6) + 1) as ColourId,
       region: ((i % 6) + 1) as ColourId,
     }));
-    expect(validateParts(seven).length).toBeGreaterThan(0);
+    expect(validateParts(seven)).toContain('more than 6 parts');
+    expect(validateParts([a, { ...b, id: a.id }, ...rest])).toEqual(['duplicate id']);
+    expect(validateParts([{ ...a, label: '  ' + 'a'.repeat(24) }])).toHaveLength(1);
     expect(validateParts([{ ...a, label: '' }])).toHaveLength(1);
     expect(validateParts([{ ...a, label: 'x'.repeat(25) }])).toHaveLength(1);
   });

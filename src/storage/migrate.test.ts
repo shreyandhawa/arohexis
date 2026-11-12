@@ -81,13 +81,12 @@ describe('Dexie version 1 to 2', () => {
     const { db } = res;
 
     expect(await db.parts.orderBy('order').toArray()).toEqual(migrateTaskTypes(M1_TASK_TYPES));
-    expect(db.tables.map((t) => t.name)).not.toContain('taskTypes');
-    expect(await db.events.count()).toBe(events.length);
-    expect((await db.events.orderBy('at').toArray()).map((e) => e.id).sort()).toEqual(
-      events.map((e) => e.id).sort(),
-    );
-    expect(await db.feelings.count()).toBe(DEFAULT_FEELINGS.length);
-    expect(await db.responses.count()).toBe(DEFAULT_RESPONSES.length);
+    expect(db.backendDB().objectStoreNames.contains('taskTypes')).toBe(false);
+    const byId = <T extends { id: string }>(rows: readonly T[]) =>
+      [...rows].sort((a, b) => a.id.localeCompare(b.id));
+    expect(byId(await db.events.toArray())).toEqual(byId(events));
+    expect(byId(await db.feelings.toArray())).toEqual(byId(DEFAULT_FEELINGS));
+    expect(byId(await db.responses.toArray())).toEqual(byId(DEFAULT_RESPONSES));
     expect(await db.parts.count()).toBe(5);
     // Past tags keep their snapshots; `other-task` simply names no configured part.
     const attempts = foldAttempts(await db.events.toArray());
@@ -143,6 +142,18 @@ describe('config patch with parts', () => {
     const unchanged = await store.getConfig();
     expect(unchanged.parts).toEqual(after.parts);
     expect(unchanged.settings.theme).toBe('system');
+  });
+
+  it('rejects a patch that changes the region of a stored part', async () => {
+    const db = await fresh();
+    const store = createConfigStore(db);
+    const before = await store.getConfig();
+    await expect(
+      store.applyConfigPatch({
+        parts: [{ id: 'work', label: 'Work', order: 1, enabled: true, colour: 1, region: 6 }],
+      }),
+    ).rejects.toThrow(/region/);
+    expect((await store.getConfig()).parts).toEqual(before.parts);
   });
 
   it('brainStill round-trips', async () => {

@@ -124,7 +124,7 @@ describe('stuck-flow actions', () => {
     const id = await beginStuck(d);
     await expect(chooseFeeling(d, id, 'nope-feeling')).rejects.toThrow('nope-feeling');
     await start(d, id);
-    await expect(tag(d, id, 'nope-task')).rejects.toThrow('nope-task');
+    await expect(tag(d, id, 'nope-part')).rejects.toThrow('nope-part');
   });
 
   it("tag records the part's label", async () => {

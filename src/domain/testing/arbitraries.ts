@@ -159,7 +159,7 @@ export function arbParts(): fc.Arbitrary<Part[]> {
         const [label, enabled] = texts[i] as [string, boolean];
         return {
           id: `part${i}`,
-          label: label.trim() === '' ? 'Part' : label.trim().slice(0, 24),
+          label: label.trim().slice(0, 24).trim() || 'Part',
           order: i + 1,
           enabled,
           colour: colours[i] as ColourId,

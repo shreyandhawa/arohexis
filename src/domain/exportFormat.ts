@@ -225,13 +225,11 @@ export function parseExport(input: unknown): ParseResult {
     const result = v.safeParse(exportSchemaV1, input);
     if (!result.success) return notABackup;
     const { taskTypes, ...rest } = result.output.data;
+    const parts = migrateTaskTypes(taskTypes);
+    if (validateParts(parts).length > 0) return notABackup;
     return {
       ok: true,
-      file: {
-        ...result.output,
-        version: EXPORT_VERSION,
-        data: { ...rest, parts: migrateTaskTypes(taskTypes) },
-      },
+      file: { ...result.output, version: EXPORT_VERSION, data: { ...rest, parts } },
     };
   }
   const result = v.safeParse(exportSchemaV2, input);

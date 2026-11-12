@@ -13,15 +13,22 @@ function cleanLabel(label: string): string | undefined {
 
 /** Spec §16.3: M1 task types become parts, in order, skipping `other-task` and disabled types. */
 export function migrateTaskTypes(taskTypes: readonly ListItem[]): Part[] {
+  const seen = new Set<string>();
   return taskTypes
     .filter((t) => t.enabled && t.id !== 'other-task')
     .sort((a, b) => a.order - b.order)
+    .filter((t) => {
+      // Hand-edited data: keep the first type per id, and skip one whose label can't be a part's.
+      if (seen.has(t.id) || cleanLabel(t.label) === undefined) return false;
+      seen.add(t.id);
+      return true;
+    })
     .slice(0, MAX_PARTS)
     .map((t, i) => {
       const slot = SLOTS[i] as ColourId & RegionId;
       return {
         id: t.id,
-        label: t.label,
+        label: t.label.trim(),
         order: i + 1,
         enabled: true,
         colour: slot,
@@ -79,8 +86,10 @@ export function validateParts(parts: readonly Part[]): string[] {
   if (parts.length > MAX_PARTS) out.push(`more than ${MAX_PARTS} parts`);
   if (new Set(parts.map((p) => p.region)).size !== parts.length) out.push('duplicate region');
   if (new Set(parts.map((p) => p.colour)).size !== parts.length) out.push('duplicate colour');
+  if (new Set(parts.map((p) => p.id)).size !== parts.length) out.push('duplicate id');
   for (const p of parts) {
-    if (cleanLabel(p.label) === undefined) out.push(`bad label for ${p.id}`);
+    if (p.label !== p.label.trim() || cleanLabel(p.label) === undefined)
+      out.push(`bad label for ${p.id}`);
   }
   return out;
 }

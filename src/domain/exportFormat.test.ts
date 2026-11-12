@@ -2,7 +2,7 @@ import * as fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_SETTINGS } from './config';
 import { DEFAULT_PARTS } from './defaults';
-import { migrateTaskTypes } from './parts';
+import { migrateTaskTypes, validateParts } from './parts';
 import {
   EXPORT_FORMAT,
   EXPORT_MESSAGES,
@@ -211,6 +211,35 @@ describe('export format', () => {
       JSON.stringify({ ...(v1 as object), data: { events: [] } }),
     ) as unknown;
     expect(parseExport(broken)).toEqual({ ok: false, message: EXPORT_MESSAGES.notABackup });
+  });
+
+  it.each([
+    ['an empty label', [{ id: 'a', label: '', order: 1, enabled: true }]],
+    ['a 30-character label', [{ id: 'a', label: 'x'.repeat(30), order: 1, enabled: true }]],
+    [
+      'a duplicate id',
+      [
+        { id: 'a', label: 'A', order: 1, enabled: true },
+        { id: 'a', label: 'B', order: 2, enabled: true },
+      ],
+    ],
+  ])('a version 1 backup with %s imports with valid parts', (_name, taskTypes) => {
+    const v1Base: Partial<ExportData> = { ...BASE };
+    delete v1Base.parts;
+    const r = parseExport(
+      JSON.parse(
+        JSON.stringify({
+          ...buildExport(BASE, META),
+          version: 1,
+          data: { ...v1Base, taskTypes },
+        }),
+      ),
+    );
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(validateParts(r.file.data.parts)).toEqual([]);
+      expect(r.file.data.parts.length).toBeLessThanOrEqual(1);
+    }
   });
 
   it('rejects invalid parts and a bad brainStill', () => {

@@ -34,6 +34,11 @@ export function createConfigStore(db: ArohexisDB): ConfigStore {
       if (rows.length === 0 && parts.length === 0) return;
       await db.transaction('rw', [db.kv, db.parts], async () => {
         if (parts.length > 0) {
+          for (const p of parts) {
+            const stored = await db.parts.get(p.id);
+            if (stored && stored.region !== p.region)
+              throw new Error(`A part never changes region: ${p.id}`);
+          }
           await db.parts.bulkPut([...parts]);
           const problems = validateParts(await db.parts.toArray());
           if (problems.length > 0) throw new Error(`Invalid parts: ${problems.join(', ')}`);
