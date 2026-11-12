@@ -96,6 +96,17 @@ describe('foldAttempts', () => {
     expect(isCountedStart(a)).toBe(false);
   });
 
+  it('undoneAt is the time of the first start.undone', () => {
+    const { deps, open } = setup();
+    const made = createEvent(deps, 'start.made', { attemptId: 'a1', backfilled: false });
+    deps.clock.advance(5000);
+    const first = createEvent(deps, 'start.undone', { attemptId: 'a1' });
+    deps.clock.advance(5000);
+    const second = createEvent(deps, 'start.undone', { attemptId: 'a1' });
+    expect(findAttempt([open(), made], 'a1')!.undoneAt).toBeUndefined();
+    expect(findAttempt([open(), made, first, second], 'a1')!.undoneAt).toBe(first.at);
+  });
+
   it('undone is sticky: a later start.made does not clear it', () => {
     const { deps, open } = setup();
     const first = createEvent(deps, 'start.made', { attemptId: 'a1', backfilled: false });

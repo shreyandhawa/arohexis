@@ -87,6 +87,11 @@ describe('focusFor', () => {
     expect(focusFor({ ...base, plans, lines: [line('p', 'work', 1)] })).toBe('name-feeling');
   });
 
+  it('rules 2 and 3 win over rule 4 for a part whose plan moved away', () => {
+    expect(focusFor({ ...base, lines: [line('p', 'work', 'waiting')] })).toBe('waiting');
+    expect(focusFor({ ...base, lines: [line('p', 'work', 2)] })).toBe('stable-cue');
+  });
+
   it('rule 4: a part with no plan is offered one, when plans exist', () => {
     expect(focusFor(base)).toBe('add-plan');
     expect(focusFor({ ...base, plansAvailable: false })).toBe('name-feeling');

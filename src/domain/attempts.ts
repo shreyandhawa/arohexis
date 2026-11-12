@@ -11,6 +11,8 @@ export type Attempt = {
   response?: { id: string; basis: Basis };
   start?: { at: number; tz: string; backfilled: boolean };
   undone: boolean;
+  /** The `at` of the first start.undone. */
+  undoneAt?: number;
   /** The latest tag. */
   part?: { id: string; label: string };
   /** Every start.tagged, in order. */
@@ -64,6 +66,7 @@ export function foldAttempts(events: readonly AppEvent[]): Attempt[] {
         break;
       case 'start.undone':
         a.undone = true;
+        a.undoneAt ??= e.at;
         break;
       case 'start.tagged':
         a.part = { id: e.taskTypeId, label: e.label };

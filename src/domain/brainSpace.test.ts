@@ -48,6 +48,7 @@ type Spec = {
   startAt?: number;
   backfilled?: boolean;
   undone?: boolean;
+  undoneAt?: number;
   tags?: [string, number][];
   planId?: string;
   occurrence?: string;
@@ -66,6 +67,7 @@ function att(s: Spec): Attempt {
       start: { at: s.startAt, tz: NY, backfilled: s.backfilled ?? false },
     }),
     undone: s.undone ?? false,
+    ...(s.undoneAt !== undefined && { undoneAt: s.undoneAt }),
     ...(last && { part: { id: last.id, label: last.label } }),
     tags,
     dismissed: false,
@@ -223,6 +225,73 @@ describe('projectBrainSpace', () => {
     expect(startLines(s.lines)).toMatchObject([{ id: 'a2', undone: true }]);
   });
 
+  it('a late start does not take the occurrence from a settled one', () => {
+    // A1 opened first, but its start arrives after A2's (second tab, or Back).
+    const a1 = att({
+      id: 'a1',
+      openedAt: T0 + MIN,
+      startAt: T0 + 20 * MIN,
+      planId: 'p',
+      occurrence: 'o',
+    });
+    const a2 = onCue('a2', 5, 'p', 'o', 'work');
+    const s = projectBrainSpace([a1, a2], [plan('p')], PARTS, T0 + 30 * MIN);
+    expect(planLines(s.lines)).toMatchObject([{ id: 'p:work', onCueStarts: 1 }]);
+    expect(startLines(s.lines)).toMatchObject([{ id: 'a1', partId: null, undone: false }]);
+  });
+
+  it('a stale undo of the holder does not promote a later start', () => {
+    const a1 = onCue('a1', 1, 'p', 'o', 'work');
+    const a2 = onCue('a2', 5, 'p', 'o', 'work');
+    const undone = { ...a1, undone: true, undoneAt: T0 + 100 * MIN };
+    const s = projectBrainSpace([undone, a2], [plan('p')], PARTS, T0 + 200 * MIN);
+    expect(planLines(s.lines)).toMatchObject([
+      { id: 'p:work', onCueStarts: 0, strength: 'waiting', order: a1.start?.at, everStarted: true },
+    ]);
+    expect(startLines(s.lines)).toMatchObject([{ id: 'a2', undone: false }]);
+  });
+
+  it('undo then retry still earns the occurrence', () => {
+    const a1 = { ...onCue('a1', 1, 'p', 'o', 'work'), undone: true, undoneAt: T0 + 2 * MIN };
+    const a2 = onCue('a2', 5, 'p', 'o', 'work');
+    const s = projectBrainSpace([a1, a2], [plan('p')], PARTS, T0 + 20 * MIN);
+    expect(planLines(s.lines)).toMatchObject([
+      { id: 'p:work', onCueStarts: 1, order: a1.start?.at, everStarted: true },
+    ]);
+    expect(startLines(s.lines)).toEqual([]);
+  });
+
+  it('a start undone after another held the occurrence is an undone start line', () => {
+    const a1 = onCue('a1', 1, 'p', 'o', 'work');
+    const a2 = { ...onCue('a2', 5, 'p', 'o', 'work'), undone: true, undoneAt: T0 + 6 * MIN };
+    const s = projectBrainSpace([a1, a2], [plan('p')], PARTS, T0 + 20 * MIN);
+    expect(planLines(s.lines)).toMatchObject([{ id: 'p:work', onCueStarts: 1 }]);
+    expect(startLines(s.lines)).toMatchObject([{ id: 'a2', undone: true }]);
+  });
+
+  it('breaks start-time ties by attempt id', () => {
+    const b = att({ id: 'b', openedAt: T0, startAt: T0 + MIN, planId: 'p', occurrence: 'o' });
+    const a = att({ id: 'a', openedAt: T0 + 1, startAt: T0 + MIN, planId: 'p', occurrence: 'o' });
+    const s = projectBrainSpace([b, a], [plan('p')], PARTS, T0 + 20 * MIN);
+    expect(startLines(s.lines).map((l) => l.id)).toEqual(['b']);
+  });
+
+  it('counts waiting lines of both kinds in planLines, and not hidden ones', () => {
+    const undoneOnly = {
+      ...onCue('a1', 1, 'p', 'o', 'work'),
+      undone: true,
+      undoneAt: T0 + 2 * MIN,
+    };
+    const s = projectBrainSpace(
+      [undoneOnly],
+      [plan('p'), plan('q', { partId: 'work' }), plan('r', { active: false, partId: 'work' })],
+      PARTS,
+      T0 + 20 * MIN,
+    );
+    expect(s.lines.map((l) => l.id).sort()).toEqual(['p:work', 'q:work']);
+    expect(s.parts[0]).toMatchObject({ partId: 'work', planLines: 2 });
+  });
+
   it('an active plan with no on-cue start waits', () => {
     const s = projectBrainSpace([], [plan('p', { partId: 'work' })], PARTS, T0);
     expect(s.lines).toEqual([
@@ -328,7 +397,7 @@ describe('projectBrainSpace', () => {
     });
   });
 
-  it('counts a start by its latest tag and places it by its light part', () => {
+  it('two tabs: a tag on a settled attempt changes counts and not light', () => {
     // Two tabs: a stale tab tags a settled attempt after the next one opened.
     const first = att({
       id: 'a1',
@@ -406,18 +475,20 @@ describe('projectBrainSpace properties', () => {
       fc.property(arbFlow(), ({ events, plans, parts, now }) => {
         const attempts = foldAttempts(events);
         const s = projectBrainSpace(attempts, plans, parts, now);
-        for (const a of attempts.filter((x) => x.start !== undefined)) {
+        const ids = new Set(parts.map((p) => p.id));
+        attempts.forEach((a, i) => {
+          if (a.start === undefined) return;
           const own = startLines(s.lines).filter((l) => l.id === a.id);
           expect(own.length).toBeLessThanOrEqual(1);
           if (own.length === 0) {
             expect(a.planId).toBeDefined();
-            expect(
-              planLines(s.lines).some(
-                (l) => l.planId === a.planId && l.everStarted && l.order <= (a.start?.at ?? 0),
-              ),
-            ).toBe(true);
+            const light = lightPartOf(a, attempts[i + 1]?.openedAt);
+            const id = `${a.planId}:${light !== null && ids.has(light) ? light : 'core'}`;
+            const line = planLines(s.lines).find((l) => l.id === id);
+            expect(line?.everStarted).toBe(true);
+            expect(line?.order).toBeLessThanOrEqual(a.start?.at ?? 0);
           }
-        }
+        });
         for (const l of s.lines) {
           if (l.kind === 'plan' && l.onCueStarts === 0 && l.everStarted) {
             expect(l.strength).toBe('waiting');
@@ -432,22 +503,35 @@ describe('projectBrainSpace properties', () => {
       fc.property(arbFlow(), fc.nat(), ({ events, plans, parts, now }, cut) => {
         if (events.length === 0) return;
         const k = cut % events.length;
-        const step = events[k];
-        if (step?.type === 'start.undone') return;
         const before = foldAttempts(events.slice(0, k));
         const after = projectBrainSpace(foldAttempts(events.slice(0, k + 1)), plans, parts, now);
         const was = projectBrainSpace(before, plans, parts, now);
-        const lastPlan = before.at(-1)?.planId;
+        // The one plan line that may still change: the one holding the unsettled last attempt.
+        const last = before.at(-1);
+        const lastPart = last ? lightPartOf(last, undefined) : null;
+        const holderId =
+          last?.start !== undefined &&
+          last.planId !== undefined &&
+          !was.lines.some((l) => l.kind === 'start' && l.id === last.id)
+            ? `${last.planId}:${lastPart !== null && parts.some((p) => p.id === lastPart) ? lastPart : 'core'}`
+            : undefined;
         for (const l of was.lines) {
           if (l.kind === 'start') {
             if (!l.settled) continue;
             const kept = after.lines.find((x) => x.id === l.id);
             expect(kept).toMatchObject({ id: l.id, partId: l.partId, order: l.order });
-          } else if (l.planId !== lastPlan) {
+          } else if (l.everStarted && l.id !== holderId) {
             const kept = planLines(after.lines).find((x) => x.id === l.id);
             expect(kept).toMatchObject({ partId: l.partId, order: l.order });
             expect(kept?.onCueStarts).toBeGreaterThanOrEqual(l.onCueStarts);
           }
+        }
+        // Fibre safety: any new lit line sorts after every line that was already lit.
+        const lit = (l: BrainLine) => l.kind === 'start' || l.everStarted;
+        const oldIds = new Set(was.lines.map((l) => l.id));
+        const top = Math.max(-Infinity, ...was.lines.filter(lit).map((l) => l.order));
+        for (const l of after.lines.filter((x) => lit(x) && !oldIds.has(x.id))) {
+          expect(l.order).toBeGreaterThanOrEqual(top);
         }
       }),
     );

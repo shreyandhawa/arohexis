@@ -74,6 +74,33 @@ export function summaryLines(space: BrainSpace): number {
 
 type PlanLine = Extract<BrainLine, { kind: 'plan' }>;
 
+/**
+ * Which attempts hold their occurrence's slot (ADR-035, R11). Per (planId, occurrence), in
+ * start.at order with ties by attempt id, an attempt holds the slot when no earlier attempt
+ * still held it at its start.at. A holder keeps the slot until its undo.
+ */
+function slotHolders(attempts: readonly Attempt[]): Set<string> {
+  const groups = new Map<string, Attempt[]>();
+  for (const a of attempts) {
+    if (!a.start || a.planId === undefined || a.occurrence === undefined) continue;
+    const key = `${a.planId}\n${a.occurrence}`;
+    groups.set(key, [...(groups.get(key) ?? []), a]);
+  }
+  const holders = new Set<string>();
+  for (const group of groups.values()) {
+    group.sort((x, y) => (x.start?.at ?? 0) - (y.start?.at ?? 0) || (x.id < y.id ? -1 : 1));
+    let releasedAt: number | undefined; // undefined: the slot is free
+    for (const a of group) {
+      const at = a.start?.at ?? 0;
+      if (releasedAt !== undefined && at < releasedAt) continue;
+      holders.add(a.id);
+      // An undone attempt with no recorded time frees the slot at once.
+      releasedAt = a.undone ? (a.undoneAt ?? at) : Infinity;
+    }
+  }
+  return holders;
+}
+
 export function projectBrainSpace(
   attempts: readonly Attempt[],
   plans: readonly Plan[],
@@ -86,7 +113,7 @@ export function projectBrainSpace(
 
   const planLines = new Map<string, PlanLine>();
   const startLines: BrainLine[] = [];
-  const onCueOccurrences = new Set<string>();
+  const holders = slotHolders(attempts);
   const counts = new Map<string | null, number>();
   let totalStarts = 0;
   let newestStart = -Infinity;
@@ -101,13 +128,7 @@ export function projectBrainSpace(
       const own = normal(partOfStart(a));
       counts.set(own, (counts.get(own) ?? 0) + 1);
     }
-    const key =
-      a.planId !== undefined && a.occurrence !== undefined
-        ? `${a.planId}\n${a.occurrence}`
-        : undefined;
-    const joinsLine = key !== undefined && !onCueOccurrences.has(key);
-    if (joinsLine && a.planId !== undefined) {
-      if (counted) onCueOccurrences.add(key);
+    if (holders.has(a.id) && a.planId !== undefined) {
       const id = `${a.planId}:${part ?? 'core'}`;
       const line = planLines.get(id) ?? {
         kind: 'plan' as const,
@@ -170,7 +191,7 @@ export function projectBrainSpace(
   const light = (partId: string | null): PartLight => ({
     partId,
     starts: counts.get(partId) ?? 0,
-    planLines: lines.filter((l) => l.partId === partId && !l.hidden).length,
+    planLines: [...lines, ...waiting].filter((l) => l.partId === partId && !l.hidden).length,
     startLines: startLines.filter((l) => l.kind === 'start' && l.partId === partId && !l.undone)
       .length,
   });
