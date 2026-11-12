@@ -676,6 +676,7 @@ Statuses:
     - **Fix:** a plan line's order is the `start.at` of its earliest on-cue start, undone or not. A line whose on-cue starts were all undone stays in the projection with that order, drawn as waiting, or as nothing while its plan is paused, so its fibre stays reserved. Waiting lines that never had a start get fibres after every other line, so no solid light moves.
   - **Settling uses tag times.** `Attempt` keeps every tag with its time (`tags`). Light uses the latest tag made at or before the moment the next attempt opened, so a stale second tab changes counts and not light (§16.4 rule 4).
   - **One on-cue start per occurrence.** A second counted start for the same occurrence leaves a start line, so on-cue starts plus start lines plus core sparks still equal counted starts.
+  - **The occurrence goes to the earliest start that still holds it** (added on 2026-11-12, in M2 Task 4's review). Attempts for an occurrence are taken in `start.at` order, ties by id. An attempt holds the occurrence from its start until its undo. A start made while another attempt holds it stays a start line for good, so a late start from a second tab or a stale undo never moves other light. A start made after an undo still counts, so undo and retry counts once. `Attempt` gains `undoneAt` for this.
   - **Unknown part ids are core light.** A tag whose id isn't a configured part counts and draws as "No part". That covers M1's `other-task` and hand-edited imports.
   - **Export version 2 is final for v1.** It already carries `plans[].partId` and `settings.brainStill`, so M3 needs no version 3.
   - **Recolouring to a colour another part holds swaps the two,** so a full set of six can still be recoloured.
@@ -689,5 +690,5 @@ Statuses:
   - **The frame-time threshold** is set in M2 Task 10, from the first CI run of the real renderer, because Task 2's page is a throwaway outside CI.
 - **Consequences:**
   - the projection's property tests can assert that appending events never moves settled light;
-  - `Attempt` grows one field (`tags`), and §16.4's `BrainLine` plan kind grows two (`everStarted`, `hidden`);
+  - `Attempt` grows two fields (`tags`, `undoneAt`), and §16.4's `BrainLine` plan kind grows two (`everStarted`, `hidden`);
   - the owner approved these with the M2 plan on 2026-11-12.

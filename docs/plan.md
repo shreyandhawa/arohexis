@@ -1051,7 +1051,7 @@ export function focusFor(input: { partId: string; plans: readonly Plan[]; lines:
   - **`parts`:** one `PartLight` per configured part, in `order`, then `{ partId: null }` last when it has starts.
   - **`plansAvailable`:** `false` until M3, so rule 4 doesn't suggest a plan the app can't make yet.
 
-- [ ] **Step 1:** Write the failing unit tests in `brainSpace.test.ts`:
+- [x] **Step 1:** Write the failing unit tests in `brainSpace.test.ts`:
   - `an M1 history becomes start lines and sparks`:
     - **Input:** three counted starts tagged `work`, one untagged, one tagged `other-task`, and one undone and untagged.
     - **Expected:**
@@ -1066,21 +1066,21 @@ export function focusFor(input: { partId: string; plans: readonly Plan[]; lines:
   - `moving at exactly 48 hours, resting 1 ms later`, with a backfilled start counting.
   - `two tabs: a tag on a settled attempt changes counts and not light` (spec §16.13).
   - `undone on-cue starts keep the line, its order and everStarted`, and pausing that plan sets `hidden`.
-- [ ] **Step 2:** Write the failing properties over `arbFlow()`. It builds realistic flows: attempts in time order, each opened, sometimes started, and then only its own Started actions (tags, undo, timer), sometimes linked to a plan occurrence, with plans to match.
+- [x] **Step 2:** Write the failing properties over `arbFlow()`. It builds realistic flows: attempts in time order, each opened, sometimes started, and then only its own Started actions (tags, undo, timer), sometimes linked to a plan occurrence, with plans to match.
   - **Light adds up:** the plan lines' `onCueStarts`, plus start lines not undone, equal `totalStarts`, which equals the count of `isCountedStart`.
   - **Undone draws nothing and keeps its place:** every attempt with a `start.made` appears exactly once, as its own start line or inside a plan line's order.
   - **Appending is stable:** for a flow F and F plus one more realistic step, every line of `project(F)` whose attempt is settled keeps its `id`, `partId` and `order`, and no plan line's `onCueStarts` falls, except when the step was an undo.
   - **Only on-cue starts grow:** appending a start that isn't on cue leaves every plan line's `onCueStarts` unchanged.
   - **Moving:** it is moving exactly when the newest counted start is at most `RESTING_AFTER_MS` before `now`.
   - **Counts:** `PartLight.starts` equals an independent count by `partOfStart`, with unknown ids counted as `null`.
-- [ ] **Step 3:** Write the failing `focus.test.ts`:
+- [x] **Step 3:** Write the failing `focus.test.ts`:
   - one test per rule that checks precedence;
   - rule 4 is skipped when `plansAvailable` is false;
   - `recentLapses` keeps a slip at exactly 7 days and drops one older by 1 ms.
-- [ ] **Step 4:** Run `npx vitest run src/domain/brainSpace.test.ts src/domain/focus.test.ts`. Expected: FAIL.
-- [ ] **Step 5:** Implement `brainSpace.ts` with the constants and signatures of spec §16.4, and `focus.ts`.
-- [ ] **Step 6:** Run it again. Expected: PASS. Then run the gate.
-- [ ] **Step 7:** Commit: `feat(domain): project Brain space lines, strength and focus`.
+- [x] **Step 4:** Run `npx vitest run src/domain/brainSpace.test.ts src/domain/focus.test.ts`. Expected: FAIL.
+- [x] **Step 5:** Implement `brainSpace.ts` with the constants and signatures of spec §16.4, and `focus.ts`.
+- [x] **Step 6:** Run it again. Expected: PASS. Then run the gate.
+- [x] **Step 7:** Commit: `feat(domain): project Brain space lines, strength and focus`.
 
 ### Task 5: Geometry
 
