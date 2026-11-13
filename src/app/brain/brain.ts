@@ -208,14 +208,26 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     if (cam.yaw !== target.yaw || cam.pitch !== target.pitch) {
       orbitStart ??= time;
       const p = progress(orbitStart);
-      const e = p >= 1 ? 1 : easeStandard(p);
-      yaw = orbitFrom.yaw + (target.yaw - orbitFrom.yaw) * e;
-      pitch = orbitFrom.pitch + (target.pitch - orbitFrom.pitch) * e;
+      if (p >= 1) {
+        // Land exactly on the target: `from + (to - from) * 1` can miss it by a rounding step.
+        yaw = target.yaw;
+        pitch = target.pitch;
+        orbitStart = null;
+      } else {
+        const e = easeStandard(p);
+        yaw = orbitFrom.yaw + (target.yaw - orbitFrom.yaw) * e;
+        pitch = orbitFrom.pitch + (target.pitch - orbitFrom.pitch) * e;
+      }
     }
     if (cam.zoom !== target.zoom) {
       zoomStart ??= time;
       const p = progress(zoomStart);
-      zoom = zoomFrom + (target.zoom - zoomFrom) * (p >= 1 ? 1 : easeStandard(p));
+      if (p >= 1) {
+        zoom = target.zoom;
+        zoomStart = null;
+      } else {
+        zoom = zoomFrom + (target.zoom - zoomFrom) * easeStandard(p);
+      }
     }
     cam = { yaw, pitch, zoom };
   }
