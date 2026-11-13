@@ -4,23 +4,33 @@ Arohexis is a local-first, installable web app for chronic procrastination. It t
 
 When you are stuck, you tap one button and name the feeling. Arohexis shows a short response matched to that feeling, and you take a two-minute first step. Each start is rewarded right away.
 
+## Install on iPhone
+
+1. Open the app's address in Safari.
+2. Tap Share, then Add to Home Screen.
+3. Open Arohexis from the Home Screen. It works offline after the first load.
+
+Android and desktop browsers can install it too, from the browser's install option.
+
 ## What it is and isn't
 
-Arohexis is a stuck button with a timer, a reward and a record of what helped. Later milestones add Brain space, if-then plans, insights and a weekly check-in.
+Arohexis is a stuck button with a timer, a reward and a record of what helped. It also has Brain space, if-then plans, Insights and a weekly check-in. Feelings, responses, obstacles and parts are all editable.
 
 It is not a task manager. It has no task lists, due dates or completion tracking. It has no accounts, no cloud sync, no AI chat, no social features and no app or site blocking.
 
 "Training" here means ordinary learning: the same cue, a new response, an immediate reward, repeated until it is automatic. Arohexis makes no claims about brain change and does not diagnose or treat any condition.
 
+## Local-first and privacy
+
+All data stays on your device, in the browser's IndexedDB. There are no accounts, no analytics, no error reporting service, and no third-party fonts or scripts. The app makes no requests to any other site, and a Content Security Policy enforces that. Back up or move your data with the export and import in Settings. The repository never contains real user data.
+
 ## Brain space
 
-Brain space draws your starts as lines of light in the shape of a brain. It's a picture of your starts, not a scan, and the shape is the same for everyone. Arohexis makes no claim that your brain changes.
+Brain space draws your starts as lines of light in the shape of a brain. It's a picture of your starts, not a scan, and the shape is the same for everyone. Arohexis makes no claim that your brain changes. Still turns the motion off.
 
-## Status
+## Demo
 
-Milestone 1 is built: Home, feeling, matched response, Start, reward, a two-minute timer, Undo, a task tag, offline use as an installable PWA, backup export, and Cloudflare deploy configuration. The first deploy has not happened yet, so there is no public URL.
-
-Demo: coming in M5.
+Explore the demo from the Welcome screen to see ten weeks of made-up data. It uses a separate database and never touches your own.
 
 ## Why it works
 
@@ -83,21 +93,17 @@ Caveat: self-report.
 
 > Arohexis is a self-help tool, not medical advice. It doesn't diagnose or treat ADHD, depression, anxiety or any other condition. If procrastination is seriously affecting your life, consider talking to a qualified professional.
 
-## Privacy
-
-All data stays on your device, in the browser's IndexedDB. There are no accounts, no analytics, no error reporting service, and no third-party fonts or scripts. The app makes no requests to any other site, and a Content Security Policy enforces that. The repository never contains real user data.
-
-## Architecture
+## The stack
 
 - React 19, Vite 8 and strict TypeScript 6, built as an offline-first PWA.
+- Dexie for IndexedDB, Valibot for import validation, and hand-written CSS tokens with CSS Modules.
+- Brain space draws with canvas 2D and no library.
 - `src/domain` is pure TypeScript with no React, Dexie, DOM or network. Its own `tsconfig` has no DOM lib, and ESLint bans UI and storage imports there.
-- `src/storage` holds the Dexie database and the repositories that implement the domain ports.
-- `src/app` holds the routes, screens and actions. Screens read projections through hooks; actions wire pure domain functions to storage.
-- `src/copy` holds every user-facing string, and a test enforces the copy rules. Hosting is Cloudflare Workers Static Assets.
+- `src/storage` holds the Dexie database and the repositories. `src/app` holds routes, screens and actions. `src/copy` holds every user-facing string, and a test enforces the copy rules.
 
 The full design is in [docs/spec.md](docs/spec.md).
 
-## Development
+## Develop and test
 
 Use the Node version in `.nvmrc` (26).
 
@@ -119,8 +125,26 @@ npm run dev
 | `npm run e2e`                        | Run the Playwright end-to-end tests            |
 | `node scripts/check-bundle-size.mjs` | Check the built bundle against its size budget |
 
+Locally, run the end-to-end tests on Android and desktop:
+
+```sh
+npx playwright test --project=android --project=desktop
+```
+
+The iPhone project (WebKit) runs in CI. CI's Linux WebKit is not an iPhone, so timings there say nothing about the device. See ADR-029 in [docs/decisions.md](docs/decisions.md).
+
+## Deploy
+
+Every push to `main` that passes CI deploys to Cloudflare Workers Static Assets with `wrangler deploy`. Pull requests get preview URLs. The deploy settings are in `wrangler.jsonc` and `.github/workflows/ci.yml`.
+
+## Licence
+
+No licence file is present, so all rights are reserved.
+
 ## Project docs
 
 - [docs/spec.md](docs/spec.md): the design spec.
 - [docs/decisions.md](docs/decisions.md): the decision log (ADRs).
 - [docs/plan.md](docs/plan.md): the implementation plan and milestones.
+- [docs/case-study.md](docs/case-study.md): the decisions and what changed.
+- [docs/v1-success-criteria.md](docs/v1-success-criteria.md): the v1.0 success criteria and their evidence.
