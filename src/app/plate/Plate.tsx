@@ -1,4 +1,4 @@
-import { useMemo, useRef, type KeyboardEvent } from 'react';
+import { useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { brain } from '../../copy/brain';
 import { summaryLines } from '../../domain/brainSpace';
 import { Chip } from '../components/Chip';
@@ -6,7 +6,9 @@ import { useData } from '../data/DataProvider';
 import { useBrainSpace } from '../hooks/useBrainSpace';
 import { useStill } from '../hooks/useStill';
 import { shownParts } from './describe';
+import { PART_CARD_TITLE_ID, PartCard } from './PartCard';
 import { PartsRow } from './PartsRow';
+import { Sheet } from './Sheet';
 import { TurnControls, ZoomControls } from './PlateControls';
 import { TextEquivalent } from './TextEquivalent';
 import { useRenderer } from './useRenderer';
@@ -24,13 +26,27 @@ export function Plate({ selected, onSelect, notice }: Props) {
   const data = useBrainSpace();
   const { still, toggle } = useStill();
   const canvas = useRef<HTMLCanvasElement>(null);
+  const root = useRef<HTMLElement>(null);
+  const [opener, setOpener] = useState<HTMLElement | null>(null);
+  // The card opens on a tap; closing it keeps the part selected until All clears it.
+  const [cardFor, setCardFor] = useState<string | null>(null);
   const state = useMemo(
     () => data && { space: data.space, parts: data.parts, selected, still },
     [data, selected, still],
   );
+  // Tapping a part, on the plate or its chip, opens its card. Focus returns to that part's chip.
+  function select(partId: string | null) {
+    setCardFor(partId);
+    if (partId !== null) {
+      const chips = root.current?.querySelectorAll<HTMLElement>('[data-part-id]');
+      setOpener([...(chips ?? [])].find((c) => c.dataset['partId'] === partId) ?? null);
+    }
+    onSelect(partId);
+  }
+
   const renderer = useRenderer(
     canvas,
-    { variant: 'plate', now: () => clock.now(), onPartTap: onSelect },
+    { variant: 'plate', now: () => clock.now(), onPartTap: select },
     state,
   );
 
@@ -54,43 +70,54 @@ export function Plate({ selected, onSelect, notice }: Props) {
 
   const motion = still ? 'still' : (data?.space.motion ?? 'moving');
   return (
-    <section
-      role="region"
-      aria-label={brain.regionLabel}
-      className={`plate plate-scope ${styles['plate']}`}
-      data-motion={motion}
-      onKeyDown={onKeyDown}
-    >
-      <div className={styles['stage']}>
-        <canvas ref={canvas} aria-hidden="true" className={styles['canvas']} />
-        {data && (
-          <>
-            <p className={styles['summary']}>
-              {data.space.totalStarts === 0
-                ? brain.empty
-                : brain.summary(data.space.totalStarts, summaryLines(data.space))}
-            </p>
-            <Chip pressed={still} className={styles['still']} onClick={toggle}>
-              {brain.controls.still}
-            </Chip>
-            <TurnControls onTurn={renderer.turn} />
-            <ZoomControls onZoom={renderer.zoom} />
-            {notice && (
-              <p role="status" className={styles['notice']}>
-                {notice}
+    <>
+      <section
+        role="region"
+        aria-label={brain.regionLabel}
+        ref={root}
+        className={`plate plate-scope ${styles['plate']}`}
+        data-motion={motion}
+        onKeyDown={onKeyDown}
+      >
+        <div className={styles['stage']}>
+          <canvas ref={canvas} aria-hidden="true" className={styles['canvas']} />
+          {data && (
+            <>
+              <p className={styles['summary']}>
+                {data.space.totalStarts === 0
+                  ? brain.empty
+                  : brain.summary(data.space.totalStarts, summaryLines(data.space))}
               </p>
-            )}
-            <TextEquivalent space={data.space} parts={data.parts} />
-          </>
+              <Chip pressed={still} className={styles['still']} onClick={toggle}>
+                {brain.controls.still}
+              </Chip>
+              <TurnControls onTurn={renderer.turn} />
+              <ZoomControls onZoom={renderer.zoom} />
+              {notice && (
+                <p role="status" className={styles['notice']}>
+                  {notice}
+                </p>
+              )}
+              <TextEquivalent space={data.space} parts={data.parts} />
+            </>
+          )}
+        </div>
+        {data && (
+          <PartsRow
+            parts={shownParts(data.space, data.parts)}
+            selected={selected}
+            onSelect={select}
+          />
         )}
-      </div>
-      {data && (
-        <PartsRow
-          parts={shownParts(data.space, data.parts)}
-          selected={selected}
-          onSelect={onSelect}
-        />
-      )}
-    </section>
+      </section>
+      <Sheet
+        open={cardFor !== null}
+        onClose={() => setCardFor(null)}
+        labelledBy={PART_CARD_TITLE_ID}
+        opener={opener}
+      >
+        {cardFor !== null && <PartCard partId={cardFor} onClose={() => setCardFor(null)} />}
+      </Sheet>
+    </>
   );
 }

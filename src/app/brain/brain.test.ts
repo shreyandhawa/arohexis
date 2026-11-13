@@ -4,7 +4,8 @@ import type { Plan } from '../../domain/config';
 import { DEFAULT_PARTS } from '../../domain/defaults';
 import { buildField } from '../../geometry/field';
 import { createRenderer, type RenderState } from './brain';
-import { BRAIN_CENTRE } from './constants';
+import { BRAIN_CENTRE, BURST_MS, STILL_FADE_MS } from './constants';
+import type { BrainSpace } from '../../domain/brainSpace';
 import { buildRig, pulledLabel } from './draw';
 
 const lookOf = (at: readonly number[]): string => at.map((v) => v.toFixed(2)).join(',');
@@ -81,12 +82,13 @@ function setup(opts: { reduce?: boolean } = {}) {
   );
   vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => frames.push(cb));
   vi.stubGlobal('cancelAnimationFrame', () => undefined);
+  const clock = { now: 0 };
   const reported: unknown[] = [];
   vi.stubGlobal('reportError', (e: unknown) => reported.push(e));
 
   const renderer = createRenderer(canvas as unknown as HTMLCanvasElement, {
     variant: 'plate',
-    now: () => 0,
+    now: () => clock.now,
     onPartTap: () => undefined,
   });
   const state = (over: Partial<RenderState> = {}): RenderState => ({
@@ -115,7 +117,7 @@ function setup(opts: { reduce?: boolean } = {}) {
       listeners.get('pointerup')?.(at(80));
     },
   };
-  return { renderer, canvas, control, pointer, reported, state, flush, frames, calls };
+  return { renderer, canvas, clock, control, pointer, reported, state, flush, frames, calls };
 }
 
 beforeEach(() => vi.useFakeTimers());
@@ -336,5 +338,101 @@ describe('the draw report', () => {
     expect(h.canvas.dataset['drawMean']).toBeUndefined();
     for (let t = 5016; t < 6100; t += 16) h.flush(t);
     expect(h.canvas.dataset['drawMean']).toBeDefined();
+  });
+});
+
+describe('the arriving start', () => {
+  const partId = DEFAULT_PARTS[0]!.id;
+  const space: BrainSpace = {
+    lines: [
+      { kind: 'start', id: 'a1', partId, at: 1000, order: 1000, settled: false, undone: false },
+    ],
+    parts: [],
+    motion: 'moving',
+    totalStarts: 1,
+  };
+  const arriving = { space, reveal: { lineId: 'a1', startAt: 1000 }, burstAt: 1000 };
+
+  it('reports reveal progress from the clock, and the part', () => {
+    const h = setup();
+    h.clock.now = 61_000;
+    h.renderer.update(h.state(arriving));
+    h.flush(0);
+    expect(h.canvas.dataset['reveal']).toBe('0.50');
+    expect(h.canvas.dataset['revealPart']).toBe(partId);
+    expect(h.canvas.dataset['loop']).toBe('running');
+    h.clock.now = 121_000;
+    h.flush(16);
+    expect(h.canvas.dataset['reveal']).toBe('1.00');
+  });
+
+  it('resumes at the right progress after a reload', () => {
+    const h = setup();
+    h.clock.now = 31_000;
+    h.renderer.update(h.state(arriving));
+    h.flush(0);
+    expect(h.canvas.dataset['reveal']).toBe('0.25');
+  });
+
+  it('lets the loop idle once the reveal, the settle ring and the burst are over', () => {
+    const h = setup();
+    h.clock.now = 1000 + 120_000 + 1000;
+    h.renderer.update(h.state(arriving));
+    h.flush(0);
+    expect(h.canvas.dataset['loop']).toBe('idle');
+    expect(h.canvas.dataset['reveal']).toBe('1.00');
+  });
+
+  it('runs the burst for BURST_MS only', () => {
+    const h = setup();
+    h.clock.now = 1000 + BURST_MS - 10;
+    h.renderer.update(h.state({ space, burstAt: 1000 }));
+    h.flush(0);
+    expect(h.canvas.dataset['loop']).toBe('running');
+    h.clock.now = 1000 + BURST_MS + 1;
+    h.flush(16);
+    expect(h.canvas.dataset['loop']).toBe('idle');
+  });
+
+  it('shows the light whole under Still, with a fade of at most 120 ms', () => {
+    const h = setup();
+    h.clock.now = 31_000;
+    h.renderer.update(h.state({ ...arriving, still: true }));
+    h.flush(0);
+    expect(h.canvas.dataset['reveal']).toBe('1.00');
+    expect(h.canvas.dataset['loop']).toBe('idle');
+    h.clock.now = 1000 + STILL_FADE_MS - 10;
+    h.renderer.update(h.state({ ...arriving, still: true }));
+    h.flush(16);
+    expect(h.canvas.dataset['loop']).toBe('running');
+    h.clock.now = 1000 + STILL_FADE_MS + 1;
+    h.flush(32);
+    expect(h.canvas.dataset['loop']).toBe('idle');
+  });
+
+  it('carries the reveal to a new line at the same progress', () => {
+    const h = setup();
+    const other = DEFAULT_PARTS[1]!.id;
+    h.clock.now = 61_000;
+    h.renderer.update(h.state(arriving));
+    h.flush(0);
+    const moved: BrainSpace = {
+      ...space,
+      lines: [{ ...space.lines[0]!, partId: other } as BrainSpace['lines'][number]],
+    };
+    h.renderer.update(h.state({ ...arriving, space: moved }));
+    h.flush(16);
+    expect(h.canvas.dataset['reveal']).toBe('0.50');
+    expect(h.canvas.dataset['revealPart']).toBe(other);
+  });
+
+  it('clears the report when nothing is arriving', () => {
+    const h = setup();
+    h.clock.now = 61_000;
+    h.renderer.update(h.state(arriving));
+    h.flush(0);
+    h.renderer.update(h.state({ space }));
+    h.flush(16);
+    expect(h.canvas.dataset['reveal']).toBeUndefined();
   });
 });

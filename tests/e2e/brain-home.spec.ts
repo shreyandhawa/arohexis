@@ -274,7 +274,11 @@ test('a part chip selects its part, and All clears it', async ({ page }) => {
   await work.click();
   await expect(work).toHaveAttribute('aria-pressed', 'true');
   await expect(all).toHaveAttribute('aria-pressed', 'false');
+  // The chip also opened the part's card; closing it keeps the part selected.
+  await page.keyboard.press('Escape');
+  await expect(work).toHaveAttribute('aria-pressed', 'true');
   await plate.getByRole('button', { name: 'Study' }).click();
+  await page.keyboard.press('Escape');
   await expect(work).toHaveAttribute('aria-pressed', 'false');
   await all.click();
   await expect(all).toHaveAttribute('aria-pressed', 'true');

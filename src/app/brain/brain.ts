@@ -1,16 +1,30 @@
 // The lazy Brain space entry: the canvas 2D renderer (spec §16.6 to §16.8, ADR-029).
 import type { BrainSpace } from '../../domain/brainSpace';
-import { RESTING_BRIGHTNESS } from '../../domain/brainSpace';
+import { RESTING_BRIGHTNESS, strengthFor } from '../../domain/brainSpace';
+import { TIMER_SECONDS } from '../../domain/timer';
 import type { Part } from '../../domain/config';
 import { PLATE } from '../../design/partColours';
 import { buildField, regionKey, type Field } from '../../geometry/field';
 import { clampZoom, easeStandard, explodeAmount, turnBy, zoomBy, type Camera } from './camera';
-import { BRAIN_CENTRE, EASE_MS } from './constants';
+import {
+  BRAIN_CENTRE,
+  BURST_MS,
+  EASE_MS,
+  MIN_STRIP_BAND,
+  SETTLE_MS,
+  STILL_FADE_MS,
+} from './constants';
 import {
   buildRig,
   buildScene,
   clipToBand,
+  coreOf,
+  drawBurst,
   drawDim,
+  drawReveal,
+  drawSettle,
+  endPointOf,
+  makeProject,
   drawLabels,
   drawLit,
   drawSignals,
@@ -18,6 +32,7 @@ import {
   facing,
   hitTest,
   pulledLabel,
+  type Item,
   type Rig,
   type Scene,
   type View,
@@ -28,7 +43,9 @@ export type RenderState = {
   parts: readonly Part[];
   selected: string | null;
   still: boolean;
+  /** The start that is arriving: its light's line id (an attempt id, or a plan line id) and its `start.at`. */
   reveal?: { lineId: string; startAt: number };
+  /** The `start.at` of a start made on Started. The burst's phase is `(now - burstAt) / BURST_MS`. */
   burstAt?: number;
 };
 
@@ -50,6 +67,22 @@ const START_CAMERA: Camera = { yaw: -Math.PI / 2, pitch: 0, zoom: 1, look: BRAIN
 const TAP_SLOP = 6;
 const TAP_RADIUS = 24;
 const DRAW_SAMPLES = 120;
+const REVEAL_MS = TIMER_SECONDS * 1000;
+const STRIP_ZOOM_FIT = 2.5;
+
+type Motion = {
+  /** The arriving start, if its light is on the scene. */
+  item?: Item;
+  /** The reveal's progress (0 to 1) while a reveal is set; 1 under Still. */
+  progress?: number;
+  /** A plan line's strength before this start, or 0. */
+  prior?: number;
+  /** The overlay draws the item instead of the cached layer. */
+  revealing?: boolean;
+  burst?: number;
+  settle?: number;
+  animating: boolean;
+};
 
 const sameLook = (a: Camera['look'], b: Camera['look']): boolean =>
   a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
@@ -109,6 +142,13 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   let destroyed = false;
   let broken = false;
   let cacheKey = '';
+  const strip = opts.variant === 'strip';
+  /** The time of the frame being drawn, from `opts.now`, so drawing and the loop agree on it. */
+  let at = 0;
+  let current: Motion = { animating: false };
+  /** The strip's extra magnification, and what it was worked out for. */
+  let fit = 1;
+  let framedFor = '';
   const cache = document.createElement('canvas');
   const cacheCtx = cache.getContext('2d');
   const samples: number[] = [];
@@ -133,6 +173,88 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   canvas.dataset['loop'] = 'idle';
 
   const still = (): boolean => state?.still ?? false;
+
+  /** What the clock says about the arriving start at `now` (spec §16.8). Nothing here is stored. */
+  function motionAt(now: number): Motion {
+    if (!state) return { animating: false };
+    const calm = state.still;
+    const out: Motion = { animating: false };
+    const rv = state.reveal;
+    if (rv) {
+      const raw = Math.min(1, Math.max(0, (now - rv.startAt) / REVEAL_MS));
+      out.progress = calm ? 1 : raw;
+      const item = scene.items.find((i) => i.id === rv.lineId);
+      if (item) out.item = item;
+      const line = state.space.lines.find((l) => l.id === rv.lineId);
+      if (line?.kind === 'plan') {
+        const before = strengthFor(line.onCueStarts - 1);
+        out.prior = before === 'waiting' || before === line.strength ? 0 : before;
+      }
+      if (!calm && raw < 1) {
+        out.animating = true;
+        out.revealing = item !== undefined;
+      }
+      const since = now - rv.startAt - REVEAL_MS;
+      if (!calm && item && since >= 0 && since < SETTLE_MS) {
+        out.settle = since / SETTLE_MS;
+        out.animating = true;
+      }
+    }
+    if (state.burstAt !== undefined) {
+      const phase = (now - state.burstAt) / (calm ? STILL_FADE_MS : BURST_MS);
+      if (phase >= 0 && phase < 1) {
+        out.burst = phase;
+        out.animating = true;
+      }
+    }
+    return out;
+  }
+
+  function reportReveal(): void {
+    const rv = state?.reveal;
+    if (!state || !rv || current.progress === undefined) {
+      delete canvas.dataset['reveal'];
+      delete canvas.dataset['revealPart'];
+      return;
+    }
+    const line = state.space.lines.find((l) => l.id === rv.lineId);
+    canvas.dataset['reveal'] = current.progress.toFixed(2);
+    canvas.dataset['revealPart'] = line?.partId ?? current.item?.partId ?? 'core';
+  }
+
+  /** The strip frames the arriving line from its core to its end, in a side view. */
+  function frameStrip(): void {
+    const item = current.item;
+    const key = `${item?.id ?? ''}:${width}:${height}`;
+    if (key === framedFor) return;
+    framedFor = key;
+    const s = item && ensureField().field.fibres[item.fibre]?.strands[Math.max(item.strand, 0)];
+    if (!item || !s) {
+      target = { ...START_CAMERA };
+      fit = 1;
+    } else {
+      const end: [number, number, number] = [s[s.length - 3]!, s[s.length - 2]!, s[s.length - 1]!];
+      const look: [number, number, number] = [
+        (s[0]! + end[0]) / 2,
+        (s[1]! + end[1]) / 2,
+        (s[2]! + end[2]) / 2,
+      ];
+      target = { ...facing(end, START_CAMERA), look };
+      const probe = makeProject({ w: width, h: height, top: 0, bottom: 0, cam: target });
+      const a = { ...probe(s[0]!, s[1]!, s[2]!) };
+      const b = probe(...end);
+      const span = Math.max(Math.abs(b.x - a.x), Math.abs(b.y - a.y) * (width / height), 1);
+      fit = Math.min(STRIP_ZOOM_FIT, Math.max(1, (0.8 * width) / span));
+    }
+    cam = { ...target };
+    cacheKey = '';
+    report();
+  }
+
+  const viewNow = (): View =>
+    strip
+      ? { w: width, h: height, top: 0, bottom: 0, cam, minBand: MIN_STRIP_BAND, fit }
+      : { w: width, h: height, top: insetTop, bottom: insetBottom, cam };
   /** Camera moves snap under Still and under reduced motion; only the signals are exempt. */
   const snaps = (): boolean => still() || reduce?.matches === true;
   const easing = (): boolean =>
@@ -141,11 +263,12 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     cam.zoom !== target.zoom ||
     !sameLook(cam.look, target.look);
   const signalsOn = (): boolean => scene.signals && state?.space.motion === 'moving' && !still();
-  const needsLoop = (): boolean => !document.hidden && (dragging || easing() || signalsOn());
+  const needsLoop = (): boolean =>
+    !document.hidden && (dragging || easing() || signalsOn() || current.animating);
 
   function syncTouchAction(): void {
     const scrolls = document.documentElement.scrollHeight > window.innerHeight + 1;
-    canvas.style.touchAction = scrolls ? 'pan-y' : 'none';
+    canvas.style.touchAction = strip ? 'auto' : scrolls ? 'pan-y' : 'none';
   }
 
   /** The band between the plate's top row and bottom control row, from `--brain-inset-*` (0 when absent). */
@@ -203,7 +326,9 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   function draw(time: number, detailed: boolean): void {
     if (width === 0 || !state) return;
     const { field: f, rig: r } = ensureField();
-    const view: View = { w: width, h: height, top: insetTop, bottom: insetBottom, cam };
+    if (strip) frameStrip();
+    reportReveal();
+    const view = viewNow();
     const resting = state.space.motion === 'resting';
     const lit = {
       ctx,
@@ -232,7 +357,14 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       sceneVersion,
       state.selected,
       resting,
+      current.revealing ? current.item?.id : '',
+      fit,
     ].join(':');
+    // The arriving line is drawn each frame over the cached layer, so it stays out of the cache until it lands.
+    const settled: Scene =
+      current.revealing && current.item
+        ? { ...scene, items: scene.items.filter((i) => i !== current.item) }
+        : scene;
     if (cacheCtx) {
       if (key !== cacheKey) {
         cacheCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -243,7 +375,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
         cacheCtx.save();
         clipToBand(cacheCtx, view);
         drawDim(cacheCtx, f, r, view, detailed, state.selected !== null);
-        drawLit({ ...lit, ctx: cacheCtx });
+        drawLit({ ...lit, ctx: cacheCtx, scene: settled });
         cacheCtx.restore();
         cacheKey = key;
       }
@@ -258,12 +390,24 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       ctx.save();
       clipToBand(ctx, view);
       drawDim(ctx, f, r, view, detailed, state.selected !== null);
-      drawLit(lit);
+      drawLit({ ...lit, scene: settled });
       ctx.restore();
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.save();
     clipToBand(ctx, view);
+    const arriving = current.item;
+    if (arriving && current.revealing && current.progress !== undefined) {
+      drawReveal(lit, { item: arriving, progress: current.progress, prior: current.prior ?? 0 });
+    }
+    if (current.burst !== undefined) {
+      const core = (arriving && coreOf(lit, arriving)) ?? BRAIN_CENTRE;
+      drawBurst(ctx, view, core, arriving?.css ?? PLATE.core, current.burst, state.still);
+    }
+    if (arriving && current.settle !== undefined) {
+      const end = endPointOf(lit, arriving);
+      if (end) drawSettle(ctx, end, arriving.css, current.settle);
+    }
     if (signalsOn()) drawSignals(lit);
     drawWaiting(lit);
     drawLabels(ctx, r, state.parts, view, { selected: state.selected, lit: { scene, field: f } });
@@ -324,6 +468,8 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     raf = 0;
     if (destroyed || broken) return;
     try {
+      at = opts.now();
+      current = motionAt(at);
       stepCamera(time);
       const moving = dragging || easing();
       const t0 = performance.now();
@@ -477,7 +623,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     }
     if (wasTap && state && field && rig) {
       const p = local(e);
-      const view: View = { w: width, h: height, top: insetTop, bottom: insetBottom, cam };
+      const view = viewNow();
       const hit = hitTest(scene, field, rig, view, p.x, p.y, TAP_RADIUS);
       opts.onPartTap(hit ? hit.partId : null);
     }
@@ -514,6 +660,8 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     if (!size()) return;
     if (!broken) {
       try {
+        at = opts.now();
+        current = motionAt(at);
         draw(performance.now(), !(dragging || easing()));
       } catch (e) {
         fail(e);
@@ -535,11 +683,14 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     watchDpr();
   }
 
-  canvas.addEventListener('pointerdown', onDown);
-  canvas.addEventListener('pointermove', onMove);
-  canvas.addEventListener('pointerup', onUp);
-  canvas.addEventListener('pointercancel', onCancel);
-  canvas.addEventListener('wheel', onWheel, { passive: false });
+  // The strip is for watching: it takes no touch, so a swipe across it scrolls the page.
+  if (!strip) {
+    canvas.addEventListener('pointerdown', onDown);
+    canvas.addEventListener('pointermove', onMove);
+    canvas.addEventListener('pointerup', onUp);
+    canvas.addEventListener('pointercancel', onCancel);
+    canvas.addEventListener('wheel', onWheel, { passive: false });
+  }
   document.addEventListener('visibilitychange', onVisibility);
   window.addEventListener('resize', syncTouchAction);
   const observer = new ResizeObserver(resize);
@@ -559,13 +710,15 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     update(next) {
       const before = state?.selected ?? null;
       state = next;
+      at = opts.now();
       const { field: f } = ensureField();
       const built = buildScene(next.space, next.parts, f);
       // Spec §16.6: the cached layer is redrawn only when the data changes, not on every re-emit.
       if (!sameScene(scene, built)) sceneVersion += 1;
       scene = built;
+      current = motionAt(at);
       if (next.still) cam = { ...target };
-      if (next.selected !== before) {
+      if (!strip && next.selected !== before) {
         if (next.selected !== null) faceRegion(next.selected, next.parts);
         else aim(target); // the look-at returns to the centre
       }
