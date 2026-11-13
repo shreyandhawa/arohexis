@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { BRAIN_CENTRE, EXPLODE_FROM_ZOOM, TURN_STEP_RAD, ZOOM_MAX, ZOOM_MIN } from './constants';
-import { easeStandard, explodeAmount, turnBy, zoomBy, type Camera } from './camera';
+import {
+  STRIP_FIT_MAX,
+  STRIP_FILL,
+  boxCentre,
+  easeStandard,
+  explodeAmount,
+  stripFit,
+  turnBy,
+  zoomBy,
+  type Camera,
+} from './camera';
 
 const start: Camera = { yaw: 0, pitch: 0, zoom: 1, look: BRAIN_CENTRE };
 
@@ -49,5 +59,23 @@ describe('camera', () => {
       expect(e).toBeGreaterThanOrEqual(last);
       last = e;
     }
+  });
+});
+
+describe('strip framing', () => {
+  it('centres on the box of the drawn points', () => {
+    expect(
+      boxCentre([
+        [0, 0, 0, 2, 4, 6],
+        [1, 1, 1],
+      ]),
+    ).toEqual([1, 2, 3]);
+  });
+
+  it('fits the line to the strip height with padding, within 1 and STRIP_FIT_MAX', () => {
+    // A tall line, 20 px high at fit 1, in an 80 px strip fills 76% of the height.
+    expect(20 * stripFit(375, 80, 10, 20)).toBeCloseTo(STRIP_FILL * 80);
+    expect(stripFit(375, 80, 1000, 1000)).toBe(1);
+    expect(stripFit(375, 80, 1, 1)).toBe(STRIP_FIT_MAX);
   });
 });

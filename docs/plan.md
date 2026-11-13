@@ -1382,12 +1382,12 @@ export function Plate(props: { selected: string | null; onSelect(partId: string 
   - an M1-like history;
   - the full fixture: every strength, a waiting line, six parts, zoomed past `EXPLODE_FROM_ZOOM`, and one part selected.
 - [x] **Step 3:** `design-critic` judges them against `docs/reference/brain-space/`, ADR-018, ADR-021 and spec §16.6–16.7, and returns ranked findings. The lead accepts or rejects each one. The builders fix the accepted ones, and a reviewer checks the fixes.
-- [ ] **Step 4: Owner step.** The owner reviews Home on the preview URL on the iPhone, in light and dark, plus the full-fixture screenshots.
+- [x] **Step 4: Owner step.** The owner reviews Home on the preview URL on the iPhone, in light and dark, plus the full-fixture screenshots.
   - The preview is its own origin, so it starts empty. A few starts there show real light.
   - Ask about: the plate's weight in the light theme (ADR-026), the parts row over the plate (ADR-030), and how resting looks (ADR-024).
 
   Iterate until the owner says yes. Later tasks wait for that yes.
-- [ ] **Step 5:** Add a line to ADR-021's consequences: "Home review passed on <date>", plus any changes. Commit and push.
+- [x] **Step 5:** Add a line to ADR-021's consequences: "Home review passed on <date>", plus any changes. Commit and push.
 
 ### Task 8: Part card and Started
 
@@ -1423,11 +1423,11 @@ export function Strip(props: { attempt: Attempt }): JSX.Element;
   - the title "What to focus on", the focus line for `focusFor(…)` (the five lines of §16.9, verbatim), and a link to About (`/about#brain-space`);
   - `close: 'Close'`.
 
-- [ ] **Step 1:** Measure.
+- [x] **Step 1:** Measure.
   - **Setup:** at 375×667 with six parts (seed a sixth).
   - **Measure:** the free height on Started between the parts row and **Done for now**.
   - **Decide:** the strip is `min(80, free)` px. Under 64 px, stop and report to the lead, who takes it to the owner. It never falls back to playing the reveal on Home.
-- [ ] **Step 2:** Write the failing tests in `brain-started.spec.ts`:
+- [x] **Step 2:** Write the failing tests in `brain-started.spec.ts`:
   - `Started doesn't scroll with six parts and the strip`;
   - `the strip reveals the new light over two minutes`: with `page.clock`, `data-reveal` is 0.5 ± 0.02 at 60 s and 1 at 120 s;
   - `a reload mid-reveal resumes at the right progress` (Review Focus #7);
@@ -1438,10 +1438,10 @@ export function Strip(props: { attempt: Attempt }): JSX.Element;
   - `a part chip opens its card with focus trapped; Esc and Close each return focus to the chip`;
   - `the card shows counts and the focus line`: in M2, rule 5's line;
   - `Started and the card are accessible`, in light and dark.
-- [ ] **Step 3:** Run `npx playwright test tests/e2e/brain-started.spec.ts`. Expected: FAIL.
-- [ ] **Step 4:** Implement: the renderer work first, then the UI. The strip sits between "What is it?" and the timer's actions, with **Still** in its corner. Under a blocked chunk it shows the summary line at the same height.
-- [ ] **Step 5:** Run it again, then the gate. Expected: PASS.
-- [ ] **Step 6:** Commit each builder's part after its review: `feat(brain): burst and reveal on the Started strip` and `feat(app): part card and the Started strip`.
+- [x] **Step 3:** Run `npx playwright test tests/e2e/brain-started.spec.ts`. Expected: FAIL.
+- [x] **Step 4:** Implement: the renderer work first, then the UI. The strip sits between "What is it?" and the timer's actions, with **Still** in its corner. Under a blocked chunk it shows the summary line at the same height.
+- [x] **Step 5:** Run it again, then the gate. Expected: PASS.
+- [x] **Step 6:** Commit each builder's part after its review: `feat(brain): burst and reveal on the Started strip` and `feat(app): part card and the Started strip`.
 
 ### Task 9: Settings and About
 
@@ -1495,7 +1495,7 @@ export function setPartEnabled(d: AppDeps, id: string, enabled: boolean): Promis
 - Create: `tests/e2e/brain-guards.spec.ts`, `tests/e2e/brain-perf.spec.ts`
 - Modify: `tests/e2e/offline.spec.ts`, `tests/e2e/csp.spec.ts`, `docs/decisions.md` (ADR-029)
 
-- [ ] **Step 1:** Write `brain-guards.spec.ts`:
+- [x] **Step 1:** Write `brain-guards.spec.ts`:
   - `with the renderer chunk blocked, every Brain space action works` (Review Focus #8), with `serviceWorkers: 'block'` as in 7B:
     - **Actions:** Still, zoom and turn, a part chip opening its card, Settings → Parts edits, and the stuck flow to Started with the strip's text;
     - **Expected:** no console errors except the blocked request;
@@ -1505,25 +1505,25 @@ export function setPartEnabled(d: AppDeps, id: string, enabled: boolean): Promis
     - Enter opens a card and Esc closes it;
     - `S` still opens the stuck flow;
   - an axe sweep of Home, Started, the card and Settings → Parts, in light and dark.
-- [ ] **Step 2:** Extend the existing specs:
+- [x] **Step 2:** Extend the existing specs:
   - **`offline.spec.ts`** (Chromium projects): `offline, the chunk is precached and Brain space draws`. Load the app, wait for the service worker to be ready, go offline and reload. The canvas has `data-loop`;
   - **`csp.spec.ts`:** the walk adds Home with the canvas running, zoom, a part card and the Started strip, with zero `securitypolicyviolation` events.
-- [ ] **Step 3:** Write `brain-perf.spec.ts` (`iphone` project only).
+- [x] **Step 3:** Write `brain-perf.spec.ts` (`iphone` project only).
   - **Setup:** seed the full fixture.
   - **Action:** drag across the plate for 5 s with moves every 16 ms.
   - **Read:** `data-draw-mean`, then assert it is at most `DRAW_MEAN_BUDGET_MS`.
-- [ ] **Step 4:** Push. On the first CI run, the lead reads the logged mean and sets `DRAW_MEAN_BUDGET_MS` to twice it, rounded up to 0.5 ms. Record it in ADR-029's consequences, then push again.
-- [ ] **Step 5:** Confirm CI is green on every job, and `check-bundle-size.mjs` prints the initial JS at most 150 kB and the chunk at most 30 kB. Commit: `test(e2e): Brain space guards for blocked chunk, offline, CSP and frame time`.
+- [x] **Step 4:** Push. On the first CI run, the lead reads the logged mean and sets `DRAW_MEAN_BUDGET_MS` to twice it, rounded up to 0.5 ms. Record it in ADR-029's consequences, then push again.
+- [x] **Step 5:** Confirm CI is green on every job, and `check-bundle-size.mjs` prints the initial JS at most 150 kB and the chunk at most 30 kB. Commit: `test(e2e): Brain space guards for blocked chunk, offline, CSP and frame time`.
 
 ### Task 11: Review and acceptance
 
 **Builder:** the lead, with `code-reviewer` and the unslop audit.
 
-- [ ] **Step 1:** Retitle PR #2 "Milestone 2: Brain space" and write its body with the `pr` skill:
+- [x] **Step 1:** Retitle PR #2 "Milestone 2: Brain space" and write its body with the `pr` skill:
   - the summary;
   - the evidence: the gates, the bundle and chunk sizes, the draw mean, and the Review Focus rows 6–14;
   - the owner checklist below.
-- [ ] **Step 2:** Run a whole-branch review with `code-reviewer`, against spec §16, ADR-021 to ADR-035 and this milestone.
+- [x] **Step 2:** Run a whole-branch review with `code-reviewer`, against spec §16, ADR-021 to ADR-035 and this milestone.
   - Triage the findings with superpowers:receiving-code-review.
   - The builders fix the accepted ones, and the reviewer re-checks the fixes.
 - [ ] **Step 3:** Run the unslop audit against the preview URL, from Playwright screenshots of every M2 screen. `ui` fixes the accepted findings. None may override the tokens, ADR-018, the spec's copy or the approved look.

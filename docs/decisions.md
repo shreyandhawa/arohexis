@@ -375,6 +375,7 @@ Statuses:
   - ADR-018 is amended, not superseded: its "no hue" now reads "no hue in chrome";
   - the reference is matched in look and behaviour. Its field geometry is reused with neutral names in `src/geometry/field.ts`, and none of its other code is reused. (Amended on 2026-11-12, in M2 Task 5: the owner chose to allow reusing the prototype's geometry, their own code, over a clean-room rewrite.);
   - the prototype's outline around a selected part, its Inter labels, its auto-rotation, its line added only when the timer ends, and its anatomy-named identifiers are not adopted.
+  - Home review passed on 2026-11-13 (owner, through a Simulator check: "Yes, pass them on"). Findings: input lag of 1–3 s in the Simulator (checked on Apple WebKit); one bad frame after Done for now; the light on the Started strip too small and at its bottom edge; the plate heavy in light theme, accepted as always dark. Resting is unchecked (it needs 48 h).
 
 ## ADR-022: Brain space is Milestone 2
 

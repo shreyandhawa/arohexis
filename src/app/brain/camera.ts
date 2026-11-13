@@ -55,3 +55,34 @@ export function easeStandard(t: number): number {
   }
   return bez(y1, y2, Math.min(1, Math.max(0, u)));
 }
+
+/** Share of the strip's width and height the lit line may fill; the rest is padding. */
+export const STRIP_FILL = 0.76;
+/** The most the strip magnifies the drawing. */
+export const STRIP_FIT_MAX = 4;
+
+/** The centre of a flat list of x, y, z points' bounding box. */
+export function boxCentre(points: readonly ArrayLike<number>[]): [number, number, number] {
+  const lo = [Infinity, Infinity, Infinity];
+  const hi = [-Infinity, -Infinity, -Infinity];
+  for (const p of points) {
+    for (let i = 0; i < p.length; i += 3) {
+      for (let k = 0; k < 3; k++) {
+        const v = p[i + k]!;
+        if (v < lo[k]!) lo[k] = v;
+        if (v > hi[k]!) hi[k] = v;
+      }
+    }
+  }
+  return [0, 1, 2].map((k) => (lo[k]! + hi[k]!) / 2) as [number, number, number];
+}
+
+/**
+ * The extra magnification that makes a projected box (`spanX` by `spanY` px at fit 1) fill
+ * STRIP_FILL of a `w` by `h` strip, never below 1 or above STRIP_FIT_MAX.
+ */
+export function stripFit(w: number, h: number, spanX: number, spanY: number): number {
+  const byW = (STRIP_FILL * w) / Math.max(spanX, 1);
+  const byH = (STRIP_FILL * h) / Math.max(spanY, 1);
+  return Math.min(STRIP_FIT_MAX, Math.max(1, Math.min(byW, byH)));
+}
