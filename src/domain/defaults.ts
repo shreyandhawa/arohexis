@@ -183,3 +183,18 @@ export const BASIS_SOURCES: Readonly<Record<Basis, string>> = {
   reframe: 'Rozental et al. 2018 (cognitive techniques used in CBT)',
   'pair-a-reward': 'Garg et al. 2025',
 };
+
+export const FROM_A_PLAN_ID = 'from-plan';
+export const FROM_A_PLAN_LABEL = 'From a plan';
+export const NO_PART_LABEL = 'No part';
+
+export const CHECKIN_STEM = "Starting a task I've been putting off is something…";
+export const CHECKIN_ITEMS: readonly [string, string, string, string] = [
+  'I do automatically.',
+  'I do without having to consciously remember.',
+  'I do without thinking.',
+  "I start doing before I realize I'm doing it.",
+];
+export const CHECKIN_SCALE_LABELS = { low: 'Strongly disagree', high: 'Strongly agree' } as const;
+export const CHECKIN_ATTRIBUTION =
+  'Adapted from the Self-Report Behavioural Automaticity Index (Gardner et al., 2012), CC BY.';

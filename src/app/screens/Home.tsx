@@ -8,12 +8,14 @@ import { readNotice } from '../notice';
 import { UpdateCard } from '../components/UpdateCard';
 import { useHasEvents } from '../hooks/useHasEvents';
 import { useStartsThisWeek } from '../hooks/useStartsThisWeek';
+import { useCheckinDue } from '../hooks/useCheckinDue';
 import { usePlanState } from '../hooks/usePlanState';
 import { StuckButton } from '../layout/StuckButton';
 import type { ShellContext } from '../layout/Shell';
 import { expireOccurrences } from '../actions/lapse';
 import { useData } from '../data/DataProvider';
 import { LapseSheet } from '../plans/LapseSheet';
+import { CheckinCard } from '../plans/CheckinCard';
 import { PlanDueCard } from '../plans/PlanDueCard';
 import { Plate } from '../plate/Plate';
 import { PlateBoundary } from '../plate/PlateBoundary';
@@ -29,6 +31,7 @@ export function Home() {
   const showInstallNote = hasEvents === false && isIosSafariNonStandalone(currentPlatformEnv());
   const deps = useData();
   const planState = usePlanState();
+  const checkin = useCheckinDue();
   const expired = useRef(new Set<string>());
   // Older lapses are expired quietly, so there is never a list of them (spec §6.4).
   useEffect(() => {
@@ -56,6 +59,8 @@ export function Home() {
           <PlanDueCard plan={planState.due.plan} occurrence={planState.due.occurrence} />
         ) : updateReady ? (
           <UpdateCard onReload={reload} />
+        ) : checkin?.due && hasEvents ? (
+          <CheckinCard nudgeBackup={checkin.nudgeBackup} />
         ) : (
           showInstallNote && <p className={styles['installNote']}>{installNote}</p>
         )}
@@ -66,6 +71,9 @@ export function Home() {
         <nav aria-label={nav.label} className={styles['nav']}>
           <Link to="/plans" className={styles['link']}>
             {nav.plans}
+          </Link>
+          <Link to="/insights" className={styles['link']}>
+            {nav.insights}
           </Link>
           <Link to="/settings" className={styles['link']}>
             {nav.settings}
