@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { EXPLODE_FROM_ZOOM, TURN_STEP_RAD, ZOOM_MAX, ZOOM_MIN } from './constants';
+import { BRAIN_CENTRE, EXPLODE_FROM_ZOOM, TURN_STEP_RAD, ZOOM_MAX, ZOOM_MIN } from './constants';
 import { easeStandard, explodeAmount, turnBy, zoomBy, type Camera } from './camera';
 
-const start: Camera = { yaw: 0, pitch: 0, zoom: 1 };
+const start: Camera = { yaw: 0, pitch: 0, zoom: 1, look: BRAIN_CENTRE };
 
 describe('camera', () => {
   it('turn steps by TURN_STEP_RAD', () => {

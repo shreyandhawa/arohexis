@@ -2,7 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { projectBrainSpace } from '../../domain/brainSpace';
 import type { Plan } from '../../domain/config';
 import { DEFAULT_PARTS } from '../../domain/defaults';
+import { buildField } from '../../geometry/field';
 import { createRenderer, type RenderState } from './brain';
+import { BRAIN_CENTRE } from './constants';
+import { buildRig, pulledLabel } from './draw';
+
+const lookOf = (at: readonly number[]): string => at.map((v) => v.toFixed(2)).join(',');
 
 /** Just enough of a browser for the renderer: a context that does nothing, and a frame queue. */
 function setup(opts: { reduce?: boolean } = {}) {
@@ -209,6 +214,54 @@ describe('camera moves', () => {
     expect(h.canvas.dataset['zoom']).toBe('1.25');
     expect(h.frames).toHaveLength(0);
     expect(h.canvas.dataset['loop']).toBe('idle');
+  });
+});
+
+describe('the look-at', () => {
+  const rig = buildRig(buildField());
+  // Zoom does not change on selecting, so the pull is the one at zoom 1: none.
+  const workAt = lookOf(pulledLabel(rig, 'region-1', 0)!);
+
+  it('eases to the selected region and back to the centre when the selection clears', () => {
+    const h = setup();
+    h.renderer.update(h.state());
+    h.flush(0);
+    expect(h.canvas.dataset['look']).toBe(lookOf(BRAIN_CENTRE));
+    h.renderer.update(h.state({ selected: 'work' }));
+    expect(h.canvas.dataset['look']).toBe(workAt);
+    h.flush(0);
+    h.flush(16);
+    expect(h.canvas.dataset['loop']).toBe('running');
+    h.flush(1000);
+    expect(h.canvas.dataset['loop']).toBe('idle');
+    h.renderer.update(h.state({ selected: null }));
+    expect(h.canvas.dataset['look']).toBe(lookOf(BRAIN_CENTRE));
+    h.flush(1100);
+    h.flush(1116);
+    expect(h.canvas.dataset['loop']).toBe('running');
+    h.flush(2000);
+    expect(h.canvas.dataset['loop']).toBe('idle');
+  });
+
+  it('snaps under Still', () => {
+    const h = setup();
+    h.renderer.update(h.state({ still: true }));
+    h.flush(0);
+    h.renderer.update(h.state({ still: true, selected: 'work' }));
+    h.flush(0);
+    expect(h.canvas.dataset['loop']).toBe('idle');
+    expect(h.canvas.dataset['look']).toBe(workAt);
+  });
+
+  it('follows the pull when the selection is zoomed', () => {
+    const h = setup({ reduce: true });
+    h.renderer.update(h.state({ selected: 'work' }));
+    h.flush(0);
+    for (let i = 0; i < 4; i++) h.renderer.zoom(1);
+    const zoom = Number(h.canvas.dataset['zoom']);
+    const pulled = lookOf(pulledLabel(rig, 'region-1', Math.min(1, (zoom - 1.1) / 2.1))!);
+    expect(h.canvas.dataset['look']).toBe(pulled);
+    expect(pulled).not.toBe(workAt);
   });
 });
 

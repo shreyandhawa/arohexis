@@ -1,6 +1,12 @@
 import { EXPLODE_FROM_ZOOM, TURN_STEP_RAD, ZOOM_MAX, ZOOM_MIN, ZOOM_STEP } from './constants';
 
-export type Camera = { yaw: number; pitch: number; zoom: number };
+/** `look` is the field point at the centre of the free band. */
+export type Camera = {
+  yaw: number;
+  pitch: number;
+  zoom: number;
+  look: readonly [number, number, number];
+};
 
 export const clampZoom = (zoom: number): number => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoom));
 

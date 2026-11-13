@@ -5,14 +5,16 @@ import { PART_COLOURS, PLATE } from '../../design/partColours';
 import { assignFibres, type LineRef } from '../../geometry/assign';
 import { PULL_DIRECTIONS, regionKey, type Field, type RegionKey } from '../../geometry/field';
 import { lineShade } from '../../geometry/shade';
-import { UNSELECTED_ALPHA } from './constants';
+import { BRAIN_CENTRE, UNSELECTED_ALPHA } from './constants';
 import { explodeAmount, type Camera } from './camera';
 
 /** How far a region moves at full pull, in field units. */
 const PULL_DISTANCE = 0.55;
-/** Field y of the middle of the drawing. */
-const CENTRE_Y = -0.17;
-const LABEL_FONT = "600 13px 'Atkinson Hyperlegible Next Variable', system-ui, sans-serif";
+/** Field y of the middle of the drawing, used to lift the pitch toward a point. */
+const CENTRE_Y = BRAIN_CENTRE[1];
+/** A label keeps this far from the band's edges. */
+const LABEL_INSET = 8;
+const LABEL_FONT = "600 14px 'Atkinson Hyperlegible Next Variable', system-ui, sans-serif";
 /** Region keys whose fibres sit on the midline, so their pull direction is never mirrored. */
 const MIDLINE: ReadonlySet<RegionKey> = new Set<RegionKey>(['region-5', 'core']);
 
@@ -125,40 +127,72 @@ function hsl(c: { h: number; s: number; l: number }): string {
 
 // ---- projection ----
 
-export type View = { w: number; h: number; cam: Camera };
+/**
+ * `top` and `bottom` are the plate's free band: the space between its top row and its bottom
+ * control row, in CSS px. The drawing is scaled to the band and centred in it.
+ */
+export type View = { w: number; h: number; top: number; bottom: number; cam: Camera };
 /** `d` is depth: positive toward the viewer. */
 type Point = { x: number; y: number; d: number };
 export type Project = (x: number, y: number, z: number) => Point;
 type Path = Pick<CanvasPath, 'moveTo' | 'lineTo'>;
 
-export function makeProject({ w, h, cam }: View): Project {
+export function makeProject({ w, h, top, bottom, cam }: View): Project {
   const cy = Math.cos(cam.yaw);
   const sy = Math.sin(cam.yaw);
   const cp = Math.cos(cam.pitch);
   const sp = Math.sin(cam.pitch);
-  const scale = Math.min(w / 2.1, h / 1.8) * cam.zoom;
+  const band = Math.max(1, h - top - bottom);
+  const scale = Math.min(w / 2.1, band / 1.8) * cam.zoom;
+  const [lx, ly, lz] = cam.look;
+  const mid = top + band / 2;
   const out: Point = { x: 0, y: 0, d: 0 };
   return (x, y, z) => {
-    const yy = y - CENTRE_Y;
-    const x1 = x * cy + z * sy;
-    const z1 = -x * sy + z * cy;
+    const xr = x - lx;
+    const yy = y - ly;
+    const zr = z - lz;
+    const x1 = xr * cy + zr * sy;
+    const z1 = -xr * sy + zr * cy;
     const y2 = yy * cp - z1 * sp;
     const z2 = yy * sp + z1 * cp;
     const f = scale * (1 + 0.18 * z2);
     out.x = w / 2 + x1 * f;
-    out.y = h / 2 - y2 * f;
+    out.y = mid - y2 * f;
     out.d = z2;
     return out;
   };
 }
 
-/** The yaw and pitch that turn a field point to face the viewer, reached by the shortest turn from `from`. */
+/** Where a region's label sits after the regions have pulled apart by `amount`, or undefined for an unknown region. */
+export function pulledLabel(
+  rig: Rig,
+  key: RegionKey,
+  amount: number,
+): readonly [number, number, number] | undefined {
+  const at = rig.labelAt.get(key);
+  if (!at) return undefined;
+  const dir = PULL_DIRECTIONS[key];
+  const k = amount * PULL_DISTANCE;
+  return [at[0] + dir[0] * k, at[1] + dir[1] * k, at[2] + dir[2] * k];
+}
+
+/**
+ * The yaw and pitch that turn a field point toward the viewer, reached by the shortest turn from
+ * `from`. The yaw stays within a quarter turn of a side view (an odd multiple of pi/2), so a midline
+ * region is never seen front-on or from behind. The look-at point is left to the caller.
+ */
 export function facing(at: readonly [number, number, number], from: Camera): Camera {
   const base = Math.atan2(-at[0], at[2]);
-  const yaw = base + 2 * Math.PI * Math.round((from.yaw - base) / (2 * Math.PI));
+  const whole = base + 2 * Math.PI * Math.round((from.yaw - base) / (2 * Math.PI));
+  const a = Math.PI / 2 + Math.PI * Math.round((whole - Math.PI / 2) / Math.PI);
+  // A midline point faces the viewer halfway between two sides: take the side the camera is nearer to.
+  const tie = Math.abs(Math.abs(whole - a) - Math.PI / 2) < 1e-6;
+  const other = a + (whole > a ? Math.PI : -Math.PI);
+  const side = tie && Math.abs(other - from.yaw) < Math.abs(a - from.yaw) ? other : a;
+  const yaw = Math.max(side - Math.PI / 4, Math.min(side + Math.PI / 4, whole));
   const depth = Math.hypot(at[0], at[2]);
   const pitch = Math.max(-0.6, Math.min(0.6, 0.5 * Math.atan2(at[1] - CENTRE_Y, depth)));
-  return { yaw, pitch, zoom: from.zoom };
+  return { ...from, yaw, pitch };
 }
 
 type Disp = { x: number; y: number; z: number };
@@ -188,6 +222,8 @@ function endOf(pts: Float32Array, d: Disp, project: Project): Point {
 const BANDS = 5;
 const TRACE_ALPHA: readonly [number, number] = [0.04, 0.2];
 const POINT_ALPHA: readonly [number, number] = [0.05, 0.5];
+/** How much of the dim field's alpha is left while a part is selected. */
+const SELECTED_FIELD_FADE = 0.5;
 const bandOf = (depth: number): number =>
   Math.max(0, Math.min(BANDS - 1, Math.floor(((depth + 1) / 2) * BANDS)));
 const bandAlpha = (range: readonly [number, number], band: number): number =>
@@ -200,6 +236,7 @@ export function drawDim(
   rig: Rig,
   view: View,
   detailed: boolean,
+  selected = false,
 ): void {
   const project = makeProject(view);
   const amount = explodeAmount(view.cam.zoom);
@@ -216,7 +253,8 @@ export function drawDim(
         const band = bandOf(
           project(first[mid * 3]! + d.x, first[mid * 3 + 1]! + d.y, first[mid * 3 + 2]! + d.z).d,
         );
-        for (const s of f.strands) trace(traces[band]!, s, d, project);
+        // One strand stands for the fibre: eight overlapping strokes fill solid in WebKit.
+        trace(traces[band]!, first, d, project);
       }
     }
     for (const s of f.strands) {
@@ -231,10 +269,12 @@ export function drawDim(
   // The cache context is shared with drawLit, which sets round caps; do not inherit them.
   ctx.lineCap = 'butt';
   ctx.lineJoin = 'miter';
+  // While a part is selected the whole field steps back (spec §16.10).
+  const fade = selected ? SELECTED_FIELD_FADE : 1;
   for (let b = 0; b < BANDS; b++) {
-    ctx.globalAlpha = bandAlpha(TRACE_ALPHA, b);
+    ctx.globalAlpha = bandAlpha(TRACE_ALPHA, b) * fade;
     ctx.stroke(traces[b]!);
-    ctx.globalAlpha = bandAlpha(POINT_ALPHA, b);
+    ctx.globalAlpha = bandAlpha(POINT_ALPHA, b) * fade;
     ctx.fill(points[b]!);
   }
   ctx.globalAlpha = 1;
@@ -290,9 +330,15 @@ export function drawLit(f: LitFrame): void {
       const strand = fibre.strands[it.strand >= 0 ? it.strand : 0];
       if (!strand) continue;
       const p = endOf(strand, d, project);
+      if (it.kind === 'spark') {
+        ctx.globalAlpha = 0.12 * mul;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
       ctx.globalAlpha = (it.kind === 'spark' ? 0.7 : 0.45) * mul;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, it.kind === 'spark' ? 1.6 : 1.2, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, it.kind === 'spark' ? 2.2 : 1.2, 0, Math.PI * 2);
       ctx.fill();
       continue;
     }
@@ -310,11 +356,14 @@ export function drawLit(f: LitFrame): void {
     ctx.globalAlpha = alpha * mul;
     ctx.lineWidth = width;
     ctx.stroke(line);
-    if (strength === 4) {
-      ctx.globalAlpha = 0.55 * mul;
+    if (strength === 4 && fibre.strands[0]) {
+      // A thin core on one strand: eight white strokes over eight coloured ones wash the hue to cream.
+      const core = new Path2D();
+      trace(core, fibre.strands[0], d, project);
+      ctx.globalAlpha = 0.3 * mul;
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 0.8;
-      ctx.stroke(line);
+      ctx.stroke(core);
     }
     // Every strand end, in one path.
     const radius = it.kind === 'plan' ? 1.1 + strength * 0.25 : 0.9;
@@ -408,7 +457,7 @@ export function drawWaiting(f: LitFrame): void {
 
 // ---- labels ----
 
-/** Part names, once the regions have pulled apart. Each sits on an opaque plate-coloured backing. */
+/** Part names, once the regions have started to pull apart. Each sits on an opaque plate-coloured backing, kept inside the free band. */
 export function drawLabels(
   ctx: CanvasRenderingContext2D,
   rig: Rig,
@@ -416,26 +465,28 @@ export function drawLabels(
   view: View,
 ): void {
   const amount = explodeAmount(view.cam.zoom);
-  if (amount < 0.25) return;
+  if (amount <= 0) return;
   const project = makeProject(view);
   ctx.globalCompositeOperation = 'source-over';
   ctx.globalAlpha = 1;
   ctx.font = LABEL_FONT;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+  const top = view.top + LABEL_INSET;
+  const bottom = view.h - view.bottom - LABEL_INSET;
   for (const part of parts) {
     if (!part.enabled) continue;
-    const key = regionKey(part.region);
-    const at = rig.labelAt.get(key);
+    const at = pulledLabel(rig, regionKey(part.region), amount);
     if (!at) continue;
-    const dir = PULL_DIRECTIONS[key];
-    const k = amount * PULL_DISTANCE;
-    const p = project(at[0] + dir[0] * k, at[1] + dir[1] * k, at[2] + dir[2] * k);
+    const p = project(at[0], at[1], at[2]);
     const width = ctx.measureText(part.label).width;
+    const half = width / 2 + 5;
+    const x = Math.max(LABEL_INSET + half, Math.min(view.w - LABEL_INSET - half, p.x));
+    const y = Math.max(top + 11, Math.min(bottom - 11, p.y));
     ctx.fillStyle = PLATE.bg;
-    ctx.fillRect(p.x - width / 2 - 5, p.y - 11, width + 10, 22);
-    ctx.fillStyle = PLATE.waiting;
-    ctx.fillText(part.label, p.x, p.y);
+    ctx.fillRect(x - half, y - 11, width + 10, 22);
+    ctx.fillStyle = hsl(PART_COLOURS[part.colour]);
+    ctx.fillText(part.label, x, y);
   }
 }
 

@@ -17,7 +17,27 @@
   min-height: 0;
 }
 
+/*
+ * The free band: the part of the stage between the top row (summary and Still) and the bottom
+ * control row (turn and zoom). The renderer frames the brain to it. Registered as lengths so
+ * getComputedStyle returns resolved px, not the calc() text.
+ */
+@property --brain-inset-top {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --brain-inset-bottom {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
 .canvas {
+  --brain-inset-top: calc(var(--space-2) + var(--target-min) + var(--space-1));
+  --brain-inset-bottom: calc(var(--space-1) + var(--target-min) + var(--space-1));
+
   position: absolute;
   inset: 0;
   width: 100%;
@@ -78,7 +98,7 @@
   justify-content: center;
   padding: 0;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-m);
   background: var(--plate-bg);
   background: color-mix(in srgb, var(--plate-bg) 78%, transparent);
   color: var(--color-text);

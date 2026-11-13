@@ -4,8 +4,8 @@ import { RESTING_BRIGHTNESS } from '../../domain/brainSpace';
 import type { Part } from '../../domain/config';
 import { PLATE } from '../../design/partColours';
 import { buildField, regionKey, type Field } from '../../geometry/field';
-import { clampZoom, easeStandard, turnBy, zoomBy, type Camera } from './camera';
-import { EASE_MS } from './constants';
+import { clampZoom, easeStandard, explodeAmount, turnBy, zoomBy, type Camera } from './camera';
+import { BRAIN_CENTRE, EASE_MS } from './constants';
 import {
   buildRig,
   buildScene,
@@ -16,6 +16,7 @@ import {
   drawWaiting,
   facing,
   hitTest,
+  pulledLabel,
   type Rig,
   type Scene,
   type View,
@@ -44,10 +45,18 @@ type Options = {
 };
 
 /** Side view with the front on the left. */
-const START_CAMERA: Camera = { yaw: -Math.PI / 2, pitch: 0, zoom: 1 };
+const START_CAMERA: Camera = { yaw: -Math.PI / 2, pitch: 0, zoom: 1, look: BRAIN_CENTRE };
 const TAP_SLOP = 6;
 const TAP_RADIUS = 24;
 const DRAW_SAMPLES = 120;
+
+const sameLook = (a: Camera['look'], b: Camera['look']): boolean =>
+  a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
+const lerpLook = (a: Camera['look'], b: Camera['look'], e: number): Camera['look'] => [
+  a[0] + (b[0] - a[0]) * e,
+  a[1] + (b[1] - a[1]) * e,
+  a[2] + (b[2] - a[2]) * e,
+];
 
 function sameScene(a: Scene, b: Scene): boolean {
   if (a.signals !== b.signals || a.items.length !== b.items.length) return false;
@@ -78,12 +87,19 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   let cam: Camera = { ...START_CAMERA };
   let target: Camera = { ...START_CAMERA };
   /** Where each ease started, and when (null until its first frame). Turning and zooming keep their own clocks. */
-  let orbitFrom = { yaw: START_CAMERA.yaw, pitch: START_CAMERA.pitch };
+  let orbitFrom = {
+    yaw: START_CAMERA.yaw,
+    pitch: START_CAMERA.pitch,
+    look: START_CAMERA.look,
+  };
   let orbitStart: number | null = null;
   let zoomFrom = START_CAMERA.zoom;
   let zoomStart: number | null = null;
   let width = 0;
   let height = 0;
+  /** The free band's insets (CSS px), read from the canvas's custom properties. */
+  let insetTop = 0;
+  let insetBottom = 0;
   let dpr = 1;
   let raf = 0;
   let running = false;
@@ -105,6 +121,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   const report = (): void => {
     canvas.dataset['yaw'] = target.yaw.toFixed(2);
     canvas.dataset['zoom'] = target.zoom.toFixed(2);
+    canvas.dataset['look'] = target.look.map((v) => v.toFixed(2)).join(',');
   };
   const setLoop = (on: boolean): void => {
     if (running === on) return;
@@ -118,13 +135,27 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   /** Camera moves snap under Still and under reduced motion; only the signals are exempt. */
   const snaps = (): boolean => still() || reduce?.matches === true;
   const easing = (): boolean =>
-    cam.yaw !== target.yaw || cam.pitch !== target.pitch || cam.zoom !== target.zoom;
+    cam.yaw !== target.yaw ||
+    cam.pitch !== target.pitch ||
+    cam.zoom !== target.zoom ||
+    !sameLook(cam.look, target.look);
   const signalsOn = (): boolean => scene.signals && state?.space.motion === 'moving' && !still();
   const needsLoop = (): boolean => !document.hidden && (dragging || easing() || signalsOn());
 
   function syncTouchAction(): void {
     const scrolls = document.documentElement.scrollHeight > window.innerHeight + 1;
     canvas.style.touchAction = scrolls ? 'pan-y' : 'none';
+  }
+
+  /** The band between the plate's top row and bottom control row, from `--brain-inset-*` (0 when absent). */
+  function readInsets(): { top: number; bottom: number } {
+    if (typeof getComputedStyle !== 'function') return { top: 0, bottom: 0 };
+    const style = getComputedStyle(canvas);
+    const px = (name: string): number => {
+      const v = parseFloat(style.getPropertyValue(name));
+      return Number.isFinite(v) && v > 0 ? v : 0;
+    };
+    return { top: px('--brain-inset-top'), bottom: px('--brain-inset-bottom') };
   }
 
   /** Sizes the backing store to the canvas box and the device pixel ratio. Returns whether it changed. */
@@ -134,7 +165,19 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     if (w === 0 || h === 0) return false;
     const ratio = Math.min(window.devicePixelRatio || 1, 2);
     syncTouchAction();
-    if (w === width && h === height && ratio === dpr && canvas.width > 0) return false;
+    const inset = readInsets();
+    if (
+      w === width &&
+      h === height &&
+      ratio === dpr &&
+      inset.top === insetTop &&
+      inset.bottom === insetBottom &&
+      canvas.width > 0
+    ) {
+      return false;
+    }
+    insetTop = inset.top;
+    insetBottom = inset.bottom;
     dpr = ratio;
     width = w;
     height = h;
@@ -159,7 +202,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   function draw(time: number, detailed: boolean): void {
     if (width === 0 || !state) return;
     const { field: f, rig: r } = ensureField();
-    const view: View = { w: width, h: height, cam };
+    const view: View = { w: width, h: height, top: insetTop, bottom: insetBottom, cam };
     const resting = state.space.motion === 'resting';
     const lit = {
       ctx,
@@ -177,10 +220,13 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     const key = [
       width,
       height,
+      insetTop,
+      insetBottom,
       dpr,
       cam.yaw,
       cam.pitch,
       cam.zoom,
+      cam.look.join(','),
       detailed,
       sceneVersion,
       state.selected,
@@ -193,7 +239,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
         cacheCtx.globalAlpha = 1;
         cacheCtx.fillStyle = PLATE.bg;
         cacheCtx.fillRect(0, 0, width, height);
-        drawDim(cacheCtx, f, r, view, detailed);
+        drawDim(cacheCtx, f, r, view, detailed, state.selected !== null);
         drawLit({ ...lit, ctx: cacheCtx });
         cacheKey = key;
       }
@@ -205,7 +251,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.fillStyle = PLATE.bg;
       ctx.fillRect(0, 0, width, height);
-      drawDim(ctx, f, r, view, detailed);
+      drawDim(ctx, f, r, view, detailed, state.selected !== null);
       drawLit(lit);
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -221,19 +267,21 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       return;
     }
     const progress = (start: number | null): number => (time - (start ?? time)) / EASE_MS;
-    let { yaw, pitch, zoom } = cam;
-    if (cam.yaw !== target.yaw || cam.pitch !== target.pitch) {
+    let { yaw, pitch, zoom, look } = cam;
+    if (cam.yaw !== target.yaw || cam.pitch !== target.pitch || !sameLook(cam.look, target.look)) {
       orbitStart ??= time;
       const p = progress(orbitStart);
       if (p >= 1) {
         // Land exactly on the target: `from + (to - from) * 1` can miss it by a rounding step.
         yaw = target.yaw;
         pitch = target.pitch;
+        look = target.look;
         orbitStart = null;
       } else {
         const e = easeStandard(p);
         yaw = orbitFrom.yaw + (target.yaw - orbitFrom.yaw) * e;
         pitch = orbitFrom.pitch + (target.pitch - orbitFrom.pitch) * e;
+        look = lerpLook(orbitFrom.look, target.look, e);
       }
     }
     if (cam.zoom !== target.zoom) {
@@ -246,7 +294,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
         zoom = zoomFrom + (target.zoom - zoomFrom) * easeStandard(p);
       }
     }
-    cam = { yaw, pitch, zoom };
+    cam = { yaw, pitch, zoom, look };
   }
 
   /** A draw error stops the loop and is reported, so it reaches the console and the tests. The plate keeps its text. */
@@ -301,10 +349,23 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     raf = requestAnimationFrame(frame);
   }
 
+  /** Where the camera looks at `zoom`: the selected part's region, pulled as far as that zoom pulls it, else the centre. */
+  function lookFor(zoom: number): Camera['look'] {
+    const part =
+      state?.selected == null ? undefined : state.parts.find((p) => p.id === state?.selected);
+    const at = part && rig && pulledLabel(rig, regionKey(part.region), explodeAmount(zoom));
+    return at ?? BRAIN_CENTRE;
+  }
+
   /** Starts an ease to `next`, or snaps there under Still or reduced motion. */
-  function aim(next: Camera): void {
-    if (next.yaw !== target.yaw || next.pitch !== target.pitch) {
-      orbitFrom = { yaw: cam.yaw, pitch: cam.pitch };
+  function aim(want: Camera): void {
+    const next = { ...want, look: lookFor(want.zoom) };
+    if (
+      next.yaw !== target.yaw ||
+      next.pitch !== target.pitch ||
+      !sameLook(next.look, target.look)
+    ) {
+      orbitFrom = { yaw: cam.yaw, pitch: cam.pitch, look: cam.look };
       orbitStart = null;
     }
     if (next.zoom !== target.zoom) {
@@ -351,11 +412,15 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
 
   /** A drag moves the camera at once. Only the parts it changes restart their ease clock. */
   function setDirect(next: Partial<Camera>): void {
-    cam = { ...cam, ...next };
-    target = { ...target, ...next };
+    // A new zoom moves the region the camera looks at, so the look-at follows it.
+    const direct = next.zoom === undefined ? next : { ...next, look: lookFor(next.zoom) };
+    cam = { ...cam, ...direct };
+    target = { ...target, ...direct };
     if (next.yaw !== undefined || next.pitch !== undefined) {
-      orbitFrom = { yaw: cam.yaw, pitch: cam.pitch };
+      orbitFrom = { yaw: cam.yaw, pitch: cam.pitch, look: cam.look };
       orbitStart = null;
+    } else if (direct.look) {
+      orbitFrom = { ...orbitFrom, look: direct.look };
     }
     if (next.zoom !== undefined) {
       zoomFrom = cam.zoom;
@@ -398,7 +463,8 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     }
     if (wasTap && state && field && rig) {
       const p = local(e);
-      const hit = hitTest(scene, field, rig, { w: width, h: height, cam }, p.x, p.y, TAP_RADIUS);
+      const view: View = { w: width, h: height, top: insetTop, bottom: insetBottom, cam };
+      const hit = hitTest(scene, field, rig, view, p.x, p.y, TAP_RADIUS);
       opts.onPartTap(hit ? hit.partId : null);
     }
   }
@@ -467,11 +533,12 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   size();
   watchDpr();
 
-  /** Eases the camera so a part's region faces the viewer. */
+  /** Eases the camera so a part's region faces the viewer, centred in the free band. */
   function faceRegion(partId: string, parts: readonly Part[]): void {
     const part = parts.find((p) => p.id === partId);
     const at = part && rig?.labelAt.get(regionKey(part.region));
     if (at) aim(facing(at, target));
+    else aim(target);
   }
 
   return {
@@ -484,7 +551,10 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       if (!sameScene(scene, built)) sceneVersion += 1;
       scene = built;
       if (next.still) cam = { ...target };
-      if (next.selected !== null && next.selected !== before) faceRegion(next.selected, next.parts);
+      if (next.selected !== before) {
+        if (next.selected !== null) faceRegion(next.selected, next.parts);
+        else aim(target); // the look-at returns to the centre
+      }
       syncTouchAction();
       request();
     },
