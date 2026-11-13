@@ -57,7 +57,7 @@ export function Home() {
           notice={notice ? homeNotices[notice] : undefined}
         />
       </PlateBoundary>
-      <LapseSheet repair={planState?.repair} />
+      {deps.mode === 'main' ? <LapseSheet repair={planState?.repair} /> : null}
       {/* At most one card, by priority (spec §8.1): plan due, the update card, then the install note. */}
       <div data-slot="card" className={homeStyles['card']}>
         {planState?.due ? (

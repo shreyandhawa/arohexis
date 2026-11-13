@@ -19,18 +19,6 @@ async function insightsText(page: Page): Promise<string> {
   return page.getByRole('main').innerText();
 }
 
-/** A demo entered today can open with a plan's repair sheet; it may arrive a moment late. */
-async function closeSheet(page: Page): Promise<void> {
-  const sheet = page.getByRole('dialog');
-  try {
-    await sheet.waitFor({ state: 'visible', timeout: 2000 });
-  } catch {
-    return;
-  }
-  await sheet.getByRole('button', { name: 'Close' }).click();
-  await expect(sheet).toHaveCount(0);
-}
-
 async function mainEventCount(page: Page): Promise<number> {
   return page.evaluate(
     () =>
@@ -106,7 +94,7 @@ test('the demo shows ten weeks, and exiting leaves the main database unchanged',
   await page.getByRole('button', { name: 'Explore the demo' }).click();
   const ribbon = page.getByRole('region', { name: 'Demo' });
   await expect(ribbon).toBeVisible();
-  await closeSheet(page);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
 
   await page.getByRole('link', { name: 'Insights' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Insights' })).toBeVisible();
@@ -117,7 +105,7 @@ test('the demo shows ten weeks, and exiting leaves the main database unchanged',
 
   await ribbon.getByRole('button', { name: 'Reset demo' }).click();
   await expect(ribbon).toBeVisible();
-  await closeSheet(page);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
 
   await ribbon.getByRole('button', { name: 'Exit demo' }).click();
   await expect(page.getByRole('region', { name: 'Demo' })).toHaveCount(0);
