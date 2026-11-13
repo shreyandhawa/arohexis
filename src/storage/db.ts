@@ -17,6 +17,11 @@ export class ArohexisDB extends Dexie {
 
   constructor(name: DbName) {
     super(name);
+    // Let a newer version in another tab upgrade; never hold it up.
+    this.on('versionchange', () => {
+      this.close();
+      return false;
+    });
     this.version(1).stores({
       events: 'id, at, type, attemptId, planId, [type+at]',
       feelings: 'id, order',

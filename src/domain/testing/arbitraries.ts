@@ -169,9 +169,12 @@ export function arbParts(): fc.Arbitrary<Part[]> {
     });
 }
 
+/** Non-blank, so it passes the import limits. */
+const arbFilled = fc.stringMatching(/^[a-z]{1,12}$/);
+
 const arbFeeling = fc.record({
   id: arbText,
-  label: arbText,
+  label: arbFilled,
   order: fc.nat({ max: 99 }),
   enabled: fc.boolean(),
   builtIn: fc.boolean(),
@@ -180,7 +183,7 @@ const arbFeeling = fc.record({
 const arbResponse = fc.record({
   id: arbText,
   feelingId: arbText,
-  body: arbText,
+  body: arbFilled,
   basis: arbBasis,
   enabled: fc.boolean(),
   order: fc.nat({ max: 99 }),

@@ -41,6 +41,21 @@ const part = v.strictObject({
   region: colourOrRegion,
 });
 
+/** Same limits the editors enforce (spec §8.10): labels 1 to 40 characters, bodies 1 to 40 words. */
+export const IMPORT_LABEL_MAX = 40;
+export const IMPORT_BODY_WORDS_MAX = 40;
+const label = v.pipe(
+  v.string(),
+  v.check((text) => text.trim().length >= 1 && text.trim().length <= IMPORT_LABEL_MAX),
+);
+const body = v.pipe(
+  v.string(),
+  v.check((text) => {
+    const n = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+    return n >= 1 && n <= IMPORT_BODY_WORDS_MAX;
+  }),
+);
+
 const listItem = v.strictObject({
   id: v.string(),
   label: v.string(),
@@ -121,12 +136,12 @@ const eventSchema = v.variant('type', [
 ]);
 
 const dataEntries = {
-  feelings: v.array(v.strictObject({ ...listItem.entries, builtIn: v.boolean() })),
+  feelings: v.array(v.strictObject({ ...listItem.entries, label, builtIn: v.boolean() })),
   responses: v.array(
     v.strictObject({
       id: v.string(),
       feelingId: v.string(),
-      body: v.string(),
+      body,
       basis,
       enabled: v.boolean(),
       order: v.number(),

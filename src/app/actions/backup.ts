@@ -60,7 +60,15 @@ export async function exportBackup(d: AppDeps, sharer: Sharer, data: ExportData)
     }
   }
   if (!handedOff) sharer.download(file);
-  await d.config.applyConfigPatch({ settings: { lastExportAt: d.clock.now() } });
+  // The backup exists by now, so a failed bookkeeping write is retried once and never reported.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      await d.config.applyConfigPatch({ settings: { lastExportAt: d.clock.now() } });
+      return;
+    } catch (error) {
+      if (attempt === 1) console.error(error);
+    }
+  }
 }
 
 /** Loads everything the backup holds, ready for a tap to export without waiting. */

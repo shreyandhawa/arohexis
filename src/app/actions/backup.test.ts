@@ -91,12 +91,13 @@ describe('exportBackup', () => {
     await done;
   });
 
-  it('rejects, without calling download twice, when recording the time fails', async () => {
+  it('does not download twice, or reject, when recording the time fails', async () => {
     const { d } = await setup();
     const data = await loadBackupData(d);
     const s = sharer(false);
     vi.spyOn(d.config, 'applyConfigPatch').mockRejectedValue(new Error('write failed'));
-    await expect(exportBackup(d, s, data)).rejects.toThrow('write failed');
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    await expect(exportBackup(d, s, data)).resolves.toBeUndefined();
     expect(s.download).toHaveBeenCalledOnce();
   });
 });
@@ -132,5 +133,26 @@ describe('daysSinceBackup', () => {
     expect(daysSinceBackup(at(2026, 10, 16, 4), at(2026, 10, 16, 6), tz)).toBe(1);
     expect(daysSinceBackup(at(2026, 10, 16, 14), at(2026, 10, 16, 20), tz)).toBe(0);
     expect(daysSinceBackup(at(2026, 10, 10, 14), at(2026, 10, 16, 14), tz)).toBe(6);
+  });
+});
+
+describe('exportBackup bookkeeping', () => {
+  it('retries the lastExportAt write once and does not report a failure', async () => {
+    const { d } = await setup();
+    const real = d.config.applyConfigPatch;
+    const patch = vi
+      .spyOn(d.config, 'applyConfigPatch')
+      .mockRejectedValueOnce(new Error('write failed'))
+      .mockImplementation(real);
+    await expect(exportBackup(d, sharer(false), await loadBackupData(d))).resolves.toBeUndefined();
+    expect(patch).toHaveBeenCalledTimes(2);
+    expect(await lastExportAt(d)).toBeDefined();
+  });
+
+  it('swallows a write that fails twice, since the backup exists', async () => {
+    const { d } = await setup();
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.spyOn(d.config, 'applyConfigPatch').mockRejectedValue(new Error('write failed'));
+    await expect(exportBackup(d, sharer(false), await loadBackupData(d))).resolves.toBeUndefined();
   });
 });

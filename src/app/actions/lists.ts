@@ -6,7 +6,8 @@ import type { AppDeps } from '../data/DataProvider';
 
 export const LABEL_MAX = 40;
 export const RESPONSE_WORDS_MAX = 40;
-export type ListError = 'label' | 'words';
+/** 'missing' means the id is not in the list (for example, deleted in another tab). */
+export type ListError = 'label' | 'words' | 'missing';
 
 function cleanLabel(label: string): string | undefined {
   const t = label.trim();
@@ -52,8 +53,7 @@ export async function renameFeeling(
 ): Promise<ListError | undefined> {
   const clean = cleanLabel(label);
   if (clean === undefined) return 'label';
-  await d.db.feelings.update(id, { label: clean });
-  return undefined;
+  return (await d.db.feelings.update(id, { label: clean })) === 0 ? 'missing' : undefined;
 }
 
 export async function setFeelingEnabled(d: AppDeps, id: string, enabled: boolean): Promise<void> {
@@ -63,16 +63,26 @@ export async function setFeelingEnabled(d: AppDeps, id: string, enabled: boolean
 }
 
 export async function moveFeeling(d: AppDeps, id: string, by: -1 | 1): Promise<void> {
-  const rows = moved(await d.db.feelings.toArray(), id, by, OTHER_FEELING_ID);
-  if (rows.length > 0) await d.db.feelings.bulkPut(rows);
+  await d.db.transaction('rw', d.db.feelings, async () => {
+    const rows = moved(await d.db.feelings.toArray(), id, by, OTHER_FEELING_ID);
+    if (rows.length > 0) await d.db.feelings.bulkPut(rows);
+  });
 }
 
 export async function addFeeling(d: AppDeps, label: string): Promise<ListError | undefined> {
   const clean = cleanLabel(label);
   if (clean === undefined) return 'label';
-  const order = nextOrder(await d.db.feelings.toArray(), OTHER_FEELING_ID);
-  const feeling: Feeling = { id: d.ids.next(), label: clean, order, enabled: true, builtIn: false };
-  await d.db.feelings.add(feeling);
+  await d.db.transaction('rw', d.db.feelings, async () => {
+    const order = nextOrder(await d.db.feelings.toArray(), OTHER_FEELING_ID);
+    const feeling: Feeling = {
+      id: d.ids.next(),
+      label: clean,
+      order,
+      enabled: true,
+      builtIn: false,
+    };
+    await d.db.feelings.add(feeling);
+  });
   return undefined;
 }
 
@@ -83,8 +93,7 @@ export async function renameObstacle(
 ): Promise<ListError | undefined> {
   const clean = cleanLabel(label);
   if (clean === undefined) return 'label';
-  await d.db.obstacles.update(id, { label: clean });
-  return undefined;
+  return (await d.db.obstacles.update(id, { label: clean })) === 0 ? 'missing' : undefined;
 }
 
 export async function setObstacleEnabled(d: AppDeps, id: string, enabled: boolean): Promise<void> {
@@ -92,20 +101,24 @@ export async function setObstacleEnabled(d: AppDeps, id: string, enabled: boolea
 }
 
 export async function moveObstacle(d: AppDeps, id: string, by: -1 | 1): Promise<void> {
-  const rows = moved(await d.db.obstacles.toArray(), id, by);
-  if (rows.length > 0) await d.db.obstacles.bulkPut(rows);
+  await d.db.transaction('rw', d.db.obstacles, async () => {
+    const rows = moved(await d.db.obstacles.toArray(), id, by);
+    if (rows.length > 0) await d.db.obstacles.bulkPut(rows);
+  });
 }
 
 export async function addObstacle(d: AppDeps, label: string): Promise<ListError | undefined> {
   const clean = cleanLabel(label);
   if (clean === undefined) return 'label';
-  const item: ListItem = {
-    id: d.ids.next(),
-    label: clean,
-    order: nextOrder(await d.db.obstacles.toArray()),
-    enabled: true,
-  };
-  await d.db.obstacles.add(item);
+  await d.db.transaction('rw', d.db.obstacles, async () => {
+    const item: ListItem = {
+      id: d.ids.next(),
+      label: clean,
+      order: nextOrder(await d.db.obstacles.toArray()),
+      enabled: true,
+    };
+    await d.db.obstacles.add(item);
+  });
   return undefined;
 }
 
@@ -122,6 +135,7 @@ export async function editResponse(
   if (change.basis !== undefined) next.basis = change.basis;
   // The general response is what "Something else" and empty feelings fall back to.
   if (change.enabled !== undefined && id !== GENERIC_RESPONSE_ID) next.enabled = change.enabled;
+  if ((await d.db.responses.get(id)) === undefined) return 'missing';
   await d.db.responses.update(id, next);
   return undefined;
 }
@@ -133,16 +147,18 @@ export async function addResponse(
   basis: Basis = 'shrink-the-step',
 ): Promise<ListError | undefined> {
   if (bodyError(body)) return 'words';
-  const mine = (await d.db.responses.toArray()).filter((r) => r.feelingId === feelingId);
-  const response: FeelingResponse = {
-    id: d.ids.next(),
-    feelingId,
-    body: body.trim().replace(/\s+/g, ' '),
-    basis,
-    enabled: true,
-    order: mine.reduce((max, r) => Math.max(max, r.order), 0) + 1,
-    builtIn: false,
-  };
-  await d.db.responses.add(response);
+  await d.db.transaction('rw', d.db.responses, async () => {
+    const mine = (await d.db.responses.toArray()).filter((r) => r.feelingId === feelingId);
+    const response: FeelingResponse = {
+      id: d.ids.next(),
+      feelingId,
+      body: body.trim().replace(/\s+/g, ' '),
+      basis,
+      enabled: true,
+      order: mine.reduce((max, r) => Math.max(max, r.order), 0) + 1,
+      builtIn: false,
+    };
+    await d.db.responses.add(response);
+  });
   return undefined;
 }

@@ -166,6 +166,28 @@ describe('export format', () => {
     expect(r).toEqual({ ok: true, file: buildExport(data, META) });
   });
 
+  it('rejects imported feelings and responses that break the label and word limits', () => {
+    const feeling = { id: 'f', label: 'ok', order: 1, enabled: true, builtIn: false };
+    const response = {
+      id: 'r',
+      feelingId: 'f',
+      body: 'One small step',
+      basis: 'shrink-the-step',
+      enabled: true,
+      order: 1,
+      builtIn: false,
+    };
+    const bad = { ok: false, message: EXPORT_MESSAGES.notABackup };
+    expect(parseExport(file({}, { feelings: [feeling], responses: [response] })).ok).toBe(true);
+    expect(parseExport(file({}, { feelings: [{ ...feeling, label: 'x'.repeat(41) }] }))).toEqual(
+      bad,
+    );
+    expect(parseExport(file({}, { feelings: [{ ...feeling, label: '  ' }] }))).toEqual(bad);
+    const long = Array.from({ length: 41 }, () => 'word').join(' ');
+    expect(parseExport(file({}, { responses: [{ ...response, body: long }] }))).toEqual(bad);
+    expect(parseExport(file({}, { responses: [{ ...response, body: ' ' }] }))).toEqual(bad);
+  });
+
   it('rejects a newer version', () => {
     const r = parseExport(file({ version: EXPORT_VERSION + 1 }));
     expect(r).toEqual({ ok: false, message: EXPORT_MESSAGES.newerVersion });
