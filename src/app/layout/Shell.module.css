@@ -22,6 +22,16 @@
   padding-block: var(--space-4);
 }
 
+/* Home: the plate runs from the top edge and takes the height left (spec §16.10). */
+.pageHome {
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+.mainHome {
+  gap: var(--space-4);
+  padding-block: 0;
+}
+
 /* Sticky so the stuck button stays in the thumb zone on long pages. */
 .footer {
   position: sticky;

@@ -9,6 +9,7 @@ import {
 } from '../domain/defaults';
 import { EXPORT_MESSAGES } from '../domain/exportFormat';
 import readme from '../../README.md?raw';
+import { brain } from './brain';
 import { BANNED_WORDS, checkCopy, wordCount } from './rules';
 
 function collectStrings(value: unknown, out: string[] = []): string[] {
@@ -67,6 +68,43 @@ describe('copy rules', () => {
       if (path.endsWith('/rules.ts') || path.endsWith('.test.ts')) continue;
       for (const s of collectStrings(mod)) expect(checkCopy(s), `${path}: ${s}`).toEqual([]);
     }
+  });
+
+  it('Brain space copy reads as the spec says and passes copy rules', () => {
+    expect(brain.regionLabel).toBe('Brain space');
+    expect(brain.empty).toBe('Your starts will light up here.');
+    expect(brain.summary(6, 5)).toBe('6 starts · 5 lines');
+    expect(brain.summary(1, 1)).toBe('1 start · 1 line');
+    expect(brain.starts(1)).toBe('1 start');
+    expect(brain.starts(0)).toBe('0 starts');
+    expect(brain.onCue(1)).toBe('1 start on cue');
+    expect(brain.onCue(18)).toBe('18 starts on cue');
+    expect(brain.startLines(1)).toBe('1 start line');
+    expect(brain.startLines(9)).toBe('9 start lines');
+    expect(brain.strength).toEqual({
+      waiting: 'Waiting',
+      1: 'New',
+      2: 'Repeated',
+      3: 'Steady',
+      4: 'Well-worn',
+    });
+    const samples = [0, 1, 2, 40];
+    const strings = [
+      brain.regionLabel,
+      brain.empty,
+      brain.noPart,
+      brain.moving,
+      brain.resting,
+      ...Object.values(brain.controls),
+      ...Object.values(brain.strength),
+      ...samples.flatMap((n) => [
+        brain.starts(n),
+        brain.onCue(n),
+        brain.startLines(n),
+        ...samples.map((m) => brain.summary(n, m)),
+      ]),
+    ];
+    for (const s of strings) expect(checkCopy(s), s).toEqual([]);
   });
 
   it('the string collector finds a planted banned string', () => {

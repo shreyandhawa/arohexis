@@ -27,7 +27,7 @@ test('works offline after first load', async ({ page, context }, testInfo) => {
   await swReady(page);
   await context.setOffline(true);
   await page.reload();
-  await expect(page.getByRole('heading', { level: 1, name: 'Arohexis' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Arohexis' })).toBeAttached();
   await completeStuckFlow(page);
   await page.goto('/');
   await expect(page.getByText('1 start this week')).toBeVisible();

@@ -1,0 +1,11 @@
+/* An empty slot takes no room; a card in it sits one gap below the plate. */
+.card:empty {
+  display: none;
+}
+
+.thumbZone {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--space-4);
+}

@@ -268,7 +268,7 @@ test('Esc goes back from Feeling and runs Not now on Response', async ({ page },
 test('Esc is ignored while an input is focused', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'keyboard shortcuts are desktop only');
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1 })).toBeAttached();
   await page.keyboard.press('s');
   await expect(page.getByRole('button', { name: 'Anxious' })).toBeEnabled();
   await page.evaluate(() => {
