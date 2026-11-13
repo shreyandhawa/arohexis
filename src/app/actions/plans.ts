@@ -3,7 +3,7 @@ import { planToIcs } from '../../domain/ics';
 import { validatePlan } from '../../domain/plans';
 import type { AppDeps } from '../data/DataProvider';
 
-export const DEFAULT_GRACE_MIN = 30;
+export const DEFAULT_GRACE_MIN = 90; // plan.md Global Constraints
 
 export type PlanDraft = {
   time: string;
