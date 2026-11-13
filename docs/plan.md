@@ -1257,15 +1257,15 @@ export function createRenderer(canvas: HTMLCanvasElement,
   - `data-yaw` and `data-zoom` are given to 2 decimal places;
   - `data-draw-mean` is the mean draw time in ms over the last 120 frames, updated once a second while the loop runs.
 
-- [ ] **Step 1:** Write the failing `camera.test.ts`:
+- [x] **Step 1:** Write the failing `camera.test.ts`:
   - `turn steps by TURN_STEP_RAD`;
   - `zoom stays within ZOOM_MIN and ZOOM_MAX after 20 taps either way` (Review Focus #12);
   - `explodeAmount is 0 at EXPLODE_FROM_ZOOM and 1 at ZOOM_MAX`.
-- [ ] **Step 2:** Change `check-bundle-size.mjs`.
+- [x] **Step 2:** Change `check-bundle-size.mjs`.
   - It reads `dist/.vite/manifest.json`, finds the dynamic entry whose `src` is `src/app/brain/brain.ts`, and gzips it with the static imports that aren't in the initial set.
   - It prints both totals, and exits 1 if the chunk is over `30 * 1024`.
   - Confirm it fails with the budget set to 1 kB, then restore it.
-- [ ] **Step 3:** Implement to spec §16.6–16.8.
+- [x] **Step 3:** Implement to spec §16.6–16.8.
   - **Draw order:**
     - the dim field, with normal blending, cached offscreen;
     - lines in `lighter` mode, in their shade, using `assignFibres` over the projection's lines;
@@ -1283,8 +1283,8 @@ export function createRenderer(canvas: HTMLCanvasElement,
     - `touch-action` is `none` unless the page scrolls, in which case it is `pan-y`.
   - **Input:** a pointer drag sets yaw and pitch. Pinch and the wheel zoom. A tap hit-tests the nearest lit region within 24 px and calls `onPartTap`.
   - **Still:** camera moves snap instead of easing over `--motion-slow`.
-- [ ] **Step 4:** Run `npx vitest run src/app/brain`, then the gate. Expected: PASS, with the chunk at most 30 kB.
-- [ ] **Step 5:** Commit: `feat(brain): canvas 2D renderer as a lazy chunk`.
+- [x] **Step 4:** Run `npx vitest run src/app/brain`, then the gate. Expected: PASS, with the chunk at most 30 kB.
+- [x] **Step 5:** Commit: `feat(brain): canvas 2D renderer as a lazy chunk`.
 
 #### 7B: The plate on Home
 
@@ -1371,7 +1371,7 @@ export function Plate(props: { selected: string | null; onSelect(partId: string 
     - **Still** in a top corner, and zoom and turn as 48 px buttons;
     - the parts row along the bottom edge: **All** plus a chip with a swatch per part, 48 px tall, scrolling sideways.
   - **`useRenderer`:** after the first paint (`requestAnimationFrame`, then `setTimeout(0)`), it imports `../brain/brain`. On failure it keeps the text and doesn't retry.
-- [ ] **Step 6:** Run them again, then the gate. Expected: PASS.
+- [x] **Step 6:** Run them again, then the gate. Expected: PASS.
 - [x] **Step 7:** Commit: `feat(home): the Brain space plate on Home`.
 
 #### 7C: The owner's Home review (gate)
