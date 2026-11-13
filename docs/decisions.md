@@ -562,6 +562,7 @@ Statuses:
   - **Draw code:** static layers are cached offscreen and redrawn only when the camera or the data changes, and signals draw over the cache.
   - **Fallback:** raw WebGL2 (3 kB, already prototyped) is the fallback if the owner's iPhone check in M2 Task 2 shows stutter while turning. Its joints would then need handling to avoid hotspots, and that switch gets its own ADR.
   - **Spike files:** the throwaway spike stays out of the repo. Its results are recorded here.
+  - **Renderer check (M2 Task 2):** checked in the iOS Simulator (iPhone 18 Pro) on 2026-11-13, which the owner chose in place of their own iPhone. On Task 2's page, at the brief's counts and device pixel ratio 2, the drag mean was 7.0 ms with a p95 of 10 ms over 159 drag frames. With a pinch included it was 7.6 ms and 12 ms, and idle was 0.8 ms and 1.0 ms. All of these are inside the 16.7 ms frame, so canvas 2D stands. The simulator runs on the Mac, so its numbers don't predict the device. The owner checks turning on their iPhone at the Home review (M2 Task 7C) and at acceptance (Task 11).
 
 
 ## ADR-030: Brain space sits on Home above the card, with a strip on Started

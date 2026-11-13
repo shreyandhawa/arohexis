@@ -904,8 +904,8 @@ git commit -m "chore: add the project subagents, unslop, the Brain space referen
   - **Server:** a small static server on the local network that sends the exact CSP from Global Constraints. Print the `http://<lan-ip>:<port>/` URL.
 
   Return the URL, plus Playwright WebKit (`devices['iPhone 15']`) idle and drag draw times, the median of 3 runs.
-- [ ] **Step 2: Owner step.** On the iPhone, on the same Wi-Fi, open the URL, drag for a few seconds and pinch. Report any stutter, and the readout's mean and p95 while dragging.
-- [ ] **Step 3:** Decide.
+- [x] **Step 2: Owner step.** On the iPhone, on the same Wi-Fi, open the URL, drag for a few seconds and pinch. Report any stutter, and the readout's mean and p95 while dragging.
+- [x] **Step 3:** Decide.
   - **No visible stutter:** add a line to ADR-029's consequences: "Confirmed on the owner's iPhone on <date>: drag mean <x> ms, p95 <y> ms."
   - **Stutter:** write a new ADR that switches to raw WebGL2, then re-plan Task 7A before it starts.
 
