@@ -126,8 +126,10 @@ function hsl(c: { h: number; s: number; l: number }): string {
 // ---- projection ----
 
 export type View = { w: number; h: number; cam: Camera };
-type Point = { x: number; y: number };
+/** `d` is depth: positive toward the viewer. */
+type Point = { x: number; y: number; d: number };
 export type Project = (x: number, y: number, z: number) => Point;
+type Path = Pick<CanvasPath, 'moveTo' | 'lineTo'>;
 
 export function makeProject({ w, h, cam }: View): Project {
   const cy = Math.cos(cam.yaw);
@@ -135,7 +137,7 @@ export function makeProject({ w, h, cam }: View): Project {
   const cp = Math.cos(cam.pitch);
   const sp = Math.sin(cam.pitch);
   const scale = Math.min(w / 2.1, h / 1.8) * cam.zoom;
-  const out: Point = { x: 0, y: 0 };
+  const out: Point = { x: 0, y: 0, d: 0 };
   return (x, y, z) => {
     const yy = y - CENTRE_Y;
     const x1 = x * cy + z * sy;
@@ -145,8 +147,18 @@ export function makeProject({ w, h, cam }: View): Project {
     const f = scale * (1 + 0.18 * z2);
     out.x = w / 2 + x1 * f;
     out.y = h / 2 - y2 * f;
+    out.d = z2;
     return out;
   };
+}
+
+/** The yaw and pitch that turn a field point to face the viewer, reached by the shortest turn from `from`. */
+export function facing(at: readonly [number, number, number], from: Camera): Camera {
+  const base = Math.atan2(-at[0], at[2]);
+  const yaw = base + 2 * Math.PI * Math.round((from.yaw - base) / (2 * Math.PI));
+  const depth = Math.hypot(at[0], at[2]);
+  const pitch = Math.max(-0.6, Math.min(0.6, 0.5 * Math.atan2(at[1] - CENTRE_Y, depth)));
+  return { yaw, pitch, zoom: from.zoom };
 }
 
 type Disp = { x: number; y: number; z: number };
@@ -158,11 +170,11 @@ function displace(rig: Rig, fibre: number, amount: number, out: Disp): Disp {
   return out;
 }
 
-function trace(ctx: CanvasRenderingContext2D, pts: Float32Array, d: Disp, project: Project): void {
+function trace(path: Path, pts: Float32Array, d: Disp, project: Project): void {
   for (let i = 0; i < pts.length; i += 3) {
     const p = project(pts[i]! + d.x, pts[i + 1]! + d.y, pts[i + 2]! + d.z);
-    if (i === 0) ctx.moveTo(p.x, p.y);
-    else ctx.lineTo(p.x, p.y);
+    if (i === 0) path.moveTo(p.x, p.y);
+    else path.lineTo(p.x, p.y);
   }
 }
 
@@ -171,8 +183,17 @@ function endOf(pts: Float32Array, d: Disp, project: Project): Point {
   return project(pts[i]! + d.x, pts[i + 1]! + d.y, pts[i + 2]! + d.z);
 }
 
-// ---- the dim field (cached by the caller) ----
+// ---- the static layer: dim field, then light ----
 
+const BANDS = 5;
+const TRACE_ALPHA: readonly [number, number] = [0.04, 0.2];
+const POINT_ALPHA: readonly [number, number] = [0.05, 0.5];
+const bandOf = (depth: number): number =>
+  Math.max(0, Math.min(BANDS - 1, Math.floor(((depth + 1) / 2) * BANDS)));
+const bandAlpha = (range: readonly [number, number], band: number): number =>
+  range[0] + ((range[1] - range[0]) * (band + 0.5)) / BANDS;
+
+/** The dim field. Alpha rises with depth (spec §16.7), in a few bands with one path per band. */
 export function drawDim(
   ctx: CanvasRenderingContext2D,
   field: Field,
@@ -184,30 +205,37 @@ export function drawDim(
   const amount = explodeAmount(view.cam.zoom);
   const d: Disp = { x: 0, y: 0, z: 0 };
   const every = detailed ? 1 : 4;
-  ctx.globalCompositeOperation = 'source-over';
-  ctx.globalAlpha = 0.05;
-  ctx.strokeStyle = PLATE.dimTrace;
-  ctx.lineWidth = 0.5;
-  ctx.beginPath();
-  for (const f of field.fibres) {
-    if (f.index % every !== 0) continue;
-    displace(rig, f.index, amount, d);
-    for (const s of f.strands) trace(ctx, s, d, project);
-  }
-  ctx.stroke();
-  ctx.globalAlpha = 0.4;
-  ctx.fillStyle = PLATE.dimPoint;
+  const traces = Array.from({ length: BANDS }, () => new Path2D());
+  const points = Array.from({ length: BANDS }, () => new Path2D());
   for (const f of field.fibres) {
     displace(rig, f.index, amount, d);
+    if (f.index % every === 0) {
+      const first = f.strands[0];
+      if (first) {
+        const mid = (first.length / 6) | 0;
+        const band = bandOf(
+          project(first[mid * 3]! + d.x, first[mid * 3 + 1]! + d.y, first[mid * 3 + 2]! + d.z).d,
+        );
+        for (const s of f.strands) trace(traces[band]!, s, d, project);
+      }
+    }
     for (const s of f.strands) {
       const p = endOf(s, d, project);
-      ctx.fillRect(p.x - 0.6, p.y - 0.6, 1.2, 1.2);
+      points[bandOf(p.d)]!.rect(p.x - 0.6, p.y - 0.6, 1.2, 1.2);
     }
+  }
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.strokeStyle = PLATE.dimTrace;
+  ctx.fillStyle = PLATE.dimPoint;
+  ctx.lineWidth = 0.5;
+  for (let b = 0; b < BANDS; b++) {
+    ctx.globalAlpha = bandAlpha(TRACE_ALPHA, b);
+    ctx.stroke(traces[b]!);
+    ctx.globalAlpha = bandAlpha(POINT_ALPHA, b);
+    ctx.fill(points[b]!);
   }
   ctx.globalAlpha = 1;
 }
-
-// ---- lit lines ----
 
 export type LitFrame = {
   ctx: CanvasRenderingContext2D;
@@ -217,7 +245,6 @@ export type LitFrame = {
   view: View;
   selected: string | null;
   resting: boolean;
-  signalsOn: boolean;
   /** Milliseconds, for signal phase. */
   time: number;
   restingBrightness: number;
@@ -232,14 +259,16 @@ function hash01(s: string): number {
   return (h >>> 0) / 4294967296;
 }
 
+const fadeOf = (f: LitFrame, it: Item): number =>
+  (f.selected !== null && it.partId !== f.selected ? UNSELECTED_ALPHA : 1) *
+  (f.resting ? f.restingBrightness : 1);
+
+/** Lit lines, added together. Drawn into the cached layer, so signals and waiting lines stay out of it. */
 export function drawLit(f: LitFrame): void {
   const { ctx, field, rig, scene, view } = f;
   const project = makeProject(view);
   const amount = explodeAmount(view.cam.zoom);
   const d: Disp = { x: 0, y: 0, z: 0 };
-  const level = f.resting ? f.restingBrightness : 1;
-  const fade = (it: Item): number =>
-    (f.selected !== null && it.partId !== f.selected ? UNSELECTED_ALPHA : 1) * level;
 
   ctx.globalCompositeOperation = 'lighter';
   ctx.lineCap = 'round';
@@ -249,7 +278,7 @@ export function drawLit(f: LitFrame): void {
     const fibre = field.fibres[it.fibre];
     if (!fibre) continue;
     displace(rig, it.fibre, amount, d);
-    const mul = fade(it);
+    const mul = fadeOf(f, it);
     ctx.strokeStyle = it.css;
     ctx.fillStyle = it.css;
 
@@ -268,61 +297,88 @@ export function drawLit(f: LitFrame): void {
     const strength = it.strength;
     const width = it.kind === 'plan' ? WIDTH[strength]! : 0.4;
     const alpha = it.kind === 'plan' ? ALPHA[strength]! : 0.28;
+    const line = new Path2D();
+    for (const s of fibre.strands) trace(line, s, d, project);
     if (strength >= 3) {
       ctx.globalAlpha = 0.07 * mul;
       ctx.lineWidth = width * 3.5;
-      ctx.beginPath();
-      for (const s of fibre.strands) trace(ctx, s, d, project);
-      ctx.stroke();
+      ctx.stroke(line);
     }
     ctx.globalAlpha = alpha * mul;
     ctx.lineWidth = width;
-    ctx.beginPath();
-    for (const s of fibre.strands) trace(ctx, s, d, project);
-    ctx.stroke();
+    ctx.stroke(line);
     if (strength === 4) {
       ctx.globalAlpha = 0.55 * mul;
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 0.8;
-      ctx.beginPath();
-      for (const s of fibre.strands) trace(ctx, s, d, project);
-      ctx.stroke();
+      ctx.stroke(line);
+    }
+    // Every strand end, in one path.
+    const radius = it.kind === 'plan' ? 1.1 + strength * 0.25 : 0.9;
+    const ends = new Path2D();
+    for (const s of fibre.strands) {
+      const p = endOf(s, d, project);
+      ends.moveTo(p.x + radius, p.y);
+      ends.arc(p.x, p.y, radius, 0, Math.PI * 2);
     }
     ctx.globalAlpha = Math.min(1, alpha + 0.2) * mul;
     ctx.fillStyle = it.css;
-    for (const s of fibre.strands) {
-      const p = endOf(s, d, project);
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, it.kind === 'plan' ? 1.1 + strength * 0.25 : 0.9, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    ctx.fill(ends);
+  }
+  ctx.globalAlpha = 1;
+}
 
-    if (f.signalsOn && it.kind === 'plan' && strength >= 2) {
-      ctx.fillStyle = '#ffffff';
-      for (let k = 0; k < 2; k++) {
-        const s = fibre.strands[k * 4];
-        if (!s) continue;
-        const u = (f.time * 0.00008 * (0.6 + strength * 0.2) + hash01(it.id + k)) % 1;
-        const n = s.length / 3;
-        const at = u * (n - 1);
-        const i = Math.floor(at);
-        const t = at - i;
-        const a = project(s[i * 3]! + d.x, s[i * 3 + 1]! + d.y, s[i * 3 + 2]! + d.z);
-        const ax = a.x;
-        const ay = a.y;
-        const j = Math.min(i + 1, n - 1);
-        const b = project(s[j * 3]! + d.x, s[j * 3 + 1]! + d.y, s[j * 3 + 2]! + d.z);
-        ctx.globalAlpha = 0.9 * mul;
-        ctx.beginPath();
-        ctx.arc(ax + (b.x - ax) * t, ay + (b.y - ay) * t, 1.5, 0, Math.PI * 2);
-        ctx.fill();
-      }
+/** Specks travelling along plan lines of strength 2 and up. Only these move while the camera rests. */
+export function drawSignals(f: LitFrame): void {
+  const { ctx, field, rig, scene, view } = f;
+  const project = makeProject(view);
+  const amount = explodeAmount(view.cam.zoom);
+  const d: Disp = { x: 0, y: 0, z: 0 };
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.fillStyle = '#ffffff';
+  const specks = new Map<number, Path2D>();
+  for (const it of scene.items) {
+    if (it.kind !== 'plan' || it.strength < 2 || it.strand >= 0) continue;
+    const fibre = field.fibres[it.fibre];
+    if (!fibre) continue;
+    displace(rig, it.fibre, amount, d);
+    const mul = fadeOf(f, it);
+    const bucket = Math.round(mul * 20);
+    let path = specks.get(bucket);
+    if (!path) specks.set(bucket, (path = new Path2D()));
+    for (let k = 0; k < 2; k++) {
+      const s = fibre.strands[k * 4];
+      if (!s) continue;
+      const u = (f.time * 0.00008 * (0.6 + it.strength * 0.2) + hash01(it.id + k)) % 1;
+      const n = s.length / 3;
+      const at = u * (n - 1);
+      const i = Math.floor(at);
+      const t = at - i;
+      const a = project(s[i * 3]! + d.x, s[i * 3 + 1]! + d.y, s[i * 3 + 2]! + d.z);
+      const ax = a.x;
+      const ay = a.y;
+      const j = Math.min(i + 1, n - 1);
+      const b = project(s[j * 3]! + d.x, s[j * 3 + 1]! + d.y, s[j * 3 + 2]! + d.z);
+      const x = ax + (b.x - ax) * t;
+      const y = ay + (b.y - ay) * t;
+      path.moveTo(x + 1.5, y);
+      path.arc(x, y, 1.5, 0, Math.PI * 2);
     }
   }
+  for (const [bucket, path] of specks) {
+    ctx.globalAlpha = 0.9 * (bucket / 20);
+    ctx.fill(path);
+  }
+  ctx.globalAlpha = 1;
+}
 
-  // Waiting lines: dashed and pale, with a ring at the end.
+/** Waiting lines: dashed and pale, with a ring at the end. */
+export function drawWaiting(f: LitFrame): void {
+  const { ctx, field, rig, scene, view } = f;
+  const project = makeProject(view);
+  const amount = explodeAmount(view.cam.zoom);
+  const d: Disp = { x: 0, y: 0, z: 0 };
   ctx.globalCompositeOperation = 'source-over';
-  ctx.setLineDash([4, 4]);
   ctx.strokeStyle = PLATE.waiting;
   ctx.lineWidth = 1;
   for (const it of scene.items) {
@@ -330,18 +386,18 @@ export function drawLit(f: LitFrame): void {
     const strand = field.fibres[it.fibre]?.strands[0];
     if (!strand) continue;
     displace(rig, it.fibre, amount, d);
-    const mul = fade(it);
+    const mul = fadeOf(f, it);
+    const line = new Path2D();
+    trace(line, strand, d, project);
+    ctx.setLineDash([4, 4]);
     ctx.globalAlpha = 0.75 * mul;
-    ctx.beginPath();
-    trace(ctx, strand, d, project);
-    ctx.stroke();
+    ctx.stroke(line);
     const p = endOf(strand, d, project);
+    const ring = new Path2D();
+    ring.arc(p.x, p.y, 5, 0, Math.PI * 2);
     ctx.setLineDash([]);
     ctx.globalAlpha = 0.9 * mul;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.setLineDash([4, 4]);
+    ctx.stroke(ring);
   }
   ctx.setLineDash([]);
   ctx.globalAlpha = 1;
@@ -382,7 +438,10 @@ export function drawLabels(
 
 // ---- hit test ----
 
-/** The part of the lit line nearest to (x, y) within `radius` CSS px, or `undefined` if none. */
+/**
+ * The part of the lit line nearest to (x, y) within `radius` CSS px, or `undefined` if none. Lines
+ * with no part (core sparks) never match, so a tap near one counts as a tap on nothing.
+ */
 export function hitTest(
   scene: Scene,
   field: Field,
@@ -391,18 +450,24 @@ export function hitTest(
   x: number,
   y: number,
   radius: number,
-): { partId: string | null } | undefined {
+): { partId: string } | undefined {
   const project = makeProject(view);
   const amount = explodeAmount(view.cam.zoom);
   const d: Disp = { x: 0, y: 0, z: 0 };
   let best = radius;
-  let found: { partId: string | null } | undefined;
+  let found: { partId: string } | undefined;
   for (const it of scene.items) {
+    if (it.partId === null) continue;
     const fibre = field.fibres[it.fibre];
     if (!fibre) continue;
     displace(rig, it.fibre, amount, d);
-    const single = it.strand >= 0 || it.kind === 'spark';
-    const strands = single ? [fibre.strands[Math.max(it.strand, 0)]] : fibre.strands;
+    // Only what is drawn: one strand end, or a waiting line's first strand, or the whole fibre.
+    const single = it.strand >= 0;
+    const strands = single
+      ? [fibre.strands[it.strand]]
+      : it.kind === 'waiting'
+        ? [fibre.strands[0]]
+        : fibre.strands;
     for (const s of strands) {
       if (!s) continue;
       for (let i = single ? s.length - 3 : 0; i < s.length; i += single ? 3 : 6) {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { EXPLODE_FROM_ZOOM, TURN_STEP_RAD, ZOOM_MAX, ZOOM_MIN } from './constants';
-import { explodeAmount, turnBy, zoomBy, type Camera } from './camera';
+import { easeStandard, explodeAmount, turnBy, zoomBy, type Camera } from './camera';
 
 const start: Camera = { yaw: 0, pitch: 0, zoom: 1 };
 
@@ -37,5 +37,17 @@ describe('camera', () => {
     const mid = explodeAmount((EXPLODE_FROM_ZOOM + ZOOM_MAX) / 2);
     expect(mid).toBeGreaterThan(0);
     expect(mid).toBeLessThan(1);
+  });
+
+  it('easeStandard runs 0 to 1 and never goes backwards', () => {
+    expect(easeStandard(0)).toBe(0);
+    expect(easeStandard(1)).toBe(1);
+    expect(easeStandard(0.2)).toBeGreaterThan(0.2);
+    let last = 0;
+    for (let t = 0.05; t <= 1; t += 0.05) {
+      const e = easeStandard(t);
+      expect(e).toBeGreaterThanOrEqual(last);
+      last = e;
+    }
   });
 });

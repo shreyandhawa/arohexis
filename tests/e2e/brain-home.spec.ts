@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { knownEvents, startEvents } from './fixtures/brain';
-import { expectAccessible, seedEvents, setTheme } from './helpers';
+import { full, knownEvents, startEvents } from './fixtures/brain';
+import { expectAccessible, seedEvents, seedParts, seedPlans, setTheme } from './helpers';
 
 const stuck = "I'm stuck";
 const region = (page: Page) => page.getByRole('region', { name: 'Brain space' });
@@ -187,6 +187,34 @@ test('turn and zoom buttons work without a drag', async ({ page }) => {
   await expect.poll(() => read('data-zoom')).toBeGreaterThan(zoom);
   await region(page).getByRole('button', { name: 'Zoom out' }).click();
   await region(page).getByRole('button', { name: 'Turn left' }).click();
+});
+
+test('a Turn step is not cut short by a tap on the canvas', async ({ page }) => {
+  await home(page);
+  const read = async () => Number(await canvas(page).getAttribute('data-yaw'));
+  const yaw = await read();
+  await region(page).getByRole('button', { name: 'Turn right' }).click();
+  await canvas(page).click({ position: { x: 100, y: 60 } });
+  await region(page).getByRole('button', { name: 'Turn right' }).click();
+  await expect.poll(read).toBeCloseTo(yaw + (2 * Math.PI) / 8, 1);
+});
+
+test('a full brain lists every strength, and its signals run until Still', async ({ page }) => {
+  await home(page);
+  const seed = full(Date.now());
+  await seedParts(page, seed.parts);
+  await seedPlans(page, seed.plans);
+  await seedEvents(page, seed.events);
+  await expect(region(page)).toBeVisible();
+  for (const label of ['New', 'Repeated', 'Steady', 'Well-worn', 'Waiting'])
+    await expect(region(page)).toContainText(label);
+  await expect(region(page)).toHaveAttribute('data-motion', 'moving');
+  await expect(canvas(page)).toHaveAttribute('data-loop', 'running');
+  await page.waitForTimeout(2500);
+  const attrs = await canvas(page).evaluate((c) => ({ ...(c as HTMLElement).dataset }));
+  test.info().annotations.push({ type: 'draw mean', description: JSON.stringify(attrs) });
+  await still(page).click();
+  await expect(canvas(page)).toHaveAttribute('data-loop', 'idle', { timeout: 1000 });
 });
 
 test('while a plate control has focus, arrows turn and plus and minus zoom', async ({

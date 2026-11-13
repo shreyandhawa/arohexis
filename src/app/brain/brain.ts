@@ -3,14 +3,18 @@ import type { BrainSpace } from '../../domain/brainSpace';
 import { RESTING_BRIGHTNESS } from '../../domain/brainSpace';
 import type { Part } from '../../domain/config';
 import { PLATE } from '../../design/partColours';
-import { buildField, type Field } from '../../geometry/field';
-import { clampZoom, turnBy, zoomBy, type Camera } from './camera';
+import { buildField, regionKey, type Field } from '../../geometry/field';
+import { clampZoom, easeStandard, turnBy, zoomBy, type Camera } from './camera';
+import { EASE_MS } from './constants';
 import {
   buildRig,
   buildScene,
   drawDim,
   drawLabels,
   drawLit,
+  drawSignals,
+  drawWaiting,
+  facing,
   hitTest,
   type Rig,
   type Scene,
@@ -41,8 +45,6 @@ type Options = {
 
 /** Side view with the front on the left. */
 const START_CAMERA: Camera = { yaw: -Math.PI / 2, pitch: 0, zoom: 1 };
-/** Time constant of camera easing; about 98% done by --motion-slow (480 ms). */
-const EASE_MS = 120;
 const TAP_SLOP = 6;
 const TAP_RADIUS = 24;
 const DRAW_SAMPLES = 120;
@@ -56,21 +58,30 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   let field: Field | undefined;
   let rig: Rig | undefined;
   let scene: Scene = { items: [], signals: false };
+  let sceneVersion = 0;
   let cam: Camera = { ...START_CAMERA };
   let target: Camera = { ...START_CAMERA };
+  /** Where the current ease started, and when (null until its first frame). */
+  let from: Camera = { ...START_CAMERA };
+  let easeStart: number | null = null;
   let width = 0;
   let height = 0;
   let dpr = 1;
   let raf = 0;
   let running = false;
   let dragging = false;
-  let lastFrame = 0;
+  let settling = false;
   let destroyed = false;
+  let broken = false;
   let cacheKey = '';
   const cache = document.createElement('canvas');
   const cacheCtx = cache.getContext('2d');
   const samples: number[] = [];
   let lastReport = 0;
+  const reduce =
+    typeof window.matchMedia === 'function'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)')
+      : undefined;
 
   const report = (): void => {
     canvas.dataset['yaw'] = target.yaw.toFixed(2);
@@ -85,6 +96,8 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   canvas.dataset['loop'] = 'idle';
 
   const still = (): boolean => state?.still ?? false;
+  /** Camera moves snap under Still and under reduced motion; only the signals are exempt. */
+  const snaps = (): boolean => still() || reduce?.matches === true;
   const easing = (): boolean =>
     cam.yaw !== target.yaw || cam.pitch !== target.pitch || cam.zoom !== target.zoom;
   const signalsOn = (): boolean => scene.signals && state?.space.motion === 'moving' && !still();
@@ -95,11 +108,15 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     canvas.style.touchAction = scrolls ? 'pan-y' : 'none';
   }
 
-  function size(): void {
+  /** Sizes the backing store to the canvas box and the device pixel ratio. Returns whether it changed. */
+  function size(): boolean {
     const w = canvas.clientWidth;
     const h = canvas.clientHeight;
-    if (w === 0 || h === 0) return;
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    if (w === 0 || h === 0) return false;
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+    syncTouchAction();
+    if (w === width && h === height && ratio === dpr && canvas.width > 0) return false;
+    dpr = ratio;
     width = w;
     height = h;
     canvas.width = Math.round(w * dpr);
@@ -107,7 +124,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     cache.width = canvas.width;
     cache.height = canvas.height;
     cacheKey = '';
-    syncTouchAction();
+    return true;
   }
 
   function ensureField(): { field: Field; rig: Rig } {
@@ -124,91 +141,132 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     if (width === 0 || !state) return;
     const { field: f, rig: r } = ensureField();
     const view: View = { w: width, h: height, cam };
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = PLATE.bg;
-    ctx.fillRect(0, 0, width, height);
-
-    const key = `${width}x${height}:${dpr}:${cam.yaw}:${cam.pitch}:${cam.zoom}:${detailed}`;
-    if (cacheCtx) {
-      if (key !== cacheKey) {
-        cacheCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        cacheCtx.clearRect(0, 0, width, height);
-        drawDim(cacheCtx, f, r, view, detailed);
-        cacheKey = key;
-      }
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.drawImage(cache, 0, 0);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    } else {
-      drawDim(ctx, f, r, view, detailed);
-    }
-
-    drawLit({
+    const resting = state.space.motion === 'resting';
+    const lit = {
       ctx,
       field: f,
       rig: r,
       scene,
       view,
       selected: state.selected,
-      resting: state.space.motion === 'resting',
-      signalsOn: signalsOn(),
+      resting,
       time,
       restingBrightness: RESTING_BRIGHTNESS,
-    });
+    };
+
+    // The static layer (plate, dim field, light) is redrawn only when its inputs change.
+    const key = [
+      width,
+      height,
+      dpr,
+      cam.yaw,
+      cam.pitch,
+      cam.zoom,
+      detailed,
+      sceneVersion,
+      state.selected,
+      resting,
+    ].join(':');
+    if (cacheCtx) {
+      if (key !== cacheKey) {
+        cacheCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        cacheCtx.globalCompositeOperation = 'source-over';
+        cacheCtx.globalAlpha = 1;
+        cacheCtx.fillStyle = PLATE.bg;
+        cacheCtx.fillRect(0, 0, width, height);
+        drawDim(cacheCtx, f, r, view, detailed);
+        drawLit({ ...lit, ctx: cacheCtx });
+        cacheKey = key;
+      }
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 1;
+      ctx.drawImage(cache, 0, 0);
+    } else {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = PLATE.bg;
+      ctx.fillRect(0, 0, width, height);
+      drawDim(ctx, f, r, view, detailed);
+      drawLit(lit);
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (signalsOn()) drawSignals(lit);
+    drawWaiting(lit);
     drawLabels(ctx, r, state.parts, view);
+  }
+
+  function stepCamera(time: number): void {
+    if (!easing()) return;
+    if (snaps()) {
+      cam = { ...target };
+      return;
+    }
+    easeStart ??= time;
+    const p = (time - easeStart) / EASE_MS;
+    if (p >= 1) {
+      cam = { ...target };
+      return;
+    }
+    const e = easeStandard(p);
+    cam = {
+      yaw: from.yaw + (target.yaw - from.yaw) * e,
+      pitch: from.pitch + (target.pitch - from.pitch) * e,
+      zoom: from.zoom + (target.zoom - from.zoom) * e,
+    };
+  }
+
+  function stop(): void {
+    raf = 0;
+    setLoop(false);
   }
 
   function frame(time: number): void {
     raf = 0;
-    if (destroyed) return;
-    const dt = lastFrame === 0 ? 16 : Math.min(100, time - lastFrame);
-    lastFrame = time;
-    if (still() || !easing()) {
-      if (still()) cam = { ...target };
-    } else {
-      const k = 1 - Math.exp(-dt / EASE_MS);
-      const next: Camera = {
-        yaw: cam.yaw + (target.yaw - cam.yaw) * k,
-        pitch: cam.pitch + (target.pitch - cam.pitch) * k,
-        zoom: cam.zoom + (target.zoom - cam.zoom) * k,
-      };
-      const near =
-        Math.abs(target.yaw - next.yaw) < 0.002 &&
-        Math.abs(target.pitch - next.pitch) < 0.002 &&
-        Math.abs(target.zoom - next.zoom) < 0.002;
-      cam = near ? { ...target } : next;
-    }
-    const moving = dragging || easing();
-    const t0 = performance.now();
-    draw(time, !moving);
-    samples.push(performance.now() - t0);
-    if (samples.length > DRAW_SAMPLES) samples.shift();
-
-    const loop = needsLoop();
-    setLoop(loop);
-    if (loop) {
-      if (time - lastReport >= 1000 && samples.length > 0) {
-        lastReport = time;
-        const mean = samples.reduce((a, b) => a + b, 0) / samples.length;
-        canvas.dataset['drawMean'] = mean.toFixed(2);
+    if (destroyed || broken) return;
+    try {
+      stepCamera(time);
+      const moving = dragging || easing();
+      const t0 = performance.now();
+      draw(time, !moving);
+      const took = performance.now() - t0;
+      if (!moving && settling) {
+        settling = false;
+        canvas.dataset['settleMs'] = took.toFixed(2);
+      } else {
+        samples.push(took);
+        if (samples.length > DRAW_SAMPLES) samples.shift();
       }
-      raf = requestAnimationFrame(frame);
-    } else {
-      lastFrame = 0;
+      if (moving) settling = true;
+
+      const loop = needsLoop();
+      setLoop(loop);
+      if (loop) {
+        if (time - lastReport >= 1000 && samples.length > 0) {
+          lastReport = time;
+          const mean = samples.reduce((a, b) => a + b, 0) / samples.length;
+          canvas.dataset['drawMean'] = mean.toFixed(2);
+        }
+        raf = requestAnimationFrame(frame);
+      }
+    } catch {
+      // A draw error stops the loop; the plate keeps its text.
+      broken = true;
+      stop();
     }
   }
 
   function request(): void {
-    if (destroyed || raf !== 0 || document.hidden) return;
+    if (destroyed || broken || raf !== 0 || document.hidden) return;
     raf = requestAnimationFrame(frame);
   }
 
+  /** Starts an ease to `next`, or snaps there under Still or reduced motion. */
   function aim(next: Camera): void {
     target = next;
+    from = { ...cam };
+    easeStart = null;
     report();
-    if (still()) cam = { ...target };
+    if (snaps()) cam = { ...target };
     request();
   }
 
@@ -244,6 +302,17 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     }
   }
 
+  /** A drag moves the camera at once; an ease in flight carries on from where the drag leaves it. */
+  function setDirect(next: Partial<Camera>): void {
+    cam = { ...cam, ...next };
+    target = { ...target, ...next };
+    from = { ...cam };
+    easeStart = null;
+    report();
+    dragging = true;
+    request();
+  }
+
   function onMove(e: PointerEvent): void {
     const prev = pointers.get(e.pointerId);
     if (!prev) return;
@@ -251,15 +320,8 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     pointers.set(e.pointerId, next);
     if (pointers.size >= 2) {
       const now = spread();
-      if (pinch > 0 && now > 0) {
-        const zoom = clampZoom(target.zoom * (now / pinch));
-        cam = { ...cam, zoom };
-        target = { ...target, zoom };
-        report();
-      }
+      if (pinch > 0 && now > 0) setDirect({ zoom: clampZoom(target.zoom * (now / pinch)) });
       pinch = now;
-      dragging = true;
-      request();
       return;
     }
     const here = local(e);
@@ -267,13 +329,10 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       moved = true;
     }
     if (!moved) return;
-    dragging = true;
-    const yaw = cam.yaw + (next.x - prev.x) * 0.01;
-    const pitch = Math.max(-1.2, Math.min(1.2, cam.pitch + (next.y - prev.y) * 0.01));
-    cam = { ...cam, yaw, pitch };
-    target = { ...target, yaw, pitch };
-    report();
-    request();
+    setDirect({
+      yaw: cam.yaw + (next.x - prev.x) * 0.01,
+      pitch: Math.max(-1.2, Math.min(1.2, cam.pitch + (next.y - prev.y) * 0.01)),
+    });
   }
 
   function onUp(e: PointerEvent): void {
@@ -282,7 +341,6 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     if (pointers.size < 2) pinch = 0;
     if (pointers.size === 0) {
       dragging = false;
-      target = { ...cam };
       request();
     }
     if (wasTap && state && field && rig) {
@@ -302,12 +360,47 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   }
 
   function onWheel(e: WheelEvent): void {
+    // While the page scrolls, only a trackpad pinch (ctrlKey) zooms, so the wheel can still scroll.
+    if (canvas.style.touchAction === 'pan-y' && !e.ctrlKey) return;
     e.preventDefault();
     aim({ ...target, zoom: clampZoom(target.zoom * Math.exp(-e.deltaY * 0.002)) });
   }
 
   function onVisibility(): void {
-    if (!document.hidden) request();
+    if (document.hidden) {
+      cancelAnimationFrame(raf);
+      raf = 0;
+      setLoop(false);
+    } else {
+      request();
+    }
+  }
+
+  /** Resizes, and paints at once so the cleared canvas never shows. */
+  function resize(): void {
+    if (!size()) return;
+    if (!broken) {
+      try {
+        draw(performance.now(), !(dragging || easing()));
+      } catch {
+        broken = true;
+        stop();
+      }
+    }
+    request();
+  }
+
+  // A move to another screen can change the pixel ratio without changing the box.
+  let dprWatch: MediaQueryList | undefined;
+  function watchDpr(): void {
+    if (typeof window.matchMedia !== 'function') return;
+    dprWatch?.removeEventListener('change', onDpr);
+    dprWatch = window.matchMedia(`(resolution: ${window.devicePixelRatio || 1}dppx)`);
+    dprWatch.addEventListener('change', onDpr);
+  }
+  function onDpr(): void {
+    resize();
+    watchDpr();
   }
 
   canvas.addEventListener('pointerdown', onDown);
@@ -316,18 +409,28 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   canvas.addEventListener('pointercancel', onCancel);
   canvas.addEventListener('wheel', onWheel, { passive: false });
   document.addEventListener('visibilitychange', onVisibility);
-  const observer = new ResizeObserver(() => {
-    size();
-    request();
-  });
+  window.addEventListener('resize', syncTouchAction);
+  const observer = new ResizeObserver(resize);
   observer.observe(canvas);
   size();
+  watchDpr();
+
+  /** Eases the camera so a part's region faces the viewer. */
+  function faceRegion(partId: string, parts: readonly Part[]): void {
+    const part = parts.find((p) => p.id === partId);
+    const at = part && rig?.labelAt.get(regionKey(part.region));
+    if (at) aim(facing(at, target));
+  }
 
   return {
     update(next) {
+      const before = state?.selected ?? null;
       state = next;
-      scene = buildScene(next.space, next.parts, ensureField().field);
+      const { field: f } = ensureField();
+      scene = buildScene(next.space, next.parts, f);
+      sceneVersion += 1;
       if (next.still) cam = { ...target };
+      if (next.selected !== null && next.selected !== before) faceRegion(next.selected, next.parts);
       syncTouchAction();
       request();
     },
@@ -341,12 +444,14 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       destroyed = true;
       cancelAnimationFrame(raf);
       observer.disconnect();
+      dprWatch?.removeEventListener('change', onDpr);
       canvas.removeEventListener('pointerdown', onDown);
       canvas.removeEventListener('pointermove', onMove);
       canvas.removeEventListener('pointerup', onUp);
       canvas.removeEventListener('pointercancel', onCancel);
       canvas.removeEventListener('wheel', onWheel);
       document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('resize', syncTouchAction);
       setLoop(false);
     },
   };
