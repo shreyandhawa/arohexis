@@ -206,11 +206,17 @@ test('a full brain lists every strength, and its signals run until Still', async
   await seedPlans(page, seed.plans);
   await seedEvents(page, seed.events);
   await expect(region(page)).toBeVisible();
-  for (const label of ['New', 'Repeated', 'Steady', 'Well-worn', 'Waiting'])
-    await expect(region(page)).toContainText(label);
+  for (const line of [
+    'New, 3 starts on cue',
+    'Repeated, 7 starts on cue',
+    'Steady, 20 starts on cue',
+    'Well-worn, 42 starts on cue',
+    'Waiting, 0 starts on cue',
+  ])
+    await expect(region(page)).toContainText(line);
   await expect(region(page)).toHaveAttribute('data-motion', 'moving');
   await expect(canvas(page)).toHaveAttribute('data-loop', 'running');
-  await page.waitForTimeout(2500);
+  await expect(canvas(page)).toHaveAttribute('data-draw-mean', /^\d/, { timeout: 5000 });
   const attrs = await canvas(page).evaluate((c) => ({ ...(c as HTMLElement).dataset }));
   test.info().annotations.push({ type: 'draw mean', description: JSON.stringify(attrs) });
   await still(page).click();

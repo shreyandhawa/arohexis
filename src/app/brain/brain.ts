@@ -61,9 +61,11 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   let sceneVersion = 0;
   let cam: Camera = { ...START_CAMERA };
   let target: Camera = { ...START_CAMERA };
-  /** Where the current ease started, and when (null until its first frame). */
-  let from: Camera = { ...START_CAMERA };
-  let easeStart: number | null = null;
+  /** Where each ease started, and when (null until its first frame). Turning and zooming keep their own clocks. */
+  let orbitFrom = { yaw: START_CAMERA.yaw, pitch: START_CAMERA.pitch };
+  let orbitStart: number | null = null;
+  let zoomFrom = START_CAMERA.zoom;
+  let zoomStart: number | null = null;
   let width = 0;
   let height = 0;
   let dpr = 1;
@@ -201,18 +203,29 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       cam = { ...target };
       return;
     }
-    easeStart ??= time;
-    const p = (time - easeStart) / EASE_MS;
-    if (p >= 1) {
-      cam = { ...target };
-      return;
+    const progress = (start: number | null): number => (time - (start ?? time)) / EASE_MS;
+    let { yaw, pitch, zoom } = cam;
+    if (cam.yaw !== target.yaw || cam.pitch !== target.pitch) {
+      orbitStart ??= time;
+      const p = progress(orbitStart);
+      const e = p >= 1 ? 1 : easeStandard(p);
+      yaw = orbitFrom.yaw + (target.yaw - orbitFrom.yaw) * e;
+      pitch = orbitFrom.pitch + (target.pitch - orbitFrom.pitch) * e;
     }
-    const e = easeStandard(p);
-    cam = {
-      yaw: from.yaw + (target.yaw - from.yaw) * e,
-      pitch: from.pitch + (target.pitch - from.pitch) * e,
-      zoom: from.zoom + (target.zoom - from.zoom) * e,
-    };
+    if (cam.zoom !== target.zoom) {
+      zoomStart ??= time;
+      const p = progress(zoomStart);
+      zoom = zoomFrom + (target.zoom - zoomFrom) * (p >= 1 ? 1 : easeStandard(p));
+    }
+    cam = { yaw, pitch, zoom };
+  }
+
+  /** A draw error stops the loop and is reported, so it reaches the console and the tests. The plate keeps its text. */
+  function fail(e: unknown): void {
+    broken = true;
+    stop();
+    if (typeof reportError === 'function') reportError(e);
+    else console.error(e);
   }
 
   function stop(): void {
@@ -248,10 +261,8 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
         }
         raf = requestAnimationFrame(frame);
       }
-    } catch {
-      // A draw error stops the loop; the plate keeps its text.
-      broken = true;
-      stop();
+    } catch (e) {
+      fail(e);
     }
   }
 
@@ -262,9 +273,15 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
 
   /** Starts an ease to `next`, or snaps there under Still or reduced motion. */
   function aim(next: Camera): void {
+    if (next.yaw !== target.yaw || next.pitch !== target.pitch) {
+      orbitFrom = { yaw: cam.yaw, pitch: cam.pitch };
+      orbitStart = null;
+    }
+    if (next.zoom !== target.zoom) {
+      zoomFrom = cam.zoom;
+      zoomStart = null;
+    }
     target = next;
-    from = { ...cam };
-    easeStart = null;
     report();
     if (snaps()) cam = { ...target };
     request();
@@ -302,12 +319,18 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     }
   }
 
-  /** A drag moves the camera at once; an ease in flight carries on from where the drag leaves it. */
+  /** A drag moves the camera at once. Only the parts it changes restart their ease clock. */
   function setDirect(next: Partial<Camera>): void {
     cam = { ...cam, ...next };
     target = { ...target, ...next };
-    from = { ...cam };
-    easeStart = null;
+    if (next.yaw !== undefined || next.pitch !== undefined) {
+      orbitFrom = { yaw: cam.yaw, pitch: cam.pitch };
+      orbitStart = null;
+    }
+    if (next.zoom !== undefined) {
+      zoomFrom = cam.zoom;
+      zoomStart = null;
+    }
     report();
     dragging = true;
     request();
@@ -382,9 +405,8 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     if (!broken) {
       try {
         draw(performance.now(), !(dragging || easing()));
-      } catch {
-        broken = true;
-        stop();
+      } catch (e) {
+        fail(e);
       }
     }
     request();
