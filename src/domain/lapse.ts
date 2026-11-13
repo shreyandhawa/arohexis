@@ -8,9 +8,9 @@ export type RepairChoice = 'keep' | 'smaller' | 'move' | 'pause';
 export type RepairInput = { firstAction?: string; time?: string; days?: readonly WeekDay[] };
 
 /**
- * Spec §6.4. Slipped, unresolved occurrences: the most recent one in the last 7 days is
- * offered for repair. Every other one, including those older than 7 days, is to be recorded
- * as expired by the caller, so there is never a list of lapses.
+ * Spec §6.4. Slipped, unresolved occurrences since the plan's last resume or schedule change
+ * (`activeSince`): the most recent in the last 7 days is offered for repair; every other one,
+ * including those older than 7 days, is to be recorded as expired by the caller, so there is never a list of lapses.
  */
 export function findLapseToRepair(
   plans: readonly Plan[],
@@ -20,7 +20,8 @@ export function findLapseToRepair(
 ): { repair?: { plan: Plan; occurrence: Occurrence }; expire: Occurrence[] } {
   const slipped: { plan: Plan; occurrence: Occurrence }[] = [];
   for (const plan of plans) {
-    for (const occurrence of occurrencesBetween(plan, plan.createdAt, now, tz)) {
+    const since = Math.max(plan.createdAt, plan.activeSince ?? plan.createdAt);
+    for (const occurrence of occurrencesBetween(plan, since, now, tz)) {
       if (occurrenceStatus(plan, occurrence, events, now) === 'slipped')
         slipped.push({ plan, occurrence });
     }

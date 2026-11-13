@@ -40,6 +40,8 @@ export type Plan = {
   active: boolean;
   createdAt: number;
   editCount: number;
+  /** Epoch ms of the last resume or schedule change; a missing value means `createdAt`. */
+  activeSince?: number;
   /** Set from M3. */
   partId?: string;
 };
@@ -75,6 +77,8 @@ export type PlanPatch = {
   update?: readonly Plan[];
   /** Sets `active: false` without counting as an edit. */
   pause?: readonly string[];
+  /** Sets `active: true` and `activeSince` without counting as an edit. */
+  resume?: readonly string[];
 };
 /** Parts are upserted by id. Extended by later milestones: import (M5). */
 export type ConfigPatch = {

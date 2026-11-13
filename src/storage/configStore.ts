@@ -24,7 +24,17 @@ export async function readConfig(db: ArohexisDB): Promise<Config> {
   return { feelings, responses, parts, obstacles, plans, settings };
 }
 
-export function createConfigStore(db: ArohexisDB): ConfigStore {
+/** A resume, or a change of days or time, starts a new stretch of counted occurrences. */
+function changesSchedule(stored: Plan, next: Plan): boolean {
+  return (
+    (next.active && !stored.active) ||
+    next.time !== stored.time ||
+    next.days.length !== stored.days.length ||
+    next.days.some((d, i) => d !== stored.days[i])
+  );
+}
+
+export function createConfigStore(db: ArohexisDB, now: () => number = Date.now): ConfigStore {
   return {
     getConfig: () => readConfig(db),
     async applyConfigPatch(patch) {
@@ -32,8 +42,8 @@ export function createConfigStore(db: ArohexisDB): ConfigStore {
         .filter(([, value]) => value !== undefined)
         .map(([key, value]) => ({ key, value }));
       const parts = patch.parts ?? [];
-      const { add = [], update = [], pause = [] } = patch.plans ?? {};
-      const touchesPlans = add.length + update.length + pause.length > 0;
+      const { add = [], update = [], pause = [], resume = [] } = patch.plans ?? {};
+      const touchesPlans = add.length + update.length + pause.length + resume.length > 0;
       if (rows.length === 0 && parts.length === 0 && !touchesPlans) return;
       await db.transaction('rw', [db.kv, db.parts, db.plans], async () => {
         if (parts.length > 0) {
@@ -50,7 +60,7 @@ export function createConfigStore(db: ArohexisDB): ConfigStore {
           const next: Plan[] = [];
           for (const plan of add) {
             if (await db.plans.get(plan.id)) throw new Error(`Plan already exists: ${plan.id}`);
-            next.push(plan);
+            next.push({ ...plan, activeSince: now() });
           }
           for (const plan of update) {
             const stored = await db.plans.get(plan.id);
@@ -59,12 +69,20 @@ export function createConfigStore(db: ArohexisDB): ConfigStore {
               ...plan,
               createdAt: stored.createdAt,
               editCount: stored.editCount + 1,
+              activeSince: changesSchedule(stored, plan)
+                ? now()
+                : (stored.activeSince ?? stored.createdAt),
             });
           }
           for (const id of pause) {
             const stored = await db.plans.get(id);
             if (!stored) throw new Error(`No such plan: ${id}`);
             next.push({ ...stored, active: false });
+          }
+          for (const id of resume) {
+            const stored = await db.plans.get(id);
+            if (!stored) throw new Error(`No such plan: ${id}`);
+            next.push({ ...stored, active: true, activeSince: now() });
           }
           for (const plan of next) {
             const problems = validatePlan(plan);

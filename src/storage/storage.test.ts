@@ -195,7 +195,7 @@ describe('storage', () => {
   it('adds, updates and pauses plans', async () => {
     const db = await freshDb();
     await seedDefaults(db);
-    const store = createConfigStore(db);
+    const store = createConfigStore(db, () => 1000);
     const part = (await db.parts.toArray())[0];
     const plan = {
       id: 'p1',
@@ -222,6 +222,12 @@ describe('storage', () => {
     });
     await store.applyConfigPatch({ plans: { pause: ['p1'] } });
     expect((await store.getConfig()).plans[0]).toMatchObject({ active: false, editCount: 1 });
+    await store.applyConfigPatch({ plans: { resume: ['p1'] } });
+    expect((await store.getConfig()).plans[0]).toMatchObject({
+      active: true,
+      editCount: 1,
+      activeSince: 1000,
+    });
   });
 
   it('rejects invalid plans without writing anything', async () => {

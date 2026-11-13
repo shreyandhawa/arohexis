@@ -81,7 +81,7 @@ export async function savePlan(
 
 export async function setPlanActive(d: AppDeps, plan: Plan, active: boolean): Promise<void> {
   await d.config.applyConfigPatch({
-    plans: active ? { update: [{ ...plan, active: true }] } : { pause: [plan.id] },
+    plans: active ? { resume: [plan.id] } : { pause: [plan.id] },
   });
 }
 

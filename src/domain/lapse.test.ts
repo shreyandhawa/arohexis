@@ -55,6 +55,22 @@ describe('findLapseToRepair', () => {
   });
 });
 
+describe('activeSince', () => {
+  it('A: days a plan was paused raise no lapse after resume', () => {
+    const resumedAt = instantOf('2026-11-18', '10:00', tz);
+    const out = findLapseToRepair([plan({ activeSince: resumedAt })], [], now, tz);
+    expect(out.repair).toBeUndefined();
+    expect(out.expire).toEqual([]);
+  });
+  it('B: days before a schedule change are not slips', () => {
+    const changedAt = instantOf('2026-11-17', '20:00', tz);
+    const p = plan({ days: [1, 2, 3, 4, 5], activeSince: changedAt });
+    const out = findLapseToRepair([p], [], now, tz);
+    expect(out.repair?.occurrence.date).toBe('2026-11-18');
+    expect(out.expire).toEqual([]);
+  });
+});
+
 describe('applyRepair', () => {
   const p = plan();
   it('returns the plan patch for each choice', () => {
