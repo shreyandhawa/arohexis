@@ -6,7 +6,6 @@ export function startsThisWeek(n: number): string {
 
 export const nav = {
   label: 'Main',
-  // Plans arrives in M3 and Insights in M4; both stay hidden until then.
   plans: 'Plans',
   insights: 'Insights',
   settings: 'Settings',
