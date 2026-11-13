@@ -25,6 +25,7 @@ async function setup(): Promise<AppDeps> {
     clock,
     ids,
     persist: vi.fn().mockResolvedValue(true),
+    mode: 'main',
   };
 }
 

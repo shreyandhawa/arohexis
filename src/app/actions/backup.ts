@@ -42,7 +42,10 @@ export async function exportBackup(d: AppDeps, sharer: Sharer, data: ExportData)
         2,
       ),
     ],
-    exportFileName(now, d.clock.timeZone()),
+    // Demo data is labeled in the name so it is not mistaken for a real backup (spec §7.4).
+    d.mode === 'demo'
+      ? exportFileName(now, d.clock.timeZone()).replace('arohexis-export', 'arohexis-demo-export')
+      : exportFileName(now, d.clock.timeZone()),
     { type: 'application/json' },
   );
 
