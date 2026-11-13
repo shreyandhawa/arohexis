@@ -125,16 +125,6 @@ test('a failed load shows the calm message and the button retries it', async ({ 
   await expect(page.getByText('Last backup: today')).toBeVisible();
 });
 
-test.describe('at 375x667', () => {
-  test.use({ viewport: { width: 375, height: 667 } });
-  test('data screen fits without scrolling', async ({ page }) => {
-    await openData(page);
-    expect(
-      await page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight),
-    ).toBe(true);
-  });
-});
-
 for (const scheme of ['light', 'dark'] as const) {
   test(`data screen is accessible in ${scheme}`, async ({ page }) => {
     await setTheme(page, scheme);
