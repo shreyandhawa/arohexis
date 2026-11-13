@@ -2,7 +2,16 @@ import ICAL from 'ical.js';
 import { describe, expect, it } from 'vitest';
 import type { Plan } from './config';
 import { foldLine, planToIcs, utf8Length } from './ics';
-import { instantOf, occurrencesBetween } from './plans';
+import { instantOf, occurrencesBetween, type PlanWords } from './plans';
+
+const words: PlanWords = {
+  dayNames: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+  today: 'today',
+  tomorrow: 'tomorrow',
+  weekdays: 'weekdays',
+  everyDay: 'every day',
+  weekends: 'weekends',
+};
 
 const plan: Plan = {
   id: 'p1',
@@ -31,7 +40,7 @@ describe('planToIcs', () => {
   const now = Date.UTC(2026, 9, 26, 12, 0);
 
   it('writes the required properties with CRLF', () => {
-    const ics = planToIcs(plan, 'America/New_York', now);
+    const ics = planToIcs(plan, 'America/New_York', now, words);
     expect(ics.endsWith('\r\n')).toBe(true);
     expect(ics.split('\r\n').every((l) => utf8Length(l) <= 75)).toBe(true);
     expect(ics.replace(/\r\n/g, '')).not.toMatch(/[\r\n]/);
@@ -53,7 +62,7 @@ describe('planToIcs', () => {
   it.each(['America/New_York', 'Europe/London', 'Australia/Lord_Howe', 'Asia/Kathmandu'])(
     'expands to 09:00 local on both sides of a DST change in %s',
     (tz) => {
-      const { event } = parse(planToIcs(plan, tz, now));
+      const { event } = parse(planToIcs(plan, tz, now, words));
       const expected = occurrencesBetween(
         { ...plan, days: [1, 2, 3, 4, 5] },
         now - 2 * 86_400_000,
@@ -80,6 +89,26 @@ describe('planToIcs', () => {
       expect(offsets.size).toBe(dst);
     },
   );
+
+  it('keeps the alarm at 09:00 local across DST in year 8', () => {
+    const tz = 'America/New_York';
+    const { event } = parse(planToIcs({ ...plan, days: [0, 1, 2, 3, 4, 5, 6] }, tz, now, words));
+    const it = event.iterator();
+    const from = now + 7 * 365 * 86_400_000;
+    const to = now + 8 * 365 * 86_400_000;
+    const offsets = new Set<number>();
+    let seen = 0;
+    for (let t = it.next(); t; t = it.next()) {
+      const ms = t.toUnixTime() * 1000;
+      if (ms > to) break;
+      if (ms < from) continue;
+      seen++;
+      expect(t.hour).toBe(9);
+      offsets.add(t.utcOffset());
+    }
+    expect(seen).toBeGreaterThan(300);
+    expect(offsets.size).toBe(2);
+  });
 
   it('keeps the UTC time of the alarm moving with the offset', () => {
     const before = instantOf('2026-10-30', '09:00', 'America/New_York');

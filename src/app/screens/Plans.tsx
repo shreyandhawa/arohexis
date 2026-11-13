@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { plans as copy } from '../../copy/plans';
+import { plans as copy, planWords } from '../../copy/plans';
 import { planSentence } from '../../domain/plans';
 import { useConfig } from '../hooks/useConfig';
 import shell from '../layout/Shell.module.css';
@@ -18,7 +18,7 @@ export function Plans() {
           {list.map((p) => (
             <li key={p.id} className={styles['item']}>
               <Link to={`/plans/${p.id}`} className={styles['itemLink']}>
-                <span>{planSentence(p)}</span>
+                <span>{planSentence(p, 'full', planWords)}</span>
                 <span className={styles['state']}>{p.active ? copy.active : copy.paused}</span>
               </Link>
             </li>

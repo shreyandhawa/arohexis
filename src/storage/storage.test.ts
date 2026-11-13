@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { WeekDay } from '../domain/config';
 import { foldAttempts, isCountedStart } from '../domain/attempts';
-import { makeStart, openAttempt } from '../domain/commands';
+import { makeStart, openAttempt, resolveOccurrence } from '../domain/commands';
 import { testDeps } from '../domain/testing/fixtures';
 import { ArohexisDB, type DbName } from './db';
 import { createConfigStore } from './configStore';
@@ -107,6 +107,20 @@ describe('storage', () => {
     expect(results.map((r) => r.length).sort()).toEqual([0, 1]);
     const starts = (await store.listByAttempt(id)).filter((e) => e.type === 'start.made');
     expect(starts).toHaveLength(1);
+  });
+
+  it('appendResolutions skips an occurrence that already has one, even from two tabs', async () => {
+    const db = await freshDb();
+    const store = createEventStore(db);
+    const deps = testDeps();
+    const make = (outcome: 'slipped' | 'expired') =>
+      resolveOccurrence(deps, 'p1', '2026-11-10', outcome);
+    await Promise.all([
+      store.appendResolutions([make('expired')]),
+      store.appendResolutions([make('expired'), make('slipped')]),
+    ]);
+    await store.appendResolutions([make('slipped')]);
+    expect(await store.listByType('occurrence.resolved')).toHaveLength(1);
   });
 
   it('getConfig merges stored settings over defaults', async () => {

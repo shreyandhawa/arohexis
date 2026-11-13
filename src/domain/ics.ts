@@ -1,10 +1,10 @@
 import type { Plan, WeekDay } from './config';
-import { instantOf, offsetMinutes, planSentence } from './plans';
+import { instantOf, offsetMinutes, planSentence, type PlanWords } from './plans';
 import { localDate } from './week';
 
 const MIN = 60_000;
 const DAY = 24 * 60 * MIN;
-const YEARS_MS = 3 * 366 * DAY;
+const YEARS_MS = 10 * 366 * DAY;
 const BYDAY = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
 
 type Transition = { at: number; from: number; to: number };
@@ -143,7 +143,7 @@ function firstDate(plan: Plan, now: number, tz: string): string {
 }
 
 /** One VEVENT for a plan, with its VTIMEZONE, as an iCalendar string (spec §6.4). */
-export function planToIcs(plan: Plan, tz: string, now: number): string {
+export function planToIcs(plan: Plan, tz: string, now: number, words: PlanWords): string {
   const date = firstDate(plan, now, tz);
   const startAt = instantOf(date, plan.time, tz);
   const dtstart = localStamp(startAt, offsetMinutes(startAt, tz));
@@ -161,7 +161,7 @@ export function planToIcs(plan: Plan, tz: string, now: number): string {
     `DTSTART;TZID=${tz}:${dtstart}`,
     'DURATION:PT5M',
     `RRULE:FREQ=WEEKLY;BYDAY=${days.join(',')}`,
-    `SUMMARY:${escapeText(planSentence(plan, 'calendar'))}`,
+    `SUMMARY:${escapeText(planSentence(plan, 'calendar', words))}`,
     `LOCATION:${escapeText(plan.place)}`,
     'DESCRIPTION:Open Arohexis from your Home Screen.',
     'BEGIN:VALARM',

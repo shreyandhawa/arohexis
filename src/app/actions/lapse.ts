@@ -14,12 +14,14 @@ function eventDeps(d: AppDeps): EventDeps {
 export async function expireOccurrences(d: AppDeps, list: readonly Occurrence[]): Promise<void> {
   if (list.length === 0) return;
   const deps = eventDeps(d);
-  await d.events.append(list.map((o) => resolveOccurrence(deps, o.planId, o.date, 'expired')));
+  await d.events.appendResolutions(
+    list.map((o) => resolveOccurrence(deps, o.planId, o.date, 'expired')),
+  );
 }
 
 /** Closing the repair sheet unfinished: it does not come back for this occurrence. */
 export async function slipOccurrence(d: AppDeps, planId: string, date: string): Promise<void> {
-  await d.events.append([resolveOccurrence(eventDeps(d), planId, date, 'slipped')]);
+  await d.events.appendResolutions([resolveOccurrence(eventDeps(d), planId, date, 'slipped')]);
 }
 
 export async function finishRepair(

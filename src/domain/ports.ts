@@ -15,6 +15,11 @@ export interface EventStore {
   list(range?: { from?: number; to?: number }): Promise<AppEvent[]>;
   listByAttempt(attemptId: string): Promise<AppEvent[]>;
   listByType<T extends EventType>(type: T): Promise<EventOf<T>[]>;
+  /**
+   * Appends occurrence resolutions, skipping any whose plan and occurrence already have a
+   * resolution or repair (checked in the write transaction, so two tabs cannot both add one).
+   */
+  appendResolutions(events: readonly EventOf<'occurrence.resolved'>[]): Promise<void>;
   /** Reads the attempt's events and appends decide()'s result in one read-write transaction. decide must be synchronous. */
   appendForAttempt(
     attemptId: string,

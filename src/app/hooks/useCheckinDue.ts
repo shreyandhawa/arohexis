@@ -9,6 +9,17 @@ import { useNow } from './useNow';
 const REFRESH_MS = 60_000;
 export const BACKUP_NUDGE_DAYS = 14;
 
+/** Whether the quiet "Back up now" link shows: 14+ days since the last backup, or since the first event when none. */
+export function backupNudgeDue(
+  lastExportAt: number | undefined,
+  firstEventAt: number | null,
+  now: number,
+  tz: string,
+): boolean {
+  const days = daysSinceBackup(lastExportAt ?? firstEventAt ?? undefined, now, tz);
+  return days !== undefined && days >= BACKUP_NUDGE_DAYS;
+}
+
 /** Whether this period's check-in is due, and whether to add the quiet "Back up now" link. */
 export function useCheckinDue(): { due: boolean; nudgeBackup: boolean } | undefined {
   const { events, clock, db, mode } = useData();
@@ -27,6 +38,5 @@ export function useCheckinDue(): { due: boolean; nudgeBackup: boolean } | undefi
     submitted.map((e) => e.weekOf),
     s.checkinDismissedWeek,
   );
-  const days = daysSinceBackup(s.lastExportAt ?? first ?? undefined, now, tz);
-  return { due, nudgeBackup: mode === 'main' && days !== undefined && days >= BACKUP_NUDGE_DAYS };
+  return { due, nudgeBackup: mode === 'main' && backupNudgeDue(s.lastExportAt, first, now, tz) };
 }
