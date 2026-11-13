@@ -90,7 +90,8 @@
 }
 
 .swatch[aria-pressed='true'] {
-  border: 3px solid var(--color-selected);
+  border-color: var(--color-selected);
+  box-shadow: inset 0 0 0 2px var(--color-selected);
 }
 
 .dot {
