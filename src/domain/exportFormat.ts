@@ -241,3 +241,36 @@ export function parseExport(input: unknown): ParseResult {
 export function exportFileName(at: number, tz: string): string {
   return `arohexis-export-${localDate(at, tz)}.json`;
 }
+
+/** Parses the text of a chosen file. Never throws. */
+export function parseExportText(text: string): ParseResult {
+  let json: unknown;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    return { ok: false, message: EXPORT_MESSAGES.notABackup };
+  }
+  return parseExport(json);
+}
+
+export type ExportCounts = {
+  events: number;
+  plans: number;
+  feelings: number;
+  parts: number;
+  responses: number;
+  obstacles: number;
+};
+
+/** The counts for the import preview ("312 events, 4 plans, 6 feelings"). */
+export function summarizeExport(file: ExportFile): ExportCounts {
+  const { events, plans, feelings, parts, responses, obstacles } = file.data;
+  return {
+    events: events.length,
+    plans: plans.length,
+    feelings: feelings.length,
+    parts: parts.length,
+    responses: responses.length,
+    obstacles: obstacles.length,
+  };
+}

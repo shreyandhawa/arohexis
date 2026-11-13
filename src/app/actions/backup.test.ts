@@ -23,6 +23,7 @@ async function setup() {
     clock,
     ids,
     persist: vi.fn().mockResolvedValue(true),
+    mode: 'main',
   };
   return { d, clock };
 }

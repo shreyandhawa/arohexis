@@ -4,6 +4,8 @@ import { useRegisterSW } from 'virtual:pwa-register/react';
 import { backToHome } from '../../copy/common';
 import { isTyping } from '../typing';
 import { UpdateCard } from '../components/UpdateCard';
+import { useData } from '../data/DataProvider';
+import { DemoRibbon } from './DemoRibbon';
 import { StuckButton } from './StuckButton';
 import styles from './Shell.module.css';
 
@@ -16,6 +18,7 @@ function inFlow(pathname: string): boolean {
 }
 
 export function Shell() {
+  const deps = useData();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const flow = inFlow(pathname);
@@ -44,7 +47,7 @@ export function Shell() {
 
   return (
     <div className={home ? `${styles['page']} ${styles['pageHome']}` : styles['page']}>
-      <div data-slot="ribbon" />
+      <div data-slot="ribbon">{deps.mode === 'demo' && <DemoRibbon />}</div>
       {!home && !flow && (
         <header className={styles['header']}>
           <Link to="/" className={styles['link']}>

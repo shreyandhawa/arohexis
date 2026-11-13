@@ -5,6 +5,7 @@ import type { ArohexisDB } from '../../storage/db';
 import { createEventStore } from '../../storage/eventStore';
 import { openStorageWithin } from '../../storage/open';
 import { StorageError } from '../screens/StorageError';
+import { dbNameFor, readDbChoice, type DbChoice } from './dbChoice';
 import { browserClock, browserIds } from './runtime';
 
 export type AppDeps = {
@@ -14,6 +15,8 @@ export type AppDeps = {
   ids: IdGen;
   db: ArohexisDB;
   persist: () => Promise<boolean>;
+  /** Which database is open. Only changes with a reload. */
+  mode: DbChoice;
 };
 
 const DataContext = createContext<AppDeps | undefined>(undefined);
@@ -30,7 +33,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     let opened: ArohexisDB | undefined;
-    void openStorageWithin('arohexis').then((result) => {
+    const mode = readDbChoice();
+    void openStorageWithin(dbNameFor(mode)).then((result) => {
       if (!result.ok) {
         if (!cancelled) setState({ status: 'failed' });
         return;
@@ -49,6 +53,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           clock: browserClock,
           ids: browserIds,
           persist,
+          mode,
         },
       });
     });

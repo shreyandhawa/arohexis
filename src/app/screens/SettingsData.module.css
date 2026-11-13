@@ -8,3 +8,24 @@
   margin: 0;
   color: var(--color-text-muted);
 }
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 2px solid var(--color-rule);
+  background: var(--color-surface);
+}
+
+.panel p {
+  margin: 0;
+}
+
+.panel h2:focus {
+  outline: none;
+}
+
+.hiddenInput {
+  display: none;
+}
