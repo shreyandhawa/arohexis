@@ -145,6 +145,8 @@
   display: flex;
   flex: none;
   gap: var(--space-2);
+  /* One chip row tall, filled or not, so the plate's size is the same before and after data. */
+  min-height: calc(var(--target-min) + 2 * var(--space-2));
   /* Room for the 5 px focus ring inside the scroller. */
   padding: var(--space-2);
   overflow-x: auto;

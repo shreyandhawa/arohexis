@@ -5,7 +5,17 @@ import { TIMER_SECONDS } from '../../domain/timer';
 import type { Part } from '../../domain/config';
 import { PLATE } from '../../design/partColours';
 import { buildField, regionKey, type Field } from '../../geometry/field';
-import { clampZoom, easeStandard, explodeAmount, turnBy, zoomBy, type Camera } from './camera';
+import {
+  boxCentre,
+  clampZoom,
+  easeStandard,
+  explodeAmount,
+  scaleZoom,
+  stripFit,
+  turnBy,
+  zoomBy,
+  type Camera,
+} from './camera';
 import {
   BRAIN_CENTRE,
   BURST_MS,
@@ -68,7 +78,6 @@ const TAP_SLOP = 6;
 const TAP_RADIUS = 24;
 const DRAW_SAMPLES = 120;
 const REVEAL_MS = TIMER_SECONDS * 1000;
-const STRIP_ZOOM_FIT = 2.5;
 
 type Motion = {
   /** The arriving start, if its light is on the scene. */
@@ -228,23 +237,48 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     const key = `${item?.id ?? ''}:${width}:${height}`;
     if (key === framedFor) return;
     framedFor = key;
-    const s = item && ensureField().field.fibres[item.fibre]?.strands[Math.max(item.strand, 0)];
+    const fibre = item && ensureField().field.fibres[item.fibre];
+    // What the strip draws for the line: one strand, or every strand of its fibre.
+    const drawn = fibre && (item.strand >= 0 ? [fibre.strands[item.strand]] : fibre.strands);
+    const strands = (drawn ?? []).filter((s): s is NonNullable<typeof s> => !!s && s.length >= 3);
+    const s = strands[0];
     if (!item || !s) {
       target = { ...START_CAMERA };
       fit = 1;
     } else {
       const end: [number, number, number] = [s[s.length - 3]!, s[s.length - 2]!, s[s.length - 1]!];
-      const look: [number, number, number] = [
-        (s[0]! + end[0]) / 2,
-        (s[1]! + end[1]) / 2,
-        (s[2]! + end[2]) / 2,
-      ];
-      target = { ...facing(end, START_CAMERA), look };
-      const probe = makeProject({ w: width, h: height, top: 0, bottom: 0, cam: target });
-      const a = { ...probe(s[0]!, s[1]!, s[2]!) };
-      const b = probe(...end);
-      const span = Math.max(Math.abs(b.x - a.x), Math.abs(b.y - a.y) * (width / height), 1);
-      fit = Math.min(STRIP_ZOOM_FIT, Math.max(1, (0.8 * width) / span));
+      // Centre on the drawn line's box, then nudge the look-at point until the projected box is centred
+      // in the strip (perspective moves it), and size the zoom so that box fills the strip.
+      target = { ...facing(end, START_CAMERA), look: boxCentre(strands) };
+      const { yaw, pitch, zoom } = target;
+      const scale = Math.min(width / 2.1, height / 1.8) * scaleZoom(zoom);
+      fit = 1;
+      for (let pass = 0; pass < 5; pass++) {
+        const probe = makeProject({ w: width, h: height, top: 0, bottom: 0, cam: target, fit });
+        let x0 = Infinity;
+        let x1 = -Infinity;
+        let y0 = Infinity;
+        let y1 = -Infinity;
+        for (const st of strands) {
+          for (let i = 0; i < st.length; i += 3) {
+            const p = probe(st[i]!, st[i + 1]!, st[i + 2]!);
+            x0 = Math.min(x0, p.x);
+            x1 = Math.max(x1, p.x);
+            y0 = Math.min(y0, p.y);
+            y1 = Math.max(y1, p.y);
+          }
+        }
+        // Screen offset of the box's centre, as a world move of the look-at point.
+        const sx = ((x0 + x1) / 2 - width / 2) / (scale * fit);
+        const sy = -((y0 + y1) / 2 - height / 2) / (scale * fit);
+        const [lx, ly, lz] = target.look;
+        target = {
+          ...target,
+          look: [lx + sx * Math.cos(yaw), ly + sy / Math.cos(pitch), lz + sx * Math.sin(yaw)],
+        };
+        // The box at this fit is `(x1 - x0)` wide; the fit that fills the strip scales it.
+        fit = stripFit(width, height, (x1 - x0) / fit, (y1 - y0) / fit);
+      }
     }
     cam = { ...target };
     cacheKey = '';

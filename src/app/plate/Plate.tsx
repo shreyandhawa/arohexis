@@ -102,12 +102,15 @@ export function Plate({ selected, onSelect, notice }: Props) {
             </>
           )}
         </div>
-        {data && (
+        {data ? (
           <PartsRow
             parts={shownParts(data.space, data.parts)}
             selected={selected}
             onSelect={select}
           />
+        ) : (
+          // Holds the row's height until data loads, so the plate doesn't jump.
+          <div aria-hidden="true" className={styles['partsRow']} />
         )}
       </section>
       <Sheet
