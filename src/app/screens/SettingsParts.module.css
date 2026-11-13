@@ -136,3 +136,15 @@
   flex: none;
   accent-color: var(--color-accent);
 }
+
+.summary {
+  display: flex;
+  min-height: var(--target-min);
+  align-items: center;
+  cursor: pointer;
+}
+
+.row button {
+  width: auto;
+  min-width: var(--target-min);
+}
