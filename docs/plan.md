@@ -1382,12 +1382,12 @@ export function Plate(props: { selected: string | null; onSelect(partId: string 
   - an M1-like history;
   - the full fixture: every strength, a waiting line, six parts, zoomed past `EXPLODE_FROM_ZOOM`, and one part selected.
 - [x] **Step 3:** `design-critic` judges them against `docs/reference/brain-space/`, ADR-018, ADR-021 and spec §16.6–16.7, and returns ranked findings. The lead accepts or rejects each one. The builders fix the accepted ones, and a reviewer checks the fixes.
-- [ ] **Step 4: Owner step.** The owner reviews Home on the preview URL on the iPhone, in light and dark, plus the full-fixture screenshots.
+- [x] **Step 4: Owner step.** The owner reviews Home on the preview URL on the iPhone, in light and dark, plus the full-fixture screenshots.
   - The preview is its own origin, so it starts empty. A few starts there show real light.
   - Ask about: the plate's weight in the light theme (ADR-026), the parts row over the plate (ADR-030), and how resting looks (ADR-024).
 
   Iterate until the owner says yes. Later tasks wait for that yes.
-- [ ] **Step 5:** Add a line to ADR-021's consequences: "Home review passed on <date>", plus any changes. Commit and push.
+- [x] **Step 5:** Add a line to ADR-021's consequences: "Home review passed on <date>", plus any changes. Commit and push.
 
 ### Task 8: Part card and Started
 
