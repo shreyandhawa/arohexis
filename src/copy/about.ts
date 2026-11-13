@@ -12,6 +12,10 @@ export const about = {
     'Each claim below comes from a published source, with the limits we know of. Wording stays cautious on purpose.',
   sourceLabel: 'Source',
   caveatLabel: 'Limits',
+  basisTitle: 'Where the responses come from',
+  basisIntro: 'Each built-in response has one basis. Here is the source for each.',
+  checkinTitle: 'The weekly check-in',
+  version: (version: string, sha: string): string => `Version ${version}, build ${sha}`,
 } as const;
 
 export type Source = { text: string; href?: string };

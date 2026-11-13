@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
@@ -24,7 +25,25 @@ function previewHeaders(): Plugin {
   };
 }
 
+function buildSha(): string {
+  const fromCi = process.env['VITE_BUILD_SHA'];
+  if (fromCi) return fromCi.slice(0, 7);
+  try {
+    return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
+      .toString()
+      .trim();
+  } catch {
+    return 'dev';
+  }
+}
+
+const { version } = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string };
+
 export default defineConfig({
+  define: {
+    __BUILD_SHA__: JSON.stringify(buildSha() || 'dev'),
+    __APP_VERSION__: JSON.stringify(version),
+  },
   // The manifest lets scripts/check-bundle-size.mjs find the lazy Brain space chunk.
   build: { manifest: true },
   plugins: [
