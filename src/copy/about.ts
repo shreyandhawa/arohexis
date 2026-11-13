@@ -4,6 +4,9 @@ export const about = {
     "Arohexis helps you practice one thing: starting. When you're stuck, tap the button, name the feeling, and take a two-minute first step.",
   notMedicalAdvice:
     "Arohexis is a self-help tool, not medical advice. It doesn't diagnose or treat ADHD, depression, anxiety or any other condition. If procrastination is seriously affecting your life, consider talking to a qualified professional.",
+  brainSpaceTitle: 'Brain space',
+  brainSpace:
+    "Brain space draws your starts as lines of light in the shape of a brain. It's a picture of your starts, not a scan, and the shape is the same for everyone. Arohexis makes no claim that your brain changes.",
   evidenceTitle: 'What the evidence says',
   evidenceIntro:
     'Each claim below comes from a published source, with the limits we know of. Wording stays cautious on purpose.',

@@ -1,0 +1,138 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.part {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-s);
+}
+
+.legend {
+  max-width: 100%;
+  padding-inline: var(--space-2);
+  overflow-wrap: anywhere;
+}
+
+.field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.input {
+  width: 100%;
+  min-width: 0;
+  min-height: var(--target-min);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-s);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-text);
+  font-size: var(--step-0);
+}
+
+.hint {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.colorsLabel {
+  padding: 0;
+  margin-bottom: var(--space-1);
+}
+
+.swatch {
+  display: inline-flex;
+  width: var(--target-min);
+  height: var(--target-min);
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-s);
+  background: transparent;
+  cursor: pointer;
+}
+
+.swatch[aria-pressed='true'] {
+  border: 3px solid var(--color-selected);
+}
+
+.dot {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-pill);
+}
+
+.dot[data-colour='1'] {
+  background: var(--part-1);
+}
+
+.dot[data-colour='2'] {
+  background: var(--part-2);
+}
+
+.dot[data-colour='3'] {
+  background: var(--part-3);
+}
+
+.dot[data-colour='4'] {
+  background: var(--part-4);
+}
+
+.dot[data-colour='5'] {
+  background: var(--part-5);
+}
+
+.dot[data-colour='6'] {
+  background: var(--part-6);
+}
+
+.toggle {
+  display: flex;
+  min-height: var(--target-min);
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.toggle input {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  accent-color: var(--color-accent);
+}

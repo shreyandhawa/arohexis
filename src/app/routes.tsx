@@ -6,6 +6,7 @@ import { Home } from './screens/Home';
 import { ResponseScreen } from './screens/ResponseScreen';
 import { Settings } from './screens/Settings';
 import { SettingsData } from './screens/SettingsData';
+import { SettingsParts } from './screens/SettingsParts';
 import { Started } from './screens/Started';
 
 export function AppRoutes() {
@@ -17,6 +18,7 @@ export function AppRoutes() {
         <Route path="stuck/:attemptId" element={<ResponseScreen />} />
         <Route path="started/:attemptId" element={<Started />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="settings/parts" element={<SettingsParts />} />
         <Route path="settings/data" element={<SettingsData />} />
         <Route path="about" element={<About />} />
       </Route>
