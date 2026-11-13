@@ -80,3 +80,21 @@
 .swatch[data-colour='6'] {
   background: var(--part-6);
 }
+
+.plan {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-block: var(--space-1);
+  overflow-wrap: anywhere;
+}
+
+.startNow {
+  width: auto;
+  align-self: flex-start;
+  padding-inline: var(--space-4);
+}
+
+.next {
+  color: var(--color-text-muted);
+}

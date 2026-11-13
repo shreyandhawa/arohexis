@@ -4,9 +4,12 @@ import type { Plan } from './config';
 import type { AppEvent } from './events';
 import { makeStart, openAttempt } from './commands';
 import {
+  dayWord,
   daysPhrase,
   formatPlanTime,
   instantOf,
+  nextOccurrence,
+  openOccurrence,
   occurrencesBetween,
   occurrenceStatus,
   offsetMinutes,
@@ -182,5 +185,33 @@ describe('validatePlan', () => {
       'graceMin',
     ]);
     expect(validatePlan(plan({ days: [7 as 6] }))).toEqual(['days']);
+  });
+});
+
+describe('openOccurrence, nextOccurrence and dayWord', () => {
+  const tz = 'America/New_York';
+  // Monday 2026-11-09, 09:00 EST.
+  const nine = instantOf('2026-11-09', '09:00', tz);
+  const p = plan({ createdAt: nine - 7 * 24 * 60 * MIN });
+
+  it('opens 15 minutes early and closes after the grace time', () => {
+    expect(openOccurrence(p, [], nine - 16 * MIN, tz)).toBeUndefined();
+    expect(openOccurrence(p, [], nine - 14 * MIN, tz)?.date).toBe('2026-11-09');
+    expect(openOccurrence(p, [], nine + 30 * MIN, tz)?.date).toBe('2026-11-09');
+    expect(openOccurrence(p, [], nine + 31 * MIN, tz)).toBeUndefined();
+  });
+
+  it('finds the next occurrence that has not opened', () => {
+    expect(nextOccurrence(p, [], nine - 60 * MIN, tz)?.date).toBe('2026-11-09');
+    // Inside the open window, the next one is tomorrow's.
+    expect(nextOccurrence(p, [], nine, tz)?.date).toBe('2026-11-10');
+    expect(nextOccurrence(plan({ active: false }), [], nine, tz)).toBeUndefined();
+  });
+
+  it('words the day', () => {
+    const at = instantOf('2026-11-12', '09:00', tz);
+    expect(dayWord(nine, nine - 60 * MIN, tz)).toBe('today');
+    expect(dayWord(instantOf('2026-11-10', '09:00', tz), nine, tz)).toBe('tomorrow');
+    expect(dayWord(at, nine, tz)).toBe('Thursday');
   });
 });

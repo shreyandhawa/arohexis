@@ -153,7 +153,7 @@ test.describe('the part card', () => {
     await expect(card).toContainText('3 start lines');
     await expect(card.getByRole('heading', { name: 'What to focus on' })).toBeVisible();
     await expect(card).toContainText(
-      "When you're stuck here, name the feeling, then pick a first step your hands can do.",
+      'An if-then plan, with a set time, place and first step, may help these starts happen.',
     );
     await expect(card.getByRole('link', { name: 'About' })).toHaveAttribute(
       'href',

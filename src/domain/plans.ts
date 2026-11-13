@@ -87,6 +87,39 @@ export function occurrenceStatus(
   return 'slipped';
 }
 
+/** The earliest occurrence that is open at `now`, if any. */
+export function openOccurrence(
+  plan: Plan,
+  events: readonly AppEvent[],
+  now: number,
+  tz: string,
+): Occurrence | undefined {
+  return occurrencesBetween(plan, now - plan.graceMin * MIN, now + OPEN_LEAD_MS, tz).find(
+    (o) => occurrenceStatus(plan, o, events, now) === 'open',
+  );
+}
+
+/** The next occurrence that has not opened yet, within the coming week. */
+export function nextOccurrence(
+  plan: Plan,
+  events: readonly AppEvent[],
+  now: number,
+  tz: string,
+): Occurrence | undefined {
+  return occurrencesBetween(plan, now, now + 8 * DAY, tz).find(
+    (o) => occurrenceStatus(plan, o, events, now) === 'upcoming',
+  );
+}
+
+/** "today", "tomorrow" or a weekday name, for the day of `at` as seen from `now`. */
+export function dayWord(at: number, now: number, tz: string): string {
+  const date = localDate(at, tz);
+  const today = localDate(now, tz);
+  if (date === today) return 'today';
+  if (date === addDays(today, 1)) return 'tomorrow';
+  return DAY_NAMES[weekdayOf(date)] as string;
+}
+
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 /** "9:00" or "13:30". */

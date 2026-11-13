@@ -118,7 +118,8 @@ const PLAN_BASE = {
   place: 'Desk',
   firstAction: 'Open the file',
   time: '09:00',
-  days: [0, 1, 2, 3, 4, 5, 6],
+  // No days, so these plans never come due or lapse; the lines come from the seeded starts.
+  days: [],
   graceMin: 30,
   active: true,
   editCount: 0,
