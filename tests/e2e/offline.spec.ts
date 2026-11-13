@@ -54,3 +54,16 @@ test('data survives reload and a new page', async ({ page, context }, testInfo) 
   await second.goto('/');
   await expect(second.getByText('1 start this week')).toBeVisible();
 });
+
+test('offline, the chunk is precached and Brain space draws', async ({
+  page,
+  context,
+}, testInfo) => {
+  skipIphone(testInfo.project.name);
+  await page.goto('/');
+  await swReady(page);
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page.getByRole('region', { name: 'Brain space' })).toBeVisible();
+  await expect(page.locator('canvas')).toHaveAttribute('data-loop', /./, { timeout: 15_000 });
+});

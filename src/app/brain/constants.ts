@@ -24,3 +24,5 @@ export const MIN_STRIP_BAND = 48;
 export const SETTLE_MS = 480;
 /** Under Still the burst is a fade this long (spec §16.8). */
 export const STILL_FADE_MS = 120;
+/** The most the mean draw may take (ms) in the iPhone drag test. Provisional until CI measures it (ADR-029). */
+export const DRAW_MEAN_BUDGET_MS = 8;
