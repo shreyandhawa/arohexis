@@ -12,6 +12,10 @@ It is not a task manager. It has no task lists, due dates or completion tracking
 
 "Training" here means ordinary learning: the same cue, a new response, an immediate reward, repeated until it is automatic. Arohexis makes no claims about brain change and does not diagnose or treat any condition.
 
+## Brain space
+
+Brain space draws your starts as lines of light in the shape of a brain. It's a picture of your starts, not a scan, and the shape is the same for everyone. Arohexis makes no claim that your brain changes.
+
 ## Status
 
 Milestone 1 is built: Home, feeling, matched response, Start, reward, a two-minute timer, Undo, a task tag, offline use as an installable PWA, backup export, and Cloudflare deploy configuration. The first deploy has not happened yet, so there is no public URL.
