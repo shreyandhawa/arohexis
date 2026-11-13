@@ -32,7 +32,9 @@ export function Sheet({ open, onClose, labelledBy, opener, children }: Props) {
   // Tab wraps inside the sheet, so focus never leaves it for the browser's own controls.
   function onKeyDown(event: KeyboardEvent<HTMLDialogElement>) {
     if (event.key !== 'Tab') return;
-    const stops = event.currentTarget.querySelectorAll<HTMLElement>('a[href], button');
+    const stops = event.currentTarget.querySelectorAll<HTMLElement>(
+      'a[href], button:not(:disabled), input, select',
+    );
     const first = stops[0];
     const last = stops[stops.length - 1];
     if (!first || !last) return;

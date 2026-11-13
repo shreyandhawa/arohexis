@@ -1,5 +1,6 @@
 import 'fake-indexeddb/auto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { WeekDay } from '../domain/config';
 import { foldAttempts, isCountedStart } from '../domain/attempts';
 import { makeStart, openAttempt } from '../domain/commands';
 import { testDeps } from '../domain/testing/fixtures';
@@ -189,5 +190,73 @@ describe('storage', () => {
       expect(res.error).toBeInstanceOf(StorageUnavailableError);
       expect(res.error.cause).toBeInstanceOf(Error);
     }
+  });
+
+  it('adds, updates and pauses plans', async () => {
+    const db = await freshDb();
+    await seedDefaults(db);
+    const store = createConfigStore(db, () => 1000);
+    const part = (await db.parts.toArray())[0];
+    const plan = {
+      id: 'p1',
+      place: 'my desk',
+      firstAction: 'open the doc',
+      time: '09:00',
+      days: [1, 2] as WeekDay[],
+      graceMin: 30,
+      active: true,
+      createdAt: 5,
+      editCount: 0,
+      ...(part && { partId: part.id }),
+    };
+    await store.applyConfigPatch({ plans: { add: [plan] } });
+    await expect(store.applyConfigPatch({ plans: { add: [plan] } })).rejects.toThrow(/exists/);
+    await store.applyConfigPatch({
+      plans: { update: [{ ...plan, time: '10:00', createdAt: 99, editCount: 40 }] },
+    });
+    expect((await store.getConfig()).plans[0]).toMatchObject({
+      time: '10:00',
+      createdAt: 5,
+      editCount: 1,
+      partId: part?.id,
+    });
+    await store.applyConfigPatch({ plans: { pause: ['p1'] } });
+    expect((await store.getConfig()).plans[0]).toMatchObject({ active: false, editCount: 1 });
+    await store.applyConfigPatch({ plans: { resume: ['p1'] } });
+    expect((await store.getConfig()).plans[0]).toMatchObject({
+      active: true,
+      editCount: 1,
+      activeSince: 1000,
+    });
+  });
+
+  it('rejects invalid plans without writing anything', async () => {
+    const db = await freshDb();
+    await seedDefaults(db);
+    const store = createConfigStore(db);
+    const base = {
+      id: 'p1',
+      place: '',
+      firstAction: 'a',
+      time: '09:00',
+      days: [1] as WeekDay[],
+      graceMin: 30,
+      active: true,
+      createdAt: 0,
+      editCount: 0,
+    };
+    await expect(
+      store.applyConfigPatch({ plans: { add: [{ ...base, time: '9' }] } }),
+    ).rejects.toThrow(/Invalid plan/);
+    await expect(
+      store.applyConfigPatch({ plans: { add: [{ ...base, partId: 'nope' }] } }),
+    ).rejects.toThrow(/No such part/);
+    await expect(store.applyConfigPatch({ plans: { update: [base] } })).rejects.toThrow(
+      /No such plan/,
+    );
+    await expect(store.applyConfigPatch({ plans: { pause: ['zzz'] } })).rejects.toThrow(
+      /No such plan/,
+    );
+    expect(await db.plans.count()).toBe(0);
   });
 });

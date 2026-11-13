@@ -1,8 +1,19 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Link } from 'react-router';
+import { useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router';
 import { brain } from '../../copy/brain';
 import type { BrainLine } from '../../domain/brainSpace';
 import { focusFor, recentLapses } from '../../domain/focus';
+import {
+  dayWord,
+  formatPlanTime,
+  nextOccurrence,
+  openOccurrence,
+  planSentence,
+} from '../../domain/plans';
+import { startPlan } from '../actions/lapse';
+import { Button } from '../components/Button';
+import { lapse } from '../../copy/plans';
 import { useData } from '../data/DataProvider';
 import { useBrainSpace } from '../hooks/useBrainSpace';
 import { useConfig } from '../hooks/useConfig';
@@ -13,7 +24,11 @@ export const PART_CARD_TITLE_ID = 'part-card-title';
 type PlanLine = Extract<BrainLine, { kind: 'plan' }>;
 
 export function PartCard({ partId, onClose }: { partId: string; onClose(): void }) {
-  const { events, clock } = useData();
+  const deps = useData();
+  const { events, clock } = deps;
+  const navigate = useNavigate();
+  const busy = useRef(false);
+  const [failed, setFailed] = useState(false);
   const data = useBrainSpace();
   const config = useConfig();
   const all = useLiveQuery(() => events.list(), [events]);
@@ -29,8 +44,29 @@ export function PartCard({ partId, onClose }: { partId: string; onClose(): void 
     plans: config.plans,
     lines: data.space.lines,
     lapsedPlanIds: recentLapses(all, clock.now()),
-    plansAvailable: false,
+    plansAvailable: true,
   });
+
+  const now = clock.now();
+  const tz = clock.timeZone();
+  const plans = config.plans
+    .filter((p) => p.partId === partId)
+    .sort((a, b) => a.createdAt - b.createdAt);
+
+  async function startNow(planId: string, date: string) {
+    const plan = plans.find((p) => p.id === planId);
+    if (!plan || busy.current || !config) return;
+    busy.current = true;
+    setFailed(false);
+    try {
+      const id = await startPlan(deps, plan, config.parts, date);
+      void navigate(`/started/${id}`);
+    } catch (error) {
+      console.error(error);
+      busy.current = false;
+      setFailed(true);
+    }
+  }
 
   return (
     <div className={styles['card']}>
@@ -45,6 +81,42 @@ export function PartCard({ partId, onClose }: { partId: string; onClose(): void 
         ))}
         {light && light.startLines > 0 && <li>{brain.startLines(light.startLines)}</li>}
       </ul>
+      {plans.length > 0 && (
+        <section aria-labelledby="part-card-plans" className={styles['focus']}>
+          <h3 id="part-card-plans" className={styles['focusTitle']}>
+            {brain.card.plansTitle}
+          </h3>
+          <ul className={styles['lines']}>
+            {plans.map((p) => {
+              const open = p.active ? openOccurrence(p, all, now, tz) : undefined;
+              const next = p.active && !open ? nextOccurrence(p, all, now, tz) : undefined;
+              return (
+                <li key={p.id} className={styles['plan']}>
+                  <span>{planSentence(p)}</span>
+                  {open && (
+                    <Button
+                      variant="quiet"
+                      className={styles['startNow']}
+                      onClick={() => void startNow(p.id, open.date)}
+                    >
+                      {brain.card.startNow}
+                    </Button>
+                  )}
+                  {next && (
+                    <span className={styles['next']}>
+                      {brain.card.next(formatPlanTime(p.time), dayWord(next.at, now, tz))}
+                    </span>
+                  )}
+                  {!p.active && <span className={styles['next']}>{brain.card.paused}</span>}
+                </li>
+              );
+            })}
+          </ul>
+          <p aria-live="polite" className={styles['count']}>
+            {failed ? lapse.failed : ''}
+          </p>
+        </section>
+      )}
       <section aria-labelledby="part-card-focus" className={styles['focus']}>
         <h3 id="part-card-focus" className={styles['focusTitle']}>
           {brain.card.focusTitle}

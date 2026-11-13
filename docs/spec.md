@@ -304,7 +304,7 @@ interface ConfigStore {
 | `responses` | `id, feelingId, order` | `{ id, feelingId, body, basis, enabled, order, builtIn }` |
 | `parts` | `id, order` | `{ id, label, order, enabled, colour: 1–6, region: 1–6 }` (replaces `taskTypes`; see §16.3) |
 | `obstacles` | `id, order` | `{ id, label, order, enabled }` |
-| `plans` | `id, active` | `{ id, place, cueDetail?, firstAction, partId? (M3), time: 'HH:MM', days: number[], graceMin, active, createdAt, editCount }` |
+| `plans` | `id, active` | `{ id, place, cueDetail?, firstAction, partId? (M3), time: 'HH:MM', days: number[], graceMin, active, createdAt, editCount, activeSince? }` |
 | `kv` | `key` | `{ key, value }` |
 
 `kv` keys: `schemaVersion`, `onboarded`, `theme: 'system' | 'light' | 'dark'`, `weekStartsOn`, `checkinDay`, `checkinDismissedWeek`, `lastExportAt`, `persistRequested`, `brainStill: 'still' | 'moving'` (§16.8).

@@ -1,5 +1,6 @@
 import { validateParts } from '../domain/parts';
-import { DEFAULT_SETTINGS, type Config, type Settings } from '../domain/config';
+import { validatePlan } from '../domain/plans';
+import { DEFAULT_SETTINGS, type Config, type Plan, type Settings } from '../domain/config';
 import type { ConfigStore } from '../domain/ports';
 import type { ArohexisDB } from './db';
 
@@ -23,7 +24,17 @@ export async function readConfig(db: ArohexisDB): Promise<Config> {
   return { feelings, responses, parts, obstacles, plans, settings };
 }
 
-export function createConfigStore(db: ArohexisDB): ConfigStore {
+/** A resume, or a change of days or time, starts a new stretch of counted occurrences. */
+function changesSchedule(stored: Plan, next: Plan): boolean {
+  return (
+    (next.active && !stored.active) ||
+    next.time !== stored.time ||
+    next.days.length !== stored.days.length ||
+    next.days.some((d, i) => d !== stored.days[i])
+  );
+}
+
+export function createConfigStore(db: ArohexisDB, now: () => number = Date.now): ConfigStore {
   return {
     getConfig: () => readConfig(db),
     async applyConfigPatch(patch) {
@@ -31,8 +42,10 @@ export function createConfigStore(db: ArohexisDB): ConfigStore {
         .filter(([, value]) => value !== undefined)
         .map(([key, value]) => ({ key, value }));
       const parts = patch.parts ?? [];
-      if (rows.length === 0 && parts.length === 0) return;
-      await db.transaction('rw', [db.kv, db.parts], async () => {
+      const { add = [], update = [], pause = [], resume = [] } = patch.plans ?? {};
+      const touchesPlans = add.length + update.length + pause.length + resume.length > 0;
+      if (rows.length === 0 && parts.length === 0 && !touchesPlans) return;
+      await db.transaction('rw', [db.kv, db.parts, db.plans], async () => {
         if (parts.length > 0) {
           for (const p of parts) {
             const stored = await db.parts.get(p.id);
@@ -42,6 +55,43 @@ export function createConfigStore(db: ArohexisDB): ConfigStore {
           await db.parts.bulkPut([...parts]);
           const problems = validateParts(await db.parts.toArray());
           if (problems.length > 0) throw new Error(`Invalid parts: ${problems.join(', ')}`);
+        }
+        if (touchesPlans) {
+          const next: Plan[] = [];
+          for (const plan of add) {
+            if (await db.plans.get(plan.id)) throw new Error(`Plan already exists: ${plan.id}`);
+            next.push({ ...plan, activeSince: now() });
+          }
+          for (const plan of update) {
+            const stored = await db.plans.get(plan.id);
+            if (!stored) throw new Error(`No such plan: ${plan.id}`);
+            next.push({
+              ...plan,
+              createdAt: stored.createdAt,
+              editCount: stored.editCount + 1,
+              activeSince: changesSchedule(stored, plan)
+                ? now()
+                : (stored.activeSince ?? stored.createdAt),
+            });
+          }
+          for (const id of pause) {
+            const stored = await db.plans.get(id);
+            if (!stored) throw new Error(`No such plan: ${id}`);
+            next.push({ ...stored, active: false });
+          }
+          for (const id of resume) {
+            const stored = await db.plans.get(id);
+            if (!stored) throw new Error(`No such plan: ${id}`);
+            next.push({ ...stored, active: true, activeSince: now() });
+          }
+          for (const plan of next) {
+            const problems = validatePlan(plan);
+            if (problems.length > 0)
+              throw new Error(`Invalid plan ${plan.id}: ${problems.join(', ')}`);
+            if (plan.partId !== undefined && !(await db.parts.get(plan.partId)))
+              throw new Error(`No such part: ${plan.partId}`);
+          }
+          await db.plans.bulkPut(next);
         }
         if (rows.length > 0) await db.kv.bulkPut(rows);
       });

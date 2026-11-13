@@ -1,5 +1,6 @@
 export const settings = {
   title: 'Settings',
+  plans: 'Plans',
   parts: 'Parts',
   data: 'Data',
   about: 'About',

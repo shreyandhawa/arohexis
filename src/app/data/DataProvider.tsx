@@ -45,7 +45,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         deps: {
           db: result.db,
           events: createEventStore(result.db),
-          config: createConfigStore(result.db),
+          config: createConfigStore(result.db, browserClock.now),
           clock: browserClock,
           ids: browserIds,
           persist,

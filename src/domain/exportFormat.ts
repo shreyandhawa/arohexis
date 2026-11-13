@@ -146,6 +146,7 @@ const dataEntries = {
       active: v.boolean(),
       createdAt: v.number(),
       editCount: v.number(),
+      activeSince: v.exactOptional(v.number()),
       partId: v.exactOptional(v.string()),
     }),
   ),

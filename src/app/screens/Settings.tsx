@@ -12,6 +12,11 @@ export function Settings() {
       <h1 className={styles['title']}>{settings.title}</h1>
       <ul className={styles['list']}>
         <li className={styles['listItem']}>
+          <Link to="/plans" className={styles['listLink']}>
+            {settings.plans}
+          </Link>
+        </li>
+        <li className={styles['listItem']}>
           <Link to="/settings/parts" className={styles['listLink']}>
             {settings.parts}
           </Link>

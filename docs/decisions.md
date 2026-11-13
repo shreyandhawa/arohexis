@@ -712,3 +712,5 @@ Statuses:
   - the projection's property tests can assert that appending events never moves settled light;
   - `Attempt` grows two fields (`tags`, `undoneAt`), and §16.4's `BrainLine` plan kind grows two (`everStarted`, `hidden`);
   - the owner approved these with the M2 plan on 2026-11-12.
+
+- R44: plans carry activeSince; lapses count only occurrences after the last resume or schedule change.

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { actionFailed, feeling as copy } from '../../copy/stuck';
 import { beginStuck, chooseFeeling, notNow } from '../actions/stuck';
 import { Button } from '../components/Button';
 import { useData } from '../data/DataProvider';
+import { readPlanLink } from '../planLink';
 import { isTyping } from '../typing';
 import { useConfig } from '../hooks/useConfig';
 import styles from './Feeling.module.css';
@@ -12,6 +13,7 @@ export function Feeling() {
   const deps = useData();
   const navigate = useNavigate();
   const config = useConfig();
+  const link = useRef(readPlanLink(useLocation().state));
   const opening = useRef<Promise<string | undefined> | null>(null);
   const picking = useRef(false);
   const [attemptId, setAttemptId] = useState<string>();
@@ -20,7 +22,7 @@ export function Feeling() {
   // One attempt per mount, however often this re-renders.
   useEffect(() => {
     if (opening.current) return;
-    const opened = beginStuck(deps).catch((error: unknown) => {
+    const opened = beginStuck(deps, link.current).catch((error: unknown) => {
       console.error(error);
       return undefined;
     });
