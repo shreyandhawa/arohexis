@@ -1377,11 +1377,11 @@ export function Plate(props: { selected: string | null; onSelect(partId: string 
 #### 7C: The owner's Home review (gate)
 
 - [x] **Step 1:** Merge 7A and 7B into the branch, run the gate, and push. Wait for the PR's preview URL.
-- [ ] **Step 2:** `qa-webkit` takes screenshots into the scratchpad: iPhone WebKit at 375×667 and desktop, in light and dark chrome. It seeds three fixtures from `tests/e2e/fixtures/brain.ts` with `seedEvents`, `seedParts` and `seedPlans`:
+- [x] **Step 2:** `qa-webkit` takes screenshots into the scratchpad: iPhone WebKit at 375×667 and desktop, in light and dark chrome. It seeds three fixtures from `tests/e2e/fixtures/brain.ts` with `seedEvents`, `seedParts` and `seedPlans`:
   - a new user;
   - an M1-like history;
   - the full fixture: every strength, a waiting line, six parts, zoomed past `EXPLODE_FROM_ZOOM`, and one part selected.
-- [ ] **Step 3:** `design-critic` judges them against `docs/reference/brain-space/`, ADR-018, ADR-021 and spec §16.6–16.7, and returns ranked findings. The lead accepts or rejects each one. The builders fix the accepted ones, and a reviewer checks the fixes.
+- [x] **Step 3:** `design-critic` judges them against `docs/reference/brain-space/`, ADR-018, ADR-021 and spec §16.6–16.7, and returns ranked findings. The lead accepts or rejects each one. The builders fix the accepted ones, and a reviewer checks the fixes.
 - [ ] **Step 4: Owner step.** The owner reviews Home on the preview URL on the iPhone, in light and dark, plus the full-fixture screenshots.
   - The preview is its own origin, so it starts empty. A few starts there show real light.
   - Ask about: the plate's weight in the light theme (ADR-026), the parts row over the plate (ADR-030), and how resting looks (ADR-024).
@@ -1469,12 +1469,12 @@ export function setPartEnabled(d: AppDeps, id: string, enabled: boolean): Promis
 - **Preferences** is a section on `/settings` (ADR-035), headed `Preferences`, with a **Still** switch whose hint is `'Stops all motion in Brain space.'`.
 - **About** gains the §16.9 paragraph verbatim, under a heading with `id="brain-space"`. The README gains the same paragraph under "Brain space".
 
-- [ ] **Step 1:** Write the failing unit tests in `parts.test.ts`, with fake-indexeddb:
+- [x] **Step 1:** Write the failing unit tests in `parts.test.ts`, with fake-indexeddb:
   - adding a sixth part gives region 6;
   - a seventh returns `'limit'` and writes nothing;
   - recoloring to a colour another part holds swaps the two;
   - disabling a part keeps its starts in `projectBrainSpace`.
-- [ ] **Step 2:** Write the failing E2E tests in `parts.spec.ts`:
+- [x] **Step 2:** Write the failing E2E tests in `parts.spec.ts`:
   - `a new part appears in What is it? and on Home`;
   - `renaming changes the chip and card, and the light count stays`;
   - `a disabled part leaves What is it?, and its chip and light stay on Home` (Review Focus #14);
@@ -1482,10 +1482,10 @@ export function setPartEnabled(d: AppDeps, id: string, enabled: boolean): Promis
   - `Still in Preferences matches the plate`;
   - `About shows the Brain space paragraph`;
   - `Settings and Parts are accessible`, in light and dark.
-- [ ] **Step 3:** Run `npx vitest run src/app/actions && npx playwright test tests/e2e/parts.spec.ts`. Expected: FAIL.
-- [ ] **Step 4:** Implement. Lazy-load `/settings/parts` with `React.lazy` if the initial bundle passes 145 kB.
-- [ ] **Step 5:** Run it again, then the gate. Expected: PASS.
-- [ ] **Step 6:** Commit: `feat(app): Settings → Parts, Still in Preferences, and the About paragraph`.
+- [x] **Step 3:** Run `npx vitest run src/app/actions && npx playwright test tests/e2e/parts.spec.ts`. Expected: FAIL.
+- [x] **Step 4:** Implement. Lazy-load `/settings/parts` with `React.lazy` if the initial bundle passes 145 kB.
+- [x] **Step 5:** Run it again, then the gate. Expected: PASS.
+- [x] **Step 6:** Commit: `feat(app): Settings → Parts, Still in Preferences, and the About paragraph`.
 
 ### Task 10: E2E and guards
 
