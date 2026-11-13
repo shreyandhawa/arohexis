@@ -24,3 +24,8 @@ export const MIN_STRIP_BAND = 48;
 export const SETTLE_MS = 480;
 /** Under Still the burst is a fade this long (spec §16.8). */
 export const STILL_FADE_MS = 120;
+/** The most the mean draw may take (ms) in the iPhone drag test. Provisional until CI measures it (ADR-029). */
+// R40: twice the Apple WebKit mean (0.72–0.8 ms locally), rounded up to 0.5 ms.
+export const DRAW_MEAN_BUDGET_MS = 2;
+// R40: CI's Linux WebKit draws in software (88–103 ms mean on the first run), so CI has its own guard.
+export const CI_DRAW_MEAN_BUDGET_MS = 250;

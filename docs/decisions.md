@@ -569,6 +569,7 @@ Statuses:
     - CI's iphone timings therefore say nothing about the device. The iphone E2E tests may not depend on a static redraw finishing within a frame budget. The frame-time guard's threshold (Task 10) comes from Apple WebKit or is labelled CI-only.
     - The iPhone CI failure that showed this was a redraw on every renderer update. Now the cached layer is redrawn only when the drawn scene changes, as §16.6 says.
 
+  - **Frame-time guard (2026-11-13, M2 Task 10, R40):** `DRAW_MEAN_BUDGET_MS = 2`, which is twice the Apple WebKit drag mean (0.66–0.8 ms) rounded up to 0.5 ms. CI has its own guard, `CI_DRAW_MEAN_BUDGET_MS = 250`, because its first-run mean was 88–103 ms.
 
 ## ADR-030: Brain space sits on Home above the card, with a strip on Started
 
