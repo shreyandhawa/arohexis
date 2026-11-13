@@ -28,5 +28,6 @@ export const started = {
 /** Lines Home shows once after the flow sends someone back. */
 export const homeNotices = {
   'start-removed': 'Start removed.',
+  'start-gone': 'That start was removed.',
   'not-now': "That's fine. The button's here when you need it.",
 } as const;

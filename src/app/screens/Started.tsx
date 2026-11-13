@@ -39,7 +39,7 @@ export function Started() {
 
   if (attempt === undefined) return null;
   if (!attempt || !attempt.start || !isCountedStart(attempt)) {
-    return leavingNow ? null : <Navigate to="/" replace />;
+    return leavingNow ? null : <Navigate to="/" replace state={{ notice: 'start-gone' }} />;
   }
 
   const startAt = attempt.start.at;
