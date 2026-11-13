@@ -3,6 +3,7 @@ name: renderer
 description: Builds the lazy Brain space renderer and keeps it inside its build budget.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
+effort: medium
 ---
 
 # renderer

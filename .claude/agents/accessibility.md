@@ -3,6 +3,7 @@ name: accessibility
 description: Checks axe, keyboard use, the text equivalent, WCAG 2.2.2, 2.5.7 and contrast in E2E tests.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
+effort: low
 ---
 
 # accessibility

@@ -3,6 +3,7 @@ name: ui
 description: Builds screens, components, copy, tokens and user docs outside `src/app/brain/`.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
+effort: medium
 ---
 
 # ui

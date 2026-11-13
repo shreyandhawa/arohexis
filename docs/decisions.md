@@ -646,6 +646,13 @@ Statuses:
   - CI workflow changes stay with the lead;
   - approval gates are never delegated;
   - model choices keep usage within the owner's Max plan.
+  - **Amended on 2026-11-13** (the owner asked for token-efficient agents):
+    - domain, ui and renderer run on sonnet at medium effort;
+    - qa-webkit and accessibility on sonnet at low effort;
+    - researcher on haiku at low effort;
+    - code-reviewer on sonnet at medium effort, with opus passed only for each milestone's final review;
+    - design-critic stays on opus at medium effort, and runs only at owner gates.
+    The table above shows the original models.
 
 ## ADR-033: Every Brain space action works without the canvas
 

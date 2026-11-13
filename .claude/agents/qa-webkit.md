@@ -3,6 +3,7 @@ name: qa-webkit
 description: Runs Playwright on the WebKit iPhone preset, including frame-time guards.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
+effort: low
 ---
 
 # qa-webkit

@@ -3,6 +3,7 @@ name: design-critic
 description: Judges built screens against ADR-018, ADR-021 and the reference stills. Read-only.
 tools: Read, Grep, Glob
 model: opus
+effort: medium
 ---
 
 # design-critic

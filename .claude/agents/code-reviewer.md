@@ -2,7 +2,8 @@
 name: code-reviewer
 description: Reviews a diff it did not write against the spec and the plan. Read-only.
 tools: Read, Grep, Glob, Bash
-model: opus
+model: sonnet
+effort: medium
 ---
 
 # code-reviewer

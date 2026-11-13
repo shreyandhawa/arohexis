@@ -3,6 +3,7 @@ name: domain
 description: Builds the pure domain, geometry and storage, test first, plus the purity tooling.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
+effort: medium
 ---
 
 # domain

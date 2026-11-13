@@ -2,7 +2,8 @@
 name: researcher
 description: Finds sources, versions and licences for the lead. Read-only; use for web and docs research.
 tools: Read, Grep, Glob, WebSearch, WebFetch
-model: sonnet
+model: haiku
+effort: low
 ---
 
 # researcher
