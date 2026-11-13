@@ -1,4 +1,5 @@
 import type { Strength } from '../domain/brainSpace';
+import type { FocusRule } from '../domain/focus';
 
 const plural = (n: number, one: string, many: string): string => `${n} ${n === 1 ? one : many}`;
 
@@ -34,6 +35,23 @@ export const brain = {
     return text;
   },
   partsLabel: 'Parts',
+  card: {
+    close: 'Close',
+    focusTitle: 'What to focus on',
+    aboutLink: 'About',
+    /** The five lines of spec §16.9, verbatim. */
+    focus: {
+      lapse:
+        "Go easy on the one that didn't happen. In one study, forgiving yourself was associated with less procrastination later.",
+      waiting: "Make the plan's first step small enough to do in two minutes.",
+      'stable-cue':
+        'Keep the same time and place. A stable cue may help. In one review, habits took a median of about two months to form, and the range was wide.',
+      'add-plan':
+        'An if-then plan, with a set time, place and first step, may help these starts happen.',
+      'name-feeling':
+        "When you're stuck here, name the feeling, then pick a first step your hands can do.",
+    } satisfies Record<FocusRule, string>,
+  },
   controls: {
     still: 'Still',
     zoomIn: 'Zoom in',

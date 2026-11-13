@@ -12,6 +12,8 @@ import { useAttempt } from '../hooks/useAttempt';
 import { useConfig } from '../hooks/useConfig';
 import { useNow } from '../hooks/useNow';
 import { useStartsThisWeek } from '../hooks/useStartsThisWeek';
+import { PlateBoundary } from '../plate/PlateBoundary';
+import { Strip } from '../plate/Strip';
 import styles from './Started.module.css';
 
 const TICK_MS = 250;
@@ -105,6 +107,10 @@ export function Started() {
           ))}
         </div>
       </div>
+
+      <PlateBoundary>
+        <Strip attempt={attempt} />
+      </PlateBoundary>
 
       <div className={styles['actions']}>
         {done && (

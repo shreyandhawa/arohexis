@@ -21,6 +21,7 @@ export function PartsRow({
         <Chip
           key={part.id}
           pressed={selected === part.id}
+          data-part-id={part.id}
           className={styles['chip']}
           onClick={() => onSelect(part.id)}
         >

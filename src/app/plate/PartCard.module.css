@@ -1,0 +1,82 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.heading {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin: 0;
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: var(--step-2);
+  font-weight: 400;
+}
+
+.count {
+  margin: 0;
+}
+
+.lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.focus {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.focusTitle {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: var(--step-0);
+  font-weight: 600;
+}
+
+.link {
+  display: inline-flex;
+  min-height: var(--target-min);
+  align-items: center;
+  color: var(--color-text);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.swatch {
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+}
+
+.swatch[data-colour='1'] {
+  background: var(--part-1);
+}
+
+.swatch[data-colour='2'] {
+  background: var(--part-2);
+}
+
+.swatch[data-colour='3'] {
+  background: var(--part-3);
+}
+
+.swatch[data-colour='4'] {
+  background: var(--part-4);
+}
+
+.swatch[data-colour='5'] {
+  background: var(--part-5);
+}
+
+.swatch[data-colour='6'] {
+  background: var(--part-6);
+}
