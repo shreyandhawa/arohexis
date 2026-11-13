@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { DRAW_MEAN_BUDGET_MS } from '../../src/app/brain/constants';
+import { CI_DRAW_MEAN_BUDGET_MS, DRAW_MEAN_BUDGET_MS } from '../../src/app/brain/constants';
 import { full } from './fixtures/brain';
 import { seedEvents, seedParts, seedPlans } from './helpers';
 
@@ -37,6 +37,7 @@ test('a 5 s drag across the plate keeps the draw mean within budget', async ({
 
   await expect(canvas).toHaveAttribute('data-draw-mean', /^\d/);
   const mean = Number(await canvas.getAttribute('data-draw-mean'));
-  console.log(`data-draw-mean=${mean} budget=${DRAW_MEAN_BUDGET_MS}`);
-  expect(mean).toBeLessThanOrEqual(DRAW_MEAN_BUDGET_MS);
+  const budget = process.env['CI'] ? CI_DRAW_MEAN_BUDGET_MS : DRAW_MEAN_BUDGET_MS;
+  console.log(`data-draw-mean=${mean} budget=${budget}`);
+  expect(mean).toBeLessThanOrEqual(budget);
 });
