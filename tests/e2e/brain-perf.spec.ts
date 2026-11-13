@@ -6,6 +6,7 @@ import { seedEvents, seedParts, seedPlans } from './helpers';
 test('a 5 s drag across the plate keeps the draw mean within budget', async ({
   page,
 }, testInfo) => {
+  test.setTimeout(90_000);
   test.skip(testInfo.project.name !== 'iphone', 'frame time is measured on WebKit');
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toBeAttached();
@@ -23,10 +24,11 @@ test('a 5 s drag across the plate keeps the draw mean within budget', async ({
   const span = box.width * 0.7;
   await page.mouse.move(left, y);
   await page.mouse.down();
-  const steps = Math.round(5000 / 16);
-  for (let i = 0; i <= steps; i++) {
+  // Drive by wall time: a slow runner lands fewer moves, but the drag still lasts 5 s.
+  const start = Date.now();
+  for (let elapsed = 0; elapsed < 5000; elapsed = Date.now() - start) {
     // Sweep right and back, so the drag never runs off the plate.
-    const t = (i / steps) * 2;
+    const t = (elapsed / 5000) * 2;
     const x = left + span * (t <= 1 ? t : 2 - t);
     await page.mouse.move(x, y);
     await page.waitForTimeout(16);

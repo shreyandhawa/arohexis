@@ -68,6 +68,8 @@ test('a reload mid-reveal resumes at the right progress', async ({ page }) => {
   await begin(page);
   await chip(page, 'Work').click();
   await page.clock.runFor(60_000);
+  // Hold the clock so a slow reload cannot advance the reveal.
+  await page.clock.setFixedTime((await page.evaluate(() => Date.now())) + 1_000);
   await page.reload();
   await expect(canvas(page)).toHaveAttribute('data-reveal', /./);
   expect(await reveal(page)).toBeGreaterThan(0.47);
