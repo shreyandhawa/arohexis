@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
-import { expectAccessible, setTheme } from './helpers';
+import { startEvents } from './fixtures/brain';
+import { expectAccessible, seedEvents, setTheme } from './helpers';
 
 /** The app has created its database once it has rendered Home's heading. */
 async function home(page: Page): Promise<void> {
@@ -85,3 +86,20 @@ for (const scheme of ['light', 'dark'] as const) {
     await expectAccessible(page);
   });
 }
+
+test('changing the check-in day changes when the check-in card shows', async ({ page }) => {
+  // A Sunday, the default check-in day.
+  await page.clock.install({ time: Date.parse('2026-11-15T10:00:00Z') });
+  await home(page);
+  await seedEvents(page, startEvents({ now: Date.now(), tagged: [], untagged: 3, undone: 0 }));
+  const card = page.getByRole('region', { name: 'Weekly check-in' });
+  await expect(card).toBeVisible();
+  await card.getByRole('link', { name: 'Check in' }).click();
+  await page.getByRole('button', { name: 'Skip this week' }).click();
+  await expect(page.getByRole('button', { name: "I'm stuck" })).toBeVisible();
+  await expect(card).toHaveCount(0);
+  await page.getByRole('link', { name: 'Settings' }).click();
+  await page.getByLabel('Weekly check-in day').selectOption('3');
+  await page.getByRole('link', { name: 'Home' }).click();
+  await expect(card).toBeVisible();
+});
