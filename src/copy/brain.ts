@@ -21,7 +21,18 @@ export const brain = {
   starts: (n: number): string => plural(n, 'start', 'starts'),
   onCue: (n: number): string => `${plural(n, 'start', 'starts')} on cue`,
   startLines: (n: number): string => plural(n, 'start line', 'start lines'),
-  planLines: 'Plan lines',
+  /** One part's sentence in the text equivalent. `items` are plan-line items; `startLines` is null when there is no clause. */
+  partLine: (
+    label: string,
+    starts: number,
+    items: readonly string[],
+    startLines: number | null,
+  ): string => {
+    let text = `${label}: ${plural(starts, 'start', 'starts')}.`;
+    if (items.length > 0) text += ` Plan lines: ${items.join('; ')}.`;
+    if (startLines !== null) text += ` ${plural(startLines, 'start line', 'start lines')}.`;
+    return text;
+  },
   partsLabel: 'Parts',
   controls: {
     still: 'Still',

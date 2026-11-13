@@ -46,7 +46,7 @@ test.describe('layout at 375x667', () => {
       fill('[data-slot="ribbon"]', 40);
     });
     const plate = await box(region(page));
-    console.log(`plate height at 375x667: ${plate.height}`);
+    test.info().annotations.push({ type: 'plate height', description: String(plate.height) });
     expect(plate.height).toBeGreaterThanOrEqual(200);
     expect(
       await page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight),
@@ -74,6 +74,20 @@ test.describe('layout at 375x667', () => {
     await page.getByRole('button', { name: 'Start', exact: true }).click();
     await expect(page.getByText('Started.', { exact: true })).toBeVisible();
     expect(await fits()).toBe(true);
+  });
+
+  test('the Not now line takes at most two lines on the plate', async ({ page }) => {
+    await home(page);
+    await page.getByRole('button', { name: stuck }).click();
+    await page.getByRole('button', { name: 'Anxious' }).click();
+    await page.getByRole('button', { name: 'Not now' }).click();
+    const notice = region(page).getByText(/That's fine/);
+    await expect(notice).toBeVisible();
+    const { height, lineHeight } = await notice.evaluate((el) => ({
+      height: el.getBoundingClientRect().height,
+      lineHeight: parseFloat(getComputedStyle(el).lineHeight),
+    }));
+    expect(height).toBeLessThanOrEqual(2 * lineHeight + 1);
   });
 
   test('every plate control is at least 48 px square', async ({ page }) => {
@@ -107,7 +121,13 @@ test('a new user sees the empty line', async ({ page }) => {
 test('the canvas is hidden from assistive technology and never focusable', async ({ page }) => {
   await home(page);
   await expect(canvas(page)).toHaveAttribute('aria-hidden', 'true');
-  expect(await canvas(page).evaluate((c) => (c as HTMLCanvasElement).tabIndex)).toBe(-1);
+  expect(await canvas(page).evaluate((c) => c.hasAttribute('tabindex'))).toBe(false);
+  // A click on the canvas never puts focus on it.
+  await region(page).getByRole('button', { name: 'Zoom in' }).focus();
+  const focused = () => page.evaluate(() => document.activeElement?.getAttribute('aria-label'));
+  expect(await focused()).toBe('Zoom in');
+  await canvas(page).click({ position: { x: 100, y: 60 } });
+  expect(await page.evaluate(() => document.activeElement?.tagName)).not.toBe('CANVAS');
 });
 
 test('Still toggles, survives a reload and stops the loop', async ({ page }) => {
@@ -192,6 +212,13 @@ test('while a plate control has focus, arrows turn and plus and minus zoom', asy
   await page.locator('body').click({ position: { x: 1, y: 1 } });
   const before = await read('data-yaw');
   await page.keyboard.press('ArrowRight');
+  // Two frames, so a renderer that applies a turn on the next frame would have shown it.
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      ),
+  );
   expect(await read('data-yaw')).toBe(before);
 });
 

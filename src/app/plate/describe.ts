@@ -40,15 +40,12 @@ export function shownParts(space: BrainSpace, parts: readonly Part[]): Part[] {
 
 function describe(space: BrainSpace, partId: string | null, label: string): PartText {
   const light = lightOf(space, partId);
-  let text = `${label}: ${brain.starts(light.starts)}.`;
-  const plans = planLinesOf(space, partId);
-  if (plans.length > 0) {
-    const items = plans.map((l) => `${brain.strength[l.strength]}, ${brain.onCue(l.onCueStarts)}`);
-    text += ` ${brain.planLines}: ${items.join('; ')}.`;
-  }
+  const items = planLinesOf(space, partId).map(
+    (l) => `${brain.strength[l.strength]}, ${brain.onCue(l.onCueStarts)}`,
+  );
   // Core sparks are not lines (spec §16.2), so "No part" has no start-lines clause.
-  if (partId !== null && light.startLines > 0) text += ` ${brain.startLines(light.startLines)}.`;
-  return { partId, label, text };
+  const startLines = partId !== null && light.startLines > 0 ? light.startLines : null;
+  return { partId, label, text: brain.partLine(label, light.starts, items, startLines) };
 }
 
 /** The text equivalent's entries: each shown part, then No part (spec §16.10). */

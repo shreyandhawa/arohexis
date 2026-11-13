@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { backToHome } from '../../copy/common';
@@ -24,8 +24,11 @@ export function Shell() {
     needRefresh: [needRefresh],
     updateServiceWorker,
   } = useRegisterSW();
-  const reload = () => void updateServiceWorker(true);
-  const context: ShellContext = { updateReady: needRefresh, reload };
+  const reload = useCallback(() => void updateServiceWorker(true), [updateServiceWorker]);
+  const context = useMemo<ShellContext>(
+    () => ({ updateReady: needRefresh, reload }),
+    [needRefresh, reload],
+  );
 
   useEffect(() => {
     if (flow) return;

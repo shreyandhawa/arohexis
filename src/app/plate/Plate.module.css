@@ -47,7 +47,7 @@
 
 .still {
   position: absolute;
-  top: var(--space-1);
+  top: var(--space-2);
   right: var(--space-2);
 }
 
@@ -99,12 +99,11 @@
 /* Opacity-only fade; --motion-calm is 0ms under reduced motion. */
 .notice {
   position: absolute;
-  right: 0;
-  bottom: var(--space-3);
-  left: 0;
-  width: max-content;
-  max-width: calc(100% - 2 * (2 * var(--target-min) + var(--space-6)));
-  margin: 0 auto;
+  /* Spans the plate between its gutters, in a row above the bottom control pairs. */
+  right: var(--space-3);
+  bottom: calc(var(--space-1) + var(--target-min) + var(--space-2));
+  left: var(--space-3);
+  margin: 0;
   color: var(--color-text);
   font-size: var(--step--1);
   font-weight: 600;
@@ -126,7 +125,8 @@
   display: flex;
   flex: none;
   gap: var(--space-2);
-  padding: var(--space-1) var(--space-2) var(--space-2);
+  /* Room for the 5 px focus ring inside the scroller. */
+  padding: var(--space-2);
   overflow-x: auto;
   background: var(--plate-bg);
   scrollbar-width: none;

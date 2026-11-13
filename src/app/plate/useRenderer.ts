@@ -1,22 +1,17 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
-import type { BrainRenderer, RenderState } from '../brain/brain';
-
-type Options = {
-  variant: 'plate' | 'strip';
-  now: () => number;
-  onPartTap: (partId: string | null) => void;
-};
+import type { RenderState } from '../brain/brain';
+import { loadRenderer, type GuardedRenderer, type RendererOptions } from './guarded';
 
 /**
  * Loads the renderer after the first paint, so it never delays the stuck button. If the chunk or
- * `createRenderer` fails, the plate keeps its text and nothing retries (spec §16.10).
+ * the renderer fails, now or later, the plate keeps its text and nothing retries (spec §16.10).
  */
 export function useRenderer(
   canvas: RefObject<HTMLCanvasElement | null>,
-  options: Options,
+  options: RendererOptions,
   state: RenderState | undefined,
 ): { turn(step: -1 | 1): void; zoom(step: -1 | 1): void } {
-  const renderer = useRef<BrainRenderer | null>(null);
+  const renderer = useRef<GuardedRenderer | null>(null);
   const latest = useRef(options);
   const [ready, setReady] = useState(false);
   const { variant } = options;
@@ -35,18 +30,20 @@ export function useRenderer(
     });
 
     async function load() {
-      try {
-        const { createRenderer } = await import('../brain/brain');
-        const element = canvas.current;
-        if (cancelled || !element) return;
-        renderer.current = createRenderer(element, {
-          variant,
-          now: () => latest.current.now(),
-          onPartTap: (partId) => latest.current.onPartTap(partId),
-        });
+      const element = canvas.current;
+      if (!element) return;
+      const loaded = await loadRenderer(element, {
+        variant,
+        now: () => latest.current.now(),
+        onPartTap: (partId) => latest.current.onPartTap(partId),
+      });
+      if (cancelled) {
+        loaded?.destroy();
+        return;
+      }
+      if (loaded) {
+        renderer.current = loaded;
         setReady(true);
-      } catch {
-        // The text stays and nothing retries.
       }
     }
 

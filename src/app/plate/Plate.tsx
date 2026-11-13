@@ -1,4 +1,4 @@
-import { useRef, type KeyboardEvent } from 'react';
+import { useMemo, useRef, type KeyboardEvent } from 'react';
 import { brain } from '../../copy/brain';
 import { summaryLines } from '../../domain/brainSpace';
 import { Chip } from '../components/Chip';
@@ -24,10 +24,14 @@ export function Plate({ selected, onSelect, notice }: Props) {
   const data = useBrainSpace();
   const { still, toggle } = useStill();
   const canvas = useRef<HTMLCanvasElement>(null);
+  const state = useMemo(
+    () => data && { space: data.space, parts: data.parts, selected, still },
+    [data, selected, still],
+  );
   const renderer = useRenderer(
     canvas,
     { variant: 'plate', now: () => clock.now(), onPartTap: onSelect },
-    data && { space: data.space, parts: data.parts, selected, still },
+    state,
   );
 
   // While a plate control has focus: arrows turn and plus and minus zoom (spec §16.10).
@@ -58,7 +62,7 @@ export function Plate({ selected, onSelect, notice }: Props) {
       onKeyDown={onKeyDown}
     >
       <div className={styles['stage']}>
-        <canvas ref={canvas} aria-hidden="true" tabIndex={-1} className={styles['canvas']} />
+        <canvas ref={canvas} aria-hidden="true" className={styles['canvas']} />
         {data && (
           <>
             <p className={styles['summary']}>

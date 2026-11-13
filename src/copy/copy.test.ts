@@ -81,6 +81,16 @@ describe('copy rules', () => {
     expect(brain.onCue(18)).toBe('18 starts on cue');
     expect(brain.startLines(1)).toBe('1 start line');
     expect(brain.startLines(9)).toBe('9 start lines');
+    expect(brain.partLine('Work', 3, [], 3)).toBe('Work: 3 starts. 3 start lines.');
+    expect(brain.partLine('No part', 1, [], null)).toBe('No part: 1 start.');
+    expect(
+      brain.partLine('Portfolio', 30, ['Steady, 18 starts on cue', 'New, 3 starts on cue'], 9),
+    ).toBe(
+      'Portfolio: 30 starts. Plan lines: Steady, 18 starts on cue; New, 3 starts on cue. 9 start lines.',
+    );
+    expect(brain.partLine('Home', 1, ['New, 1 start on cue'], 1)).toBe(
+      'Home: 1 start. Plan lines: New, 1 start on cue. 1 start line.',
+    );
     expect(brain.strength).toEqual({
       waiting: 'Waiting',
       1: 'New',
@@ -97,6 +107,7 @@ describe('copy rules', () => {
       brain.resting,
       ...Object.values(brain.controls),
       ...Object.values(brain.strength),
+      brain.partLine('Work', 2, ['Waiting, 0 starts on cue'], 1),
       ...samples.flatMap((n) => [
         brain.starts(n),
         brain.onCue(n),

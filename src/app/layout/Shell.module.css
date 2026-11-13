@@ -76,13 +76,6 @@
   text-underline-offset: 0.2em;
 }
 
-.thumbZone {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  margin-top: auto;
-}
-
 .list {
   display: flex;
   flex-direction: column;
@@ -142,23 +135,6 @@
   padding: var(--space-4);
   border-left: 4px solid var(--color-rule);
   background: var(--color-surface);
-}
-
-/* Opacity-only fade; --motion-calm is 0ms under reduced motion. */
-.notice {
-  margin: 0;
-  color: var(--color-text-muted);
-  animation: noticeIn var(--motion-calm) var(--ease-standard) both;
-}
-
-@keyframes noticeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
 }
 
 .installNote {

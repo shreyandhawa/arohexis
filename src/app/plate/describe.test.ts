@@ -94,7 +94,7 @@ describe('describeParts', () => {
     ]);
   });
 
-  it('shows No part for a non-waiting plan line even with no core starts', () => {
+  it('lists No part for a plan line even with no core starts', () => {
     const s = space([], [planLine(null, 'waiting', 0)]);
     expect(describeParts(s, []).map((e) => e.text)).toEqual([
       'No part: 0 starts. Plan lines: Waiting, 0 starts on cue.',

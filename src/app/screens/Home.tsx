@@ -11,6 +11,7 @@ import { useStartsThisWeek } from '../hooks/useStartsThisWeek';
 import { StuckButton } from '../layout/StuckButton';
 import type { ShellContext } from '../layout/Shell';
 import { Plate } from '../plate/Plate';
+import { PlateBoundary } from '../plate/PlateBoundary';
 import styles from '../layout/Shell.module.css';
 import homeStyles from './Home.module.css';
 
@@ -25,11 +26,13 @@ export function Home() {
   return (
     <>
       <h1 className="visually-hidden">{appName}</h1>
-      <Plate
-        selected={selected}
-        onSelect={setSelected}
-        notice={notice ? homeNotices[notice] : undefined}
-      />
+      <PlateBoundary>
+        <Plate
+          selected={selected}
+          onSelect={setSelected}
+          notice={notice ? homeNotices[notice] : undefined}
+        />
+      </PlateBoundary>
       {/* At most one card, by priority (spec §8.1): the update card, then the install note. */}
       <div data-slot="card" className={homeStyles['card']}>
         {updateReady ? (
