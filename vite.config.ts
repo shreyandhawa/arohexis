@@ -25,6 +25,8 @@ function previewHeaders(): Plugin {
 }
 
 export default defineConfig({
+  // The manifest lets scripts/check-bundle-size.mjs find the lazy Brain space chunk.
+  build: { manifest: true },
   plugins: [
     previewHeaders(),
     react(),
