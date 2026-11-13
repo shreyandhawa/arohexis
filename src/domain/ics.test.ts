@@ -1,7 +1,7 @@
 import ICAL from 'ical.js';
 import { describe, expect, it } from 'vitest';
 import type { Plan } from './config';
-import { foldLine, planToIcs } from './ics';
+import { foldLine, planToIcs, utf8Length } from './ics';
 import { instantOf, occurrencesBetween } from './plans';
 
 const plan: Plan = {
@@ -33,7 +33,7 @@ describe('planToIcs', () => {
   it('writes the required properties with CRLF', () => {
     const ics = planToIcs(plan, 'America/New_York', now);
     expect(ics.endsWith('\r\n')).toBe(true);
-    expect(ics.split('\r\n').every((l) => new TextEncoder().encode(l).length <= 75)).toBe(true);
+    expect(ics.split('\r\n').every((l) => utf8Length(l) <= 75)).toBe(true);
     expect(ics.replace(/\r\n/g, '')).not.toMatch(/[\r\n]/);
     const { vevent, event } = parse(ics);
     expect(event.uid).toBe('p1@arohexis');
@@ -91,11 +91,13 @@ describe('planToIcs', () => {
 
 describe('foldLine', () => {
   it('folds at 75 octets without splitting a character', () => {
-    const lines = foldLine(`SUMMARY:${'é'.repeat(80)}`);
+    const lines = foldLine(`SUMMARY:${'é'.repeat(40)}€😀${'é'.repeat(40)}`);
     expect(lines.length).toBeGreaterThan(1);
-    for (const l of lines) expect(new TextEncoder().encode(l).length).toBeLessThanOrEqual(75);
+    for (const l of lines) expect(utf8Length(l)).toBeLessThanOrEqual(75);
     expect(lines.slice(1).every((l) => l.startsWith(' '))).toBe(true);
-    expect(lines.map((l, i) => (i ? l.slice(1) : l)).join('')).toBe(`SUMMARY:${'é'.repeat(80)}`);
+    expect(lines.map((l, i) => (i ? l.slice(1) : l)).join('')).toBe(
+      `SUMMARY:${'é'.repeat(40)}€😀${'é'.repeat(40)}`,
+    );
     expect(foldLine('short')).toEqual(['short']);
   });
 });

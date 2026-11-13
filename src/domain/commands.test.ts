@@ -6,10 +6,13 @@ import {
   makeStart,
   nameFeeling,
   openAttempt,
+  repairLapse,
+  resolveOccurrence,
+  startFromPlan,
   tagStart,
   undoStart,
 } from './commands';
-import type { Feeling, FeelingResponse, Part } from './config';
+import type { Feeling, FeelingResponse, Part, WeekDay } from './config';
 import type { AppEvent, ResponseShown } from './events';
 import { testDeps } from './testing/fixtures';
 
@@ -142,5 +145,79 @@ describe('dismissAttempt', () => {
     const out = dismissAttempt(deps, events, id);
     expect(out.map((e) => e.type)).toEqual(['attempt.dismissed']);
     expect(dismissAttempt(deps, [...events, ...out], id)).toEqual([]);
+  });
+});
+
+describe('plan commands', () => {
+  const plan = { id: 'p1', partId: 't1' };
+  it('startFromPlan opens, starts and tags in one go', () => {
+    const out = startFromPlan(
+      testDeps(),
+      plan,
+      [{ ...part, order: 1, enabled: true, colour: 1, region: 1 }],
+      '2026-11-16',
+    );
+    expect(out.map((e) => e.type)).toEqual(['attempt.opened', 'start.made', 'start.tagged']);
+    expect(out[1]).toMatchObject({ planId: 'p1', occurrence: '2026-11-16', backfilled: false });
+  });
+  it('startFromPlan without an occurrence or a known part is not on cue and untagged', () => {
+    const out = startFromPlan(testDeps(), plan, []);
+    expect(out.map((e) => e.type)).toEqual(['attempt.opened', 'start.made']);
+    expect('occurrence' in (out[1] as object)).toBe(false);
+    expect(startFromPlan(testDeps(), { id: 'p2' }, [], '2026-11-16', true)[1]).toMatchObject({
+      backfilled: true,
+    });
+  });
+  it('resolveOccurrence records the outcome', () => {
+    expect(resolveOccurrence(testDeps(), 'p1', '2026-11-16', 'slipped')).toMatchObject({
+      type: 'occurrence.resolved',
+      outcome: 'slipped',
+    });
+  });
+  it('repairLapse emits the repair, a backfilled start, and the plan change', () => {
+    const p = {
+      id: 'p1',
+      place: 'x',
+      firstAction: 'a',
+      time: '09:00',
+      days: [1] as WeekDay[],
+      graceMin: 30,
+      active: true,
+      createdAt: 0,
+      editCount: 0,
+    };
+    const out = repairLapse(testDeps(), p, '2026-11-16', [], {
+      startedAnyway: true,
+      obstacle: { id: 'o1', label: 'Tired' },
+      choice: 'smaller',
+      firstAction: 'b',
+    });
+    expect(out.events.map((e) => e.type)).toEqual([
+      'lapse.repaired',
+      'attempt.opened',
+      'start.made',
+    ]);
+    expect(out.events[0]).toMatchObject({
+      obstacleId: 'o1',
+      obstacleLabel: 'Tired',
+      choice: 'smaller',
+    });
+    expect(out.events[2]).toMatchObject({ backfilled: true, occurrence: '2026-11-16' });
+    expect(out.plans).toEqual({ update: [{ ...p, firstAction: 'b' }] });
+    const kept = repairLapse(testDeps(), p, '2026-11-16', [], {
+      startedAnyway: false,
+      choice: 'keep',
+    });
+    expect(kept.events.map((e) => e.type)).toEqual(['lapse.repaired']);
+    expect(kept.plans).toEqual({});
+    expect(
+      repairLapse(testDeps(), p, '2026-11-16', [], { startedAnyway: false, choice: 'pause' }).plans,
+    ).toEqual({ pause: ['p1'] });
+    expect(
+      repairLapse(testDeps(), { ...p, active: false }, '2026-11-16', [], {
+        startedAnyway: false,
+        choice: 'pause',
+      }).plans,
+    ).toEqual({});
   });
 });

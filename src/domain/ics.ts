@@ -103,14 +103,22 @@ function escapeText(text: string): string {
     .replace(/\r?\n/g, '\\n');
 }
 
+export function utf8Length(text: string): number {
+  let n = 0;
+  for (const ch of text) {
+    const cp = ch.codePointAt(0) as number;
+    n += cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4;
+  }
+  return n;
+}
+
 /** Folds a content line at 75 octets, never inside a UTF-8 character (RFC 5545 §3.1). */
 export function foldLine(line: string): string[] {
-  const encoder = new TextEncoder();
   const out: string[] = [];
   let current = '';
   let size = 0;
   for (const ch of line) {
-    const bytes = encoder.encode(ch).length;
+    const bytes = utf8Length(ch);
     // Continuation lines start with a space, which counts toward the 75.
     if (size + bytes > 75) {
       out.push(current);
