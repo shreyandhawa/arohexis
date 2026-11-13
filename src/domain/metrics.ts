@@ -43,8 +43,8 @@ function addDays(date: string, days: number): string {
 export type WeekCount = { weekOf: string; count: number };
 
 /**
- * Counted starts per week, contiguous from the first event's week to the
- * current week (zeros included). Each start is bucketed in its own zone.
+ * Counted starts per week, contiguous from the week of the first counted
+ * start to the current week (zeros included); empty when nothing has been counted. Each start is bucketed in its own zone.
  */
 export function startsByWeek(
   attempts: readonly Attempt[],
@@ -52,13 +52,10 @@ export function startsByWeek(
   tz: string,
   weekStartsOn: WeekDay,
 ): WeekCount[] {
-  if (attempts.length === 0) return [];
   const counts = new Map<string, number>();
   let first = weekKey(now, tz, weekStartsOn);
   let last = first;
   for (const a of attempts) {
-    const opened = weekKey(a.openedAt, a.tz, weekStartsOn);
-    if (opened < first) first = opened;
     if (a.start && isCountedStart(a)) {
       const k = weekKey(a.start.at, a.start.tz, weekStartsOn);
       counts.set(k, (counts.get(k) ?? 0) + 1);
@@ -67,6 +64,7 @@ export function startsByWeek(
     }
   }
   const out: WeekCount[] = [];
+  if (counts.size === 0) return out;
   for (let k = first; k <= last; k = addDays(k, 7)) {
     out.push({ weekOf: k, count: counts.get(k) ?? 0 });
   }

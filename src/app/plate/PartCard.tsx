@@ -13,7 +13,7 @@ import {
 } from '../../domain/plans';
 import { startPlan } from '../actions/lapse';
 import { Button } from '../components/Button';
-import { lapse } from '../../copy/plans';
+import { lapse, planWords } from '../../copy/plans';
 import { useData } from '../data/DataProvider';
 import { useBrainSpace } from '../hooks/useBrainSpace';
 import { useConfig } from '../hooks/useConfig';
@@ -92,7 +92,7 @@ export function PartCard({ partId, onClose }: { partId: string; onClose(): void 
               const next = p.active && !open ? nextOccurrence(p, all, now, tz) : undefined;
               return (
                 <li key={p.id} className={styles['plan']}>
-                  <span>{planSentence(p)}</span>
+                  <span>{planSentence(p, 'full', planWords)}</span>
                   {open && (
                     <Button
                       variant="quiet"
@@ -104,7 +104,10 @@ export function PartCard({ partId, onClose }: { partId: string; onClose(): void 
                   )}
                   {next && (
                     <span className={styles['next']}>
-                      {brain.card.next(formatPlanTime(p.time), dayWord(next.at, now, tz))}
+                      {brain.card.next(
+                        formatPlanTime(p.time),
+                        dayWord(next.at, now, tz, planWords),
+                      )}
                     </span>
                   )}
                   {!p.active && <span className={styles['next']}>{brain.card.paused}</span>}
