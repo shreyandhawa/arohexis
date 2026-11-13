@@ -217,7 +217,32 @@ describe('camera moves', () => {
   });
 });
 
+describe('the band', () => {
+  it('clips every layer to it', () => {
+    const h = setup();
+    h.renderer.update(h.state());
+    h.flush(0);
+    expect(h.calls['clip']).toBeGreaterThanOrEqual(2); // the cached layer and the live layer
+    expect(h.calls['restore']).toBe(h.calls['save']);
+  });
+});
+
 describe('the look-at', () => {
+  it('keeps its ease clock through a drag', () => {
+    const h = setup();
+    h.renderer.update(h.state());
+    h.flush(0);
+    h.renderer.update(h.state({ selected: 'work' }));
+    h.flush(0);
+    h.flush(240);
+    h.pointer.drag();
+    h.flush(250);
+    h.flush(490);
+    h.flush(500);
+    expect(h.frames).toHaveLength(0);
+    expect(h.canvas.dataset['loop']).toBe('idle');
+  });
+
   const rig = buildRig(buildField());
   // Zoom does not change on selecting, so the pull is the one at zoom 1: none.
   const workAt = lookOf(pulledLabel(rig, 'region-1', 0)!);

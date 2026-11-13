@@ -10,3 +10,7 @@ export const ZOOM_STEP = 1.25;
 export const EASE_MS = 480;
 /** Field point the camera looks at when nothing is selected: the middle of the drawing. */
 export const BRAIN_CENTRE: readonly [number, number, number] = [0, -0.17, 0];
+/** A free band shorter than this (CSS px) is too small to draw in, so the drawing frames the whole stage. */
+export const MIN_BAND = 120;
+/** How much of the 1.1 scale the drawing gives back at full pull, so the pulled regions stay in the band. */
+export const PULL_FIT = 0.45;

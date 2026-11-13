@@ -29,6 +29,16 @@ describe('facing', () => {
     expect(far.yaw).toBeCloseTo(-Math.PI / 2 + 2 * Math.PI);
   });
 
+  it('turns a midline point to the side view nearer the current yaw', () => {
+    const at = [0.01, 0.2, 0.8] as const;
+    expect(facing(at, { ...cam, yaw: -1.4 }).yaw).toBeLessThan(0);
+    expect(facing(at, { ...cam, yaw: 1.4 }).yaw).toBeGreaterThan(0);
+    // Near the midline, not only exactly on it.
+    const near = [0.08, 0.2, 0.8] as const;
+    expect(facing(near, { ...cam, yaw: 1.4 }).yaw).toBeGreaterThan(0);
+    expect(facing(near, { ...cam, yaw: -1.4 }).yaw).toBeLessThan(0);
+  });
+
   it('keeps a midline point within a quarter turn of the nearest side view', () => {
     for (const from of [-Math.PI / 2, 0.2, 6.4, -9]) {
       for (const at of [
@@ -59,6 +69,64 @@ describe('the free band', () => {
       return Math.abs(hi - project(0, -0.5, 0).y);
     };
     expect(span(short)).toBeLessThan(span(tall));
+  });
+
+  it('never magnifies past the first pull, so zooming only pulls', () => {
+    const view = { w: 375, h: 500, top: 60, bottom: 70 };
+    const span = (zoom: number): number => {
+      const project = makeProject({ ...view, cam: { ...cam, zoom } });
+      return Math.abs(project(0, 0.5, 0).y - project(0, -0.5, 0).y);
+    };
+    expect(span(1.5)).toBeLessThanOrEqual(span(1.1));
+    expect(span(3.2)).toBeLessThanOrEqual(span(1.5));
+    expect(span(1.1)).toBeCloseTo(span(1.1000001));
+    expect(span(1)).toBeLessThan(span(1.1));
+  });
+
+  it('fits the fully pulled brain inside the band', () => {
+    const field = buildField();
+    const rig = buildRig(field);
+    for (const [w, h, top, bottom] of [
+      [375, 667, 60, 70],
+      [1280, 800, 60, 70],
+    ] as const) {
+      const view = { w, h, top, bottom, cam: { ...cam, zoom: 3.2 } };
+      const project = makeProject(view);
+      let lo = Infinity;
+      let hi = -Infinity;
+      let left = Infinity;
+      let right = -Infinity;
+      for (const f of field.fibres) {
+        const k = 0.55;
+        for (const s of f.strands) {
+          const i = s.length - 3;
+          const p = project(
+            s[i]! + rig.dirs[f.index * 3]! * k,
+            s[i + 1]! + rig.dirs[f.index * 3 + 1]! * k,
+            s[i + 2]! + rig.dirs[f.index * 3 + 2]! * k,
+          );
+          lo = Math.min(lo, p.y);
+          hi = Math.max(hi, p.y);
+          left = Math.min(left, p.x);
+          right = Math.max(right, p.x);
+        }
+      }
+      expect(lo).toBeGreaterThanOrEqual(top);
+      expect(hi).toBeLessThanOrEqual(h - bottom);
+      expect(left).toBeGreaterThanOrEqual(0);
+      expect(right).toBeLessThanOrEqual(w);
+    }
+  });
+
+  it('frames the whole stage when the free band is too short to draw in', () => {
+    const tall = makeProject({ w: 300, h: 600, top: 0, bottom: 0, cam })(...BRAIN_CENTRE);
+    // 200 px plate: 20 px of band left between the insets.
+    const small = makeProject({ w: 200, h: 200, top: 100, bottom: 80, cam })(...BRAIN_CENTRE);
+    expect(small.y).toBeCloseTo(100);
+    expect(tall.y).toBeCloseTo(300);
+    const span = (project: ReturnType<typeof makeProject>): number =>
+      Math.abs(project(0, 0.5, 0).y - project(0, -0.5, 0).y);
+    expect(span(makeProject({ w: 400, h: 200, top: 100, bottom: 80, cam }))).toBeGreaterThan(40);
   });
 
   it('centres a selected region at the band centre once the look-at is on it', () => {
@@ -186,6 +254,52 @@ describe('drawLabels', () => {
       expect(t.y - 11).toBeGreaterThanOrEqual(60 + 8);
       expect(t.y + 11).toBeLessThanOrEqual(400 - 70 - 8);
     }
+  });
+
+  it("draws only the selected part's label while one is selected", () => {
+    const r = recorder();
+    const view = { w: 375, h: 500, top: 0, bottom: 0, cam: { ...cam, zoom: 2 } };
+    drawLabels(r.ctx, rig, parts, view, { selected: 'work' });
+    expect(r.texts.map((t) => t.text)).toEqual([parts.find((p) => p.id === 'work')!.label]);
+  });
+
+  it('keeps labels inside a stage framed because the band is too short', () => {
+    const r = recorder();
+    const view = { w: 300, h: 200, top: 100, bottom: 80, cam: { ...cam, zoom: 3.2 } };
+    drawLabels(r.ctx, rig, parts, view);
+    expect(r.texts.length).toBeGreaterThan(0);
+    for (const t of r.texts) {
+      expect(t.y - 11).toBeGreaterThanOrEqual(8);
+      expect(t.y + 11).toBeLessThanOrEqual(200 - 8);
+    }
+  });
+
+  it("anchors a label to its part's lit fibres, and falls back to the region", () => {
+    const field = buildField();
+    const line: Item = {
+      id: 'l',
+      partId: 'work',
+      kind: 'start',
+      strength: 0,
+      css: '#fff',
+      fibre: 3,
+      strand: -1,
+    };
+    const scene: Scene = { items: [line], signals: false };
+    const view = { w: 375, h: 500, top: 0, bottom: 0, cam: { ...cam, zoom: 2 } };
+    const plain = recorder();
+    drawLabels(plain.ctx, rig, parts, view);
+    const lit = recorder();
+    drawLabels(lit.ctx, rig, parts, view, { lit: { scene, field } });
+    const at = (r: ReturnType<typeof recorder>, id: string) =>
+      r.texts.find((t) => t.text === parts.find((p) => p.id === id)!.label)!;
+    const a = at(lit, 'work');
+    const b = at(plain, 'work');
+    expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThan(0.5);
+    // A part with no lit fibre keeps its region's place.
+    const other = parts.find((p) => p.enabled && p.id !== 'work')!;
+    expect(at(lit, other.id).x).toBeCloseTo(at(plain, other.id).x);
+    expect(at(lit, other.id).y).toBeCloseTo(at(plain, other.id).y);
   });
 
   it('uses the pulled position of a region', () => {

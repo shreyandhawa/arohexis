@@ -5,8 +5,8 @@ import { PART_COLOURS, PLATE } from '../../design/partColours';
 import { assignFibres, type LineRef } from '../../geometry/assign';
 import { PULL_DIRECTIONS, regionKey, type Field, type RegionKey } from '../../geometry/field';
 import { lineShade } from '../../geometry/shade';
-import { BRAIN_CENTRE, UNSELECTED_ALPHA } from './constants';
-import { explodeAmount, type Camera } from './camera';
+import { BRAIN_CENTRE, MIN_BAND, UNSELECTED_ALPHA } from './constants';
+import { explodeAmount, scaleZoom, type Camera } from './camera';
 
 /** How far a region moves at full pull, in field units. */
 const PULL_DISTANCE = 0.55;
@@ -16,6 +16,8 @@ const CENTRE_Y = BRAIN_CENTRE[1];
 const LABEL_INSET = 8;
 const LABEL_FONT = "600 14px 'Atkinson Hyperlegible Next Variable', system-ui, sans-serif";
 /** Region keys whose fibres sit on the midline, so their pull direction is never mirrored. */
+/** A point whose |x| is under this share of its depth counts as on the midline when choosing a side view. */
+const MIDLINE_BAND = 0.2;
 const MIDLINE: ReadonlySet<RegionKey> = new Set<RegionKey>(['region-5', 'core']);
 
 // ---- rig: facts about the field that never change ----
@@ -137,13 +139,29 @@ type Point = { x: number; y: number; d: number };
 export type Project = (x: number, y: number, z: number) => Point;
 type Path = Pick<CanvasPath, 'moveTo' | 'lineTo'>;
 
-export function makeProject({ w, h, top, bottom, cam }: View): Project {
+/** The band the drawing is framed in and clipped to: the free band, or the whole stage when that is too short. */
+export function frameOf(view: Pick<View, 'h' | 'top' | 'bottom'>): { top: number; height: number } {
+  const free = view.h - view.top - view.bottom;
+  return free < MIN_BAND ? { top: 0, height: view.h } : { top: view.top, height: free };
+}
+
+/** Clips the context to the band. The caller saves and restores around it. */
+export function clipToBand(ctx: CanvasRenderingContext2D, view: View): void {
+  const band = frameOf(view);
+  ctx.beginPath();
+  ctx.rect(0, band.top, view.w, band.height);
+  ctx.clip();
+}
+
+export function makeProject(view: View): Project {
+  const { w, cam } = view;
+  const { top, height } = frameOf(view);
   const cy = Math.cos(cam.yaw);
   const sy = Math.sin(cam.yaw);
   const cp = Math.cos(cam.pitch);
   const sp = Math.sin(cam.pitch);
-  const band = Math.max(1, h - top - bottom);
-  const scale = Math.min(w / 2.1, band / 1.8) * cam.zoom;
+  const band = Math.max(1, height);
+  const scale = Math.min(w / 2.1, band / 1.8) * scaleZoom(cam.zoom);
   const [lx, ly, lz] = cam.look;
   const mid = top + band / 2;
   const out: Point = { x: 0, y: 0, d: 0 };
@@ -184,13 +202,15 @@ export function pulledLabel(
 export function facing(at: readonly [number, number, number], from: Camera): Camera {
   const base = Math.atan2(-at[0], at[2]);
   const whole = base + 2 * Math.PI * Math.round((from.yaw - base) / (2 * Math.PI));
-  const a = Math.PI / 2 + Math.PI * Math.round((whole - Math.PI / 2) / Math.PI);
-  // A midline point faces the viewer halfway between two sides: take the side the camera is nearer to.
-  const tie = Math.abs(Math.abs(whole - a) - Math.PI / 2) < 1e-6;
-  const other = a + (whole > a ? Math.PI : -Math.PI);
-  const side = tie && Math.abs(other - from.yaw) < Math.abs(a - from.yaw) ? other : a;
-  const yaw = Math.max(side - Math.PI / 4, Math.min(side + Math.PI / 4, whole));
   const depth = Math.hypot(at[0], at[2]);
+  const below = Math.PI / 2 + Math.PI * Math.floor((whole - Math.PI / 2) / Math.PI);
+  let side = Math.PI / 2 + Math.PI * Math.round((whole - Math.PI / 2) / Math.PI);
+  // A point near the midline faces the viewer between two sides: take the side the camera is nearer to.
+  if (Math.abs(at[0]) < MIDLINE_BAND * depth) {
+    const above = below + Math.PI;
+    side = Math.abs(above - from.yaw) < Math.abs(below - from.yaw) ? above : below;
+  }
+  const yaw = Math.max(side - Math.PI / 4, Math.min(side + Math.PI / 4, whole));
   const pitch = Math.max(-0.6, Math.min(0.6, 0.5 * Math.atan2(at[1] - CENTRE_Y, depth)));
   return { ...from, yaw, pitch };
 }
@@ -457,26 +477,82 @@ export function drawWaiting(f: LitFrame): void {
 
 // ---- labels ----
 
+/**
+ * Where each part's lit fibres sit after the pull: the mean of the points its lines are drawn at, in
+ * field units. A part with no lit fibre has no entry.
+ */
+export function litAnchors(
+  scene: Scene,
+  field: Field,
+  rig: Rig,
+  amount: number,
+): Map<string, readonly [number, number, number]> {
+  const sums = new Map<string, [number, number, number, number]>();
+  const d: Disp = { x: 0, y: 0, z: 0 };
+  for (const it of scene.items) {
+    if (it.partId === null || it.kind === 'waiting') continue;
+    const fibre = field.fibres[it.fibre];
+    if (!fibre) continue;
+    displace(rig, it.fibre, amount, d);
+    const strands = it.strand >= 0 ? [fibre.strands[it.strand]] : fibre.strands;
+    let sx = 0;
+    let sy = 0;
+    let sz = 0;
+    let n = 0;
+    for (const s of strands) {
+      if (!s) continue;
+      // One strand end is drawn as a point; a whole fibre is drawn along all its strands.
+      for (let i = it.strand >= 0 ? s.length - 3 : 0; i < s.length; i += 3) {
+        sx += s[i]!;
+        sy += s[i + 1]!;
+        sz += s[i + 2]!;
+        n += 1;
+      }
+    }
+    if (n === 0) continue;
+    const acc = sums.get(it.partId) ?? [0, 0, 0, 0];
+    acc[0] += sx / n + d.x;
+    acc[1] += sy / n + d.y;
+    acc[2] += sz / n + d.z;
+    acc[3] += 1;
+    sums.set(it.partId, acc);
+  }
+  const out = new Map<string, readonly [number, number, number]>();
+  for (const [id, a] of sums) out.set(id, [a[0] / a[3], a[1] / a[3], a[2] / a[3]]);
+  return out;
+}
+
+export type LabelOptions = {
+  /** While a part is selected, only its label is drawn. */
+  selected?: string | null;
+  /** With these, a label sits on its part's lit fibres; without them, or for a part with none, on its region. */
+  lit?: { scene: Scene; field: Field };
+};
+
 /** Part names, once the regions have started to pull apart. Each sits on an opaque plate-coloured backing, kept inside the free band. */
 export function drawLabels(
   ctx: CanvasRenderingContext2D,
   rig: Rig,
   parts: readonly Part[],
   view: View,
+  opts: LabelOptions = {},
 ): void {
   const amount = explodeAmount(view.cam.zoom);
   if (amount <= 0) return;
   const project = makeProject(view);
+  const anchors = opts.lit ? litAnchors(opts.lit.scene, opts.lit.field, rig, amount) : undefined;
   ctx.globalCompositeOperation = 'source-over';
   ctx.globalAlpha = 1;
   ctx.font = LABEL_FONT;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  const top = view.top + LABEL_INSET;
-  const bottom = view.h - view.bottom - LABEL_INSET;
+  const band = frameOf(view);
+  const top = band.top + LABEL_INSET;
+  const bottom = band.top + band.height - LABEL_INSET;
   for (const part of parts) {
     if (!part.enabled) continue;
-    const at = pulledLabel(rig, regionKey(part.region), amount);
+    if (opts.selected != null && part.id !== opts.selected) continue;
+    const at = anchors?.get(part.id) ?? pulledLabel(rig, regionKey(part.region), amount);
     if (!at) continue;
     const p = project(at[0], at[1], at[2]);
     const width = ctx.measureText(part.label).width;

@@ -9,6 +9,7 @@ import { BRAIN_CENTRE, EASE_MS } from './constants';
 import {
   buildRig,
   buildScene,
+  clipToBand,
   drawDim,
   drawLabels,
   drawLit,
@@ -239,8 +240,11 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
         cacheCtx.globalAlpha = 1;
         cacheCtx.fillStyle = PLATE.bg;
         cacheCtx.fillRect(0, 0, width, height);
+        cacheCtx.save();
+        clipToBand(cacheCtx, view);
         drawDim(cacheCtx, f, r, view, detailed, state.selected !== null);
         drawLit({ ...lit, ctx: cacheCtx });
+        cacheCtx.restore();
         cacheKey = key;
       }
       ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -251,13 +255,19 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.fillStyle = PLATE.bg;
       ctx.fillRect(0, 0, width, height);
+      ctx.save();
+      clipToBand(ctx, view);
       drawDim(ctx, f, r, view, detailed, state.selected !== null);
       drawLit(lit);
+      ctx.restore();
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.save();
+    clipToBand(ctx, view);
     if (signalsOn()) drawSignals(lit);
     drawWaiting(lit);
-    drawLabels(ctx, r, state.parts, view);
+    drawLabels(ctx, r, state.parts, view, { selected: state.selected, lit: { scene, field: f } });
+    ctx.restore();
   }
 
   function stepCamera(time: number): void {
@@ -414,13 +424,17 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   function setDirect(next: Partial<Camera>): void {
     // A new zoom moves the region the camera looks at, so the look-at follows it.
     const direct = next.zoom === undefined ? next : { ...next, look: lookFor(next.zoom) };
-    cam = { ...cam, ...direct };
+    // The look-at eases to its new place; it is never snapped, and a drag leaves its clock alone.
+    const { look, ...rest } = direct;
+    const lookIdle = sameLook(cam.look, target.look);
+    const lookChanges = look !== undefined && !sameLook(look, target.look);
+    cam = { ...cam, ...rest };
     target = { ...target, ...direct };
-    if (next.yaw !== undefined || next.pitch !== undefined) {
+    if (lookChanges && lookIdle) {
       orbitFrom = { yaw: cam.yaw, pitch: cam.pitch, look: cam.look };
       orbitStart = null;
-    } else if (direct.look) {
-      orbitFrom = { ...orbitFrom, look: direct.look };
+    } else if (next.yaw !== undefined || next.pitch !== undefined) {
+      orbitFrom = { ...orbitFrom, yaw: cam.yaw, pitch: cam.pitch };
     }
     if (next.zoom !== undefined) {
       zoomFrom = cam.zoom;

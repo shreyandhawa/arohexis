@@ -1,4 +1,11 @@
-import { EXPLODE_FROM_ZOOM, TURN_STEP_RAD, ZOOM_MAX, ZOOM_MIN, ZOOM_STEP } from './constants';
+import {
+  EXPLODE_FROM_ZOOM,
+  PULL_FIT,
+  TURN_STEP_RAD,
+  ZOOM_MAX,
+  ZOOM_MIN,
+  ZOOM_STEP,
+} from './constants';
 
 /** `look` is the field point at the centre of the free band. */
 export type Camera = {
@@ -23,6 +30,14 @@ export function explodeAmount(zoom: number): number {
   if (zoom <= EXPLODE_FROM_ZOOM) return 0;
   return Math.min(1, (zoom - EXPLODE_FROM_ZOOM) / (ZOOM_MAX - EXPLODE_FROM_ZOOM));
 }
+
+/**
+ * The magnification a zoom gives. It grows to EXPLODE_FROM_ZOOM and never past it: beyond that a
+ * zoom step only pulls the regions apart, and the scale gives back PULL_FIT of itself at full pull
+ * so the pulled-apart brain still fits the band in its side view.
+ */
+export const scaleZoom = (zoom: number): number =>
+  Math.min(zoom, EXPLODE_FROM_ZOOM) * (1 - PULL_FIT * explodeAmount(zoom));
 
 /** `--ease-standard`: cubic-bezier(0.23, 1, 0.32, 1), as progress 0..1 in, eased 0..1 out. */
 export function easeStandard(t: number): number {
