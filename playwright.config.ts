@@ -12,6 +12,16 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${PORT}`,
     trace: 'retain-on-failure',
+    // Onboarding is seen once; every spec starts past it unless it overrides this.
+    storageState: {
+      cookies: [],
+      origins: [
+        {
+          origin: `http://localhost:${PORT}`,
+          localStorage: [{ name: 'arohexis:welcomed', value: '1' }],
+        },
+      ],
+    },
   },
   projects: [
     { name: 'iphone', use: { ...devices['iPhone 15'] } },

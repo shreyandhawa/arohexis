@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useLocation, useOutletContext } from 'react-router';
+import { Link, Navigate, useLocation, useOutletContext } from 'react-router';
 import { appName } from '../../copy/common';
 import { installNote, nav, startsThisWeek } from '../../copy/home';
 import { homeNotices } from '../../copy/stuck';
@@ -13,6 +13,7 @@ import { usePlanState } from '../hooks/usePlanState';
 import { StuckButton } from '../layout/StuckButton';
 import type { ShellContext } from '../layout/Shell';
 import { expireOccurrences } from '../actions/lapse';
+import { hasWelcomed } from '../data/dbChoice';
 import { useData } from '../data/DataProvider';
 import { LapseSheet } from '../plans/LapseSheet';
 import { CheckinCard } from '../plans/CheckinCard';
@@ -42,6 +43,10 @@ export function Home() {
     void expireOccurrences(deps, fresh).catch((e: unknown) => console.error(e));
   }, [deps, planState]);
   const notice = readNotice(useLocation().state);
+  // First run: no data in the main database and onboarding not yet seen (spec §8.11).
+  if (hasEvents === false && deps.mode === 'main' && !hasWelcomed()) {
+    return <Navigate to="/welcome" replace />;
+  }
   return (
     <>
       <h1 className="visually-hidden">{appName}</h1>
