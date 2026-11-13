@@ -105,6 +105,38 @@ describe('stuck-flow actions', () => {
     expect(persist).not.toHaveBeenCalled();
   });
 
+  it('a stuck start linked to a plan is linked and tagged with the plan part in one append', async () => {
+    const { d } = await setup();
+    await d.config.applyConfigPatch({
+      plans: {
+        add: [
+          {
+            id: 'p1',
+            place: 'desk',
+            firstAction: 'open it',
+            time: '09:00',
+            days: [1],
+            graceMin: 90,
+            active: true,
+            createdAt: 0,
+            editCount: 0,
+            partId: 'work',
+          },
+        ],
+      },
+    });
+    const id = await beginStuck(d, { planId: 'p1', occurrence: '2026-11-09' });
+    await start(d, id);
+    const events = await d.events.listByAttempt(id);
+    expect(events.find((e) => e.type === 'start.made')).toMatchObject({
+      planId: 'p1',
+      occurrence: '2026-11-09',
+    });
+    expect(events.find((e) => e.type === 'start.tagged')).toMatchObject({ taskTypeId: 'work' });
+    const [a] = await attempts(d);
+    expect(a?.part?.id).toBe('work');
+  });
+
   it('chooseFeeling uses rotation across attempts', async () => {
     const { d, clock } = await setup();
     for (let i = 0; i < 3; i++) {

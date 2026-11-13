@@ -40,6 +40,7 @@ test('create a plan, see the sentence, save, list it, and download the .ics', as
   expect(text).toContain('BEGIN:VALARM');
 
   await page.getByRole('button', { name: 'Pause this plan' }).click();
+  await expect(page.getByRole('button', { name: 'Resume this plan' })).toBeVisible();
   await page.goto('/plans');
   await expect(page.getByText('Paused')).toBeVisible();
 });

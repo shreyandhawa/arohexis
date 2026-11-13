@@ -1,3 +1,4 @@
+import { findAttempt } from '../../domain/attempts';
 import {
   closeTimer,
   dismissAttempt,
@@ -15,8 +16,14 @@ function eventDeps(d: AppDeps): EventDeps {
 }
 
 /** Opens a stuck attempt and returns its id. */
-export async function beginStuck(d: AppDeps): Promise<string> {
-  const opened = openAttempt(eventDeps(d), { source: 'stuck' });
+export async function beginStuck(
+  d: AppDeps,
+  link?: { planId: string; occurrence: string },
+): Promise<string> {
+  const opened = openAttempt(
+    eventDeps(d),
+    link ? { source: 'plan', ...link } : { source: 'stuck' },
+  );
   await d.events.append([opened]);
   return opened.attemptId;
 }
@@ -36,13 +43,35 @@ export async function chooseFeeling(
   );
 }
 
-/** Makes the start. After the first counted start ever, asks for persistent storage once. */
+/** Makes the start. A start from a plan is linked to it and tagged with its part, in one append. */
 export async function start(d: AppDeps, attemptId: string): Promise<void> {
   const deps = eventDeps(d);
-  const appended = await d.events.appendForAttempt(attemptId, (evts) =>
-    makeStart(deps, evts, attemptId),
-  );
-  if (!appended.some((e) => e.type === 'start.made')) return;
+  const config = await d.config.getConfig();
+  const appended = await d.events.appendForAttempt(attemptId, (evts) => {
+    const a = findAttempt(evts, attemptId);
+    const planId = a?.planId;
+    const made = makeStart(
+      deps,
+      evts,
+      attemptId,
+      planId === undefined
+        ? undefined
+        : {
+            planId,
+            ...(a?.occurrence !== undefined && { occurrence: a.occurrence }),
+            backfilled: false,
+          },
+    );
+    const partId = config.plans.find((p) => p.id === planId)?.partId;
+    const part = partId === undefined ? undefined : config.parts.find((p) => p.id === partId);
+    if (made.length === 0 || !part) return made;
+    return [...made, ...tagStart(deps, [...evts, ...made], attemptId, part)];
+  });
+  if (appended.some((e) => e.type === 'start.made')) await afterFirstStart(d);
+}
+
+/** After a counted start, asks for persistent storage once. */
+export async function afterFirstStart(d: AppDeps): Promise<void> {
   const { settings } = await d.config.getConfig();
   if (settings.persistRequested) return;
   // Not awaited: Firefox shows a permission prompt, and waiting on it would hold up the

@@ -41,3 +41,32 @@ export const plans = {
   calendarSaved: 'Add to calendar uses the saved plan.',
   fileFallback: 'plan',
 } as const;
+
+/** The plan-due card on Home (spec §8.6). */
+export const planDue = {
+  region: 'Plan due now',
+  startNow: 'Start now',
+  stuckOnThis: "I'm stuck on this",
+} as const;
+
+/** The lapse repair sheet (spec §8.7). */
+export const lapse = {
+  happened: "This one didn't happen:",
+  learning: "That's part of learning anything. It's information, not a verdict.",
+  askStarted: 'Did you start it anyway?',
+  yes: 'Yes, I started',
+  no: 'Not this time',
+  obstacle: 'What got in the way?',
+  skip: 'Skip',
+  help: 'What would help next time?',
+  keep: 'Keep the plan',
+  smaller: 'Make the first step smaller',
+  move: 'Move the time',
+  pause: 'Pause this plan',
+  smallerField: 'New first action',
+  moveField: 'New time',
+  apply: 'Save',
+  updated: 'Plan updated.',
+  twoMinutes: 'Two minutes now?',
+  failed: "That didn't save. Try again.",
+} as const;

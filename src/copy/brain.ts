@@ -39,6 +39,10 @@ export const brain = {
     close: 'Close',
     focusTitle: 'What to focus on',
     aboutLink: 'About',
+    plansTitle: 'Plans',
+    startNow: 'Start now',
+    paused: 'Paused',
+    next: (when: string, day: string): string => `Next: ${when} ${day}`,
     /** The five lines of spec §16.9, verbatim. */
     focus: {
       lapse:
