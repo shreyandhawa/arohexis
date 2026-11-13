@@ -17,6 +17,12 @@ const PlanEditor = lazy(() =>
 const SettingsData = lazy(() =>
   import('./screens/SettingsData').then((m) => ({ default: m.SettingsData })),
 );
+const SettingsFeelings = lazy(() =>
+  import('./screens/SettingsFeelings').then((m) => ({ default: m.SettingsFeelings })),
+);
+const SettingsObstacles = lazy(() =>
+  import('./screens/SettingsObstacles').then((m) => ({ default: m.SettingsObstacles })),
+);
 const Welcome = lazy(() => import('./screens/Welcome').then((m) => ({ default: m.Welcome })));
 
 const Insights = lazy(() => import('./screens/Insights').then((m) => ({ default: m.Insights })));
@@ -80,6 +86,22 @@ export function AppRoutes() {
         />
         <Route path="settings" element={<Settings />} />
         <Route path="settings/parts" element={<SettingsParts />} />
+        <Route
+          path="settings/feelings"
+          element={
+            <Suspense fallback={null}>
+              <SettingsFeelings />
+            </Suspense>
+          }
+        />
+        <Route
+          path="settings/obstacles"
+          element={
+            <Suspense fallback={null}>
+              <SettingsObstacles />
+            </Suspense>
+          }
+        />
         <Route
           path="settings/data"
           element={
