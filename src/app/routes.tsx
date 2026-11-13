@@ -16,6 +16,7 @@ const PlanEditor = lazy(() =>
 );
 
 const Insights = lazy(() => import('./screens/Insights').then((m) => ({ default: m.Insights })));
+const Checkin = lazy(() => import('./screens/Checkin').then((m) => ({ default: m.Checkin })));
 
 export function AppRoutes() {
   return (
@@ -54,6 +55,14 @@ export function AppRoutes() {
           element={
             <Suspense fallback={null}>
               <Insights />
+            </Suspense>
+          }
+        />
+        <Route
+          path="checkin"
+          element={
+            <Suspense fallback={null}>
+              <Checkin />
             </Suspense>
           }
         />

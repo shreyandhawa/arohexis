@@ -43,6 +43,8 @@ test.describe('layout at 375x667', () => {
       const fill = (selector: string, height: number) => {
         const slot = document.querySelector(selector);
         if (!slot) throw new Error(`missing ${selector}`);
+        // Home shows at most one card, so the stand-in replaces the real check-in card.
+        if (selector.includes('card')) slot.replaceChildren();
         const block = document.createElement('div');
         block.style.height = `${height}px`;
         slot.appendChild(block);
@@ -68,7 +70,10 @@ test.describe('layout at 375x667', () => {
       ] as const) {
         const block = document.createElement('div');
         block.style.height = `${height}px`;
-        document.querySelector(selector)?.appendChild(block);
+        const slot = document.querySelector(selector);
+        // Home shows at most one card, so the stand-in replaces the real check-in card.
+        if (selector.includes('card')) slot?.replaceChildren();
+        slot?.appendChild(block);
       }
     });
     const fits = () =>
