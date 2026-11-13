@@ -10,7 +10,7 @@ One row per criterion in spec §2. Status is Met (automated), Met (manual) or Ow
 | Installable on the iOS Home Screen; data survives restarts | Persistence: `tests/e2e/offline.spec.ts`, "data survives reload and a new page"; manifest: `tests/e2e/manifest.spec.ts`. The Home Screen install on an iPhone is an owner check | Owner to confirm |
 | WCAG 2.2 AA on every screen, light and dark | axe in E2E in both schemes: `stuck-flow.spec.ts` "stuck screens are accessible in ...", `export.spec.ts`, `demo-restore.spec.ts`, `brain-guards.spec.ts`. Keyboard, 320 px reflow and 200% zoom: `tests/e2e/a11y-pass.spec.ts`. The VoiceOver pass on iPhone is an owner check | Owner to confirm |
 | Domain is pure and covered (no DOM lib; at least 95% line coverage on `src/domain`) | `src/domain/tsconfig.json` has no DOM lib (`npm run typecheck`). Coverage thresholds in `vitest.config.ts` (lines 95, branches 90), enforced by `npm test -- --coverage` in CI. Purity: `tests/purity/purity.test.ts` | Met (automated) |
-| CI on every push; `main` deploys to a public URL | `.github/workflows/ci.yml` runs checks and E2E on every push, and deploys `main` with `wrangler deploy`. The README says the first deploy had not happened at M1; confirm the public URL is live | Owner to confirm |
+| CI on every push; `main` deploys to a public URL | `.github/workflows/ci.yml` runs checks and E2E on every push, and deploys `main` with `wrangler deploy`. Live at https://arohexis.arohexis.workers.dev (HTTP 200 on 2026-11-13, CSP header byte-identical to `public/_headers`) | Met (automated) |
 | Demo mode shows 10 realistic weeks without touching real data | `tests/e2e/demo-restore.spec.ts`, "the demo shows ten weeks, and exiting leaves the main database unchanged" | Met (automated) |
 | The owner uses it daily for 10 to 12 weeks | Starts per week and the check-in trend in Insights. This takes 10 to 12 weeks of use after release | Owner to confirm |
 | Brain space turns without visible stutter on the owner's iPhone | Frame-time guard: `tests/e2e/brain-perf.spec.ts` (Apple WebKit budget 2 ms mean; CI-only budget 250 ms, ADR-029). Simulator check recorded in ADR-029. The device check is an owner check | Owner to confirm |
@@ -18,5 +18,5 @@ One row per criterion in spec §2. Status is Met (automated), Met (manual) or Ow
 
 ## Summary
 
-- Met (automated): 5 of 11.
-- Owner to confirm: 6 of 11. Four need the owner's iPhone (the timed flow, the Home Screen install, VoiceOver, Brain space turning). One needs the live public URL. One needs 10 to 12 weeks of use.
+- Met (automated): 6 of 11.
+- Owner to confirm: 5 of 11. Four need the owner's iPhone (the timed flow, the Home Screen install, VoiceOver, Brain space turning). One needs 10 to 12 weeks of use.
