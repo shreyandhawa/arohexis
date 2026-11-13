@@ -1333,7 +1333,7 @@ export function Plate(props: { selected: string | null; onSelect(partId: string 
   `copy.test.ts` checks every function's output for sample inputs, because the glob only reads string values.
 - **Which parts show:** the parts row and the text equivalent list every part that is enabled or has light (Review Focus #14).
 
-- [ ] **Step 1:** Write the failing layout test first, in `brain-home.spec.ts` at 375×667:
+- [x] **Step 1:** Write the failing layout test first, in `brain-home.spec.ts` at 375×667:
   - **Setup:** inject a 180 px block into `[data-slot="card"]` and a 40 px block into `[data-slot="ribbon"]`, with the week line showing;
   - **Expected:** no scroll, the plate at least 200 px tall, and **I'm stuck** fully in view.
 
@@ -1344,7 +1344,7 @@ export function Plate(props: { selected: string | null; onSelect(partId: string 
 
   That gives about 206 px. If it still measures under 200 px, move the week line into the nav row. If that isn't enough either, stop and report the measurements to the lead, who takes it to the owner.
 - **Home's one card** (spec §8.1, ADR-035): `[data-slot="card"]` shows at most one card. In M2 the update card comes first, then the iOS install note, and Shell no longer renders `UpdateCard` above `<main>` on `/`. The "Start removed." notice shows on the plate's bottom edge, in plate tokens. `update.spec.ts`'s worst case becomes the update card plus the notice, with the install note waiting.
-- [ ] **Step 2:** Write the other failing E2E tests in `brain-home.spec.ts`:
+- [x] **Step 2:** Write the other failing E2E tests in `brain-home.spec.ts`:
   - `the text equivalent matches known events`:
     - **Seed:** 3 Work, 2 Study, 1 untagged, 1 undone;
     - **Expected:** the summary reads `6 starts · 5 lines`, and the region contains `Work: 3 starts. 3 start lines.`, `Study: 2 starts. 2 start lines.`, `No part: 1 start.` and `Signals are moving.`;
@@ -1358,11 +1358,11 @@ export function Plate(props: { selected: string | null; onSelect(partId: string 
   - `the stuck flow is still three taps` with the placeholders;
   - `with the chunk blocked, the plate shows its text and Still works`: `test.use({ serviceWorkers: 'block' })`, because `page.route` doesn't see requests the service worker answers, then `page.route('**/assets/brain-*.js', r => r.abort())`;
   - `Home is accessible with the plate`, in light and dark.
-- [ ] **Step 3:** Write the failing unit tests:
+- [x] **Step 3:** Write the failing unit tests:
   - `effectiveStill`: unset with reduce gives true; unset alone gives false; `'moving'` with reduce gives false; `'still'` gives true;
   - `setStill writes the setting`.
-- [ ] **Step 4:** Run `npx vitest run src/app && npx playwright test tests/e2e/brain-home.spec.ts`. Expected: FAIL.
-- [ ] **Step 5:** Implement, with frontend-design's guidance, the reference stills and ADR-018.
+- [x] **Step 4:** Run `npx vitest run src/app && npx playwright test tests/e2e/brain-home.spec.ts`. Expected: FAIL.
+- [x] **Step 5:** Implement, with frontend-design's guidance, the reference stills and ADR-018.
   - **Home:** the plate on top (flex 1, `min-height: 200px`), then `[data-slot="card"]`, then the thumb zone as in M1. The `h1` is visually hidden.
   - **Plate:** a `section` with `role="region"`, `aria-label="Brain space"`, the classes `plate` and `plate-scope`, and `data-motion` (`still`, `moving` or `resting`). It holds:
     - the visible summary line;
@@ -1372,7 +1372,7 @@ export function Plate(props: { selected: string | null; onSelect(partId: string 
     - the parts row along the bottom edge: **All** plus a chip with a swatch per part, 48 px tall, scrolling sideways.
   - **`useRenderer`:** after the first paint (`requestAnimationFrame`, then `setTimeout(0)`), it imports `../brain/brain`. On failure it keeps the text and doesn't retry.
 - [ ] **Step 6:** Run them again, then the gate. Expected: PASS.
-- [ ] **Step 7:** Commit: `feat(home): the Brain space plate on Home`.
+- [x] **Step 7:** Commit: `feat(home): the Brain space plate on Home`.
 
 #### 7C: The owner's Home review (gate)
 
