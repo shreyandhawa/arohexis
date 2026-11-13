@@ -563,6 +563,11 @@ Statuses:
   - **Fallback:** raw WebGL2 (3 kB, already prototyped) is the fallback if the owner's iPhone check in M2 Task 2 shows stutter while turning. Its joints would then need handling to avoid hotspots, and that switch gets its own ADR.
   - **Spike files:** the throwaway spike stays out of the repo. Its results are recorded here.
   - **Renderer check (M2 Task 2):** checked in the iOS Simulator (iPhone 18 Pro) on 2026-11-13, which the owner chose in place of their own iPhone. On Task 2's page, at the brief's counts and device pixel ratio 2, the drag mean was 7.0 ms with a p95 of 10 ms over 159 drag frames. With a pinch included it was 7.6 ms and 12 ms, and idle was 0.8 ms and 1.0 ms. All of these are inside the 16.7 ms frame, so canvas 2D stands. The simulator runs on the Mac, so its numbers don't predict the device. The owner checks turning on their iPhone at the Home review (M2 Task 7C) and at acceptance (Task 11).
+  - **CI's WebKit is not the iPhone (2026-11-13, M2 Task 7C):**
+    - GitHub CI runs Playwright's Linux WebKit with software raster. There, a full redraw of the static layer took 0.5–1.2 s.
+    - The same renderer in local Playwright WebKit on macOS (CoreGraphics, like Safari) took 4–6 ms for that redraw, with a mean draw of 1.3–1.7 ms while signals run. Chromium took 9.6–11.5 ms and 3.7–5.0 ms.
+    - CI's iphone timings therefore say nothing about the device. The iphone E2E tests may not depend on a static redraw finishing within a frame budget. The frame-time guard's threshold (Task 10) comes from Apple WebKit or is labelled CI-only.
+    - The iPhone CI failure that showed this was a redraw on every renderer update. Now the cached layer is redrawn only when the drawn scene changes, as §16.6 says.
 
 
 ## ADR-030: Brain space sits on Home above the card, with a strip on Started

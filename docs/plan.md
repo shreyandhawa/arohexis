@@ -1376,7 +1376,7 @@ export function Plate(props: { selected: string | null; onSelect(partId: string 
 
 #### 7C: The owner's Home review (gate)
 
-- [ ] **Step 1:** Merge 7A and 7B into the branch, run the gate, and push. Wait for the PR's preview URL.
+- [x] **Step 1:** Merge 7A and 7B into the branch, run the gate, and push. Wait for the PR's preview URL.
 - [ ] **Step 2:** `qa-webkit` takes screenshots into the scratchpad: iPhone WebKit at 375×667 and desktop, in light and dark chrome. It seeds three fixtures from `tests/e2e/fixtures/brain.ts` with `seedEvents`, `seedParts` and `seedPlans`:
   - a new user;
   - an M1-like history;
