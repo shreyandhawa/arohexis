@@ -75,9 +75,9 @@ describe('occurrencesBetween', () => {
               // Only a skipped (gap) time may differ, and then it lands later on that date.
               expect(date).toBe(o.date);
               expect(wall > time).toBe(true);
-              expect(Date.parse(`${date}T${wall}:00Z`) - Date.parse(`${date}T${time}:00Z`)).toBeLessThanOrEqual(
-                60 * MIN,
-              );
+              expect(
+                Date.parse(`${date}T${wall}:00Z`) - Date.parse(`${date}T${time}:00Z`),
+              ).toBeLessThanOrEqual(60 * MIN);
             }
           }
           const ats = occ.map((o) => o.at);
@@ -92,12 +92,23 @@ describe('occurrencesBetween', () => {
     const from = Date.UTC(2026, 10, 16, 0, 0);
     const to = Date.UTC(2026, 10, 23, 15, 0);
     const dates = occurrencesBetween(plan(), from, to, tz).map((o) => o.date);
-    expect(dates).toEqual(['2026-11-16', '2026-11-17', '2026-11-18', '2026-11-19', '2026-11-20', '2026-11-23']);
+    expect(dates).toEqual([
+      '2026-11-16',
+      '2026-11-17',
+      '2026-11-18',
+      '2026-11-19',
+      '2026-11-20',
+      '2026-11-23',
+    ]);
     expect(occurrencesBetween(plan({ active: false }), from, to, tz)).toEqual([]);
     expect(occurrencesBetween(plan(), to, from, tz)).toEqual([]);
     const created = instantOf('2026-11-18', '09:00', tz);
-    expect(occurrencesBetween(plan({ createdAt: created }), from, to, tz)[0]?.date).toBe('2026-11-18');
-    expect(occurrencesBetween(plan({ createdAt: created + 1 }), from, to, tz)[0]?.date).toBe('2026-11-19');
+    expect(occurrencesBetween(plan({ createdAt: created }), from, to, tz)[0]?.date).toBe(
+      '2026-11-18',
+    );
+    expect(occurrencesBetween(plan({ createdAt: created + 1 }), from, to, tz)[0]?.date).toBe(
+      '2026-11-19',
+    );
   });
 });
 
@@ -144,9 +155,9 @@ describe('planSentence', () => {
     expect(planSentence(plan())).toBe(
       "If it's 9:00 on weekdays at my desk, then I will open the essay doc.",
     );
-    expect(planSentence(plan({ cueDetail: 'after coffee', firstAction: 'open it.' }), 'calendar')).toBe(
-      "If it's 9:00 at my desk, after coffee, then open it",
-    );
+    expect(
+      planSentence(plan({ cueDetail: 'after coffee', firstAction: 'open it.' }), 'calendar'),
+    ).toBe("If it's 9:00 at my desk, after coffee, then open it");
     expect(planSentence(plan({ place: ' ', time: '13:05', days: [0, 6] }))).toBe(
       "If it's 13:05 on weekends, then I will open the essay doc.",
     );

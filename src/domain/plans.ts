@@ -72,10 +72,7 @@ export function occurrenceStatus(
   now: number,
 ): OccurrenceStatus {
   const linked = foldAttempts(events).some(
-    (a) =>
-      a.planId === plan.id &&
-      a.occurrence === occurrence.date &&
-      isCountedStart(a),
+    (a) => a.planId === plan.id && a.occurrence === occurrence.date && isCountedStart(a),
   );
   if (linked) return 'started';
   const resolved = events.some(
