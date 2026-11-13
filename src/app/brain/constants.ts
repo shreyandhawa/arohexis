@@ -14,3 +14,13 @@ export const BRAIN_CENTRE: readonly [number, number, number] = [0, -0.17, 0];
 export const MIN_BAND = 120;
 /** How much of the 1.1 scale the drawing gives back at full pull, so the pulled regions stay in the band. */
 export const PULL_FIT = 0.45;
+/**
+ * The strip's own floor (CSS px). The strip is 64 to 80 px tall, so it can't use MIN_BAND; below this its
+ * insets are ignored and the drawing frames the whole strip. At 64 px with 8 px of inset top and bottom the
+ * band is 48, which still draws.
+ */
+export const MIN_STRIP_BAND = 48;
+/** The reveal's length is `TIMER_SECONDS`; this is how long the settle ring takes (`--motion-slow`). */
+export const SETTLE_MS = 480;
+/** Under Still the burst is a fade this long (spec §16.8). */
+export const STILL_FADE_MS = 120;

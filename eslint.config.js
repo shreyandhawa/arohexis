@@ -11,6 +11,7 @@ export default tseslint.config(
       'tests/purity/fixture',
       'tests/purity/geometry-fixture',
       'docs/reference',
+      '.worktrees',
     ],
   },
   js.configs.recommended,

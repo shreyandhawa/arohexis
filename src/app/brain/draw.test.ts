@@ -7,6 +7,7 @@ import { BRAIN_CENTRE } from './constants';
 import {
   buildRig,
   drawDim,
+  frameOf,
   drawLabels,
   facing,
   hitTest,
@@ -368,5 +369,15 @@ describe('drawDim', () => {
     }
     expect(seen.length).toBeGreaterThan(0);
     for (const s of seen) expect(s).toEqual({ cap: 'butt', join: 'miter' });
+  });
+});
+
+describe('the strip band', () => {
+  it('uses its own floor, and frames the whole strip below it', () => {
+    // 80 px with 12 px of inset each side leaves 56: enough for the strip, too little for the plate.
+    const strip = { h: 80, top: 12, bottom: 12, minBand: 48 };
+    expect(frameOf(strip)).toEqual({ top: 12, height: 56 });
+    expect(frameOf({ ...strip, top: 20, bottom: 20 })).toEqual({ top: 0, height: 80 });
+    expect(frameOf({ h: 80, top: 12, bottom: 12 })).toEqual({ top: 0, height: 80 });
   });
 });
