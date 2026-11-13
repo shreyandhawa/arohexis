@@ -228,6 +228,9 @@ export function drawDim(
   ctx.strokeStyle = PLATE.dimTrace;
   ctx.fillStyle = PLATE.dimPoint;
   ctx.lineWidth = 0.5;
+  // The cache context is shared with drawLit, which sets round caps; do not inherit them.
+  ctx.lineCap = 'butt';
+  ctx.lineJoin = 'miter';
   for (let b = 0; b < BANDS; b++) {
     ctx.globalAlpha = bandAlpha(TRACE_ALPHA, b);
     ctx.stroke(traces[b]!);

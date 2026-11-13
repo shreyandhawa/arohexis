@@ -49,6 +49,22 @@ const TAP_SLOP = 6;
 const TAP_RADIUS = 24;
 const DRAW_SAMPLES = 120;
 
+function sameScene(a: Scene, b: Scene): boolean {
+  if (a.signals !== b.signals || a.items.length !== b.items.length) return false;
+  return a.items.every((x, i) => {
+    const y = b.items[i]!;
+    return (
+      x.id === y.id &&
+      x.partId === y.partId &&
+      x.kind === y.kind &&
+      x.strength === y.strength &&
+      x.css === y.css &&
+      x.fibre === y.fibre &&
+      x.strand === y.strand
+    );
+  });
+}
+
 export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainRenderer {
   const maybeCtx = canvas.getContext('2d');
   if (!maybeCtx) throw new Error('no 2D canvas');
@@ -79,7 +95,8 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   const cache = document.createElement('canvas');
   const cacheCtx = cache.getContext('2d');
   const samples: number[] = [];
-  let lastReport = 0;
+  /** Starts at the loop's first frame, so the first mean covers about a second of frames. */
+  let lastReport: number | null = null;
   const reduce =
     typeof window.matchMedia === 'function'
       ? window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -266,6 +283,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       const loop = needsLoop();
       setLoop(loop);
       if (loop) {
+        lastReport ??= time;
         if (time - lastReport >= 1000 && samples.length > 0) {
           lastReport = time;
           const mean = samples.reduce((a, b) => a + b, 0) / samples.length;
@@ -461,8 +479,10 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       const before = state?.selected ?? null;
       state = next;
       const { field: f } = ensureField();
-      scene = buildScene(next.space, next.parts, f);
-      sceneVersion += 1;
+      const built = buildScene(next.space, next.parts, f);
+      // Spec §16.6: the cached layer is redrawn only when the data changes, not on every re-emit.
+      if (!sameScene(scene, built)) sceneVersion += 1;
+      scene = built;
       if (next.still) cam = { ...target };
       if (next.selected !== null && next.selected !== before) faceRegion(next.selected, next.parts);
       syncTouchAction();

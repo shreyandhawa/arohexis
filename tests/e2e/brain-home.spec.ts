@@ -14,6 +14,11 @@ async function home(page: Page): Promise<void> {
   await expect(region(page)).toBeVisible();
 }
 
+/** The renderer chunk loads after first paint; until it has drawn, the canvas has no yaw or zoom. */
+async function drawn(page: Page): Promise<void> {
+  await expect(canvas(page)).toHaveAttribute('data-field-ms', /./);
+}
+
 async function seeded(page: Page, events: readonly object[]): Promise<void> {
   await home(page);
   await seedEvents(page, events);
@@ -178,6 +183,7 @@ test('old starts leave the signals resting', async ({ page }) => {
 
 test('turn and zoom buttons work without a drag', async ({ page }) => {
   await home(page);
+  await drawn(page);
   const read = async (name: string) => Number(await canvas(page).getAttribute(name));
   const yaw = await read('data-yaw');
   await region(page).getByRole('button', { name: 'Turn right' }).click();
@@ -191,6 +197,7 @@ test('turn and zoom buttons work without a drag', async ({ page }) => {
 
 test('a Turn step is not cut short by a tap on the canvas', async ({ page }) => {
   await home(page);
+  await drawn(page);
   const read = async () => Number(await canvas(page).getAttribute('data-yaw'));
   const yaw = await read();
   await region(page).getByRole('button', { name: 'Turn right' }).click();
@@ -228,6 +235,7 @@ test('while a plate control has focus, arrows turn and plus and minus zoom', asy
 }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'keyboard only');
   await home(page);
+  await drawn(page);
   const read = async (name: string) => Number(await canvas(page).getAttribute(name));
   await region(page).getByRole('button', { name: 'Turn right' }).focus();
   const yaw = await read('data-yaw');

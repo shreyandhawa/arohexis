@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { buildField } from '../../geometry/field';
-import { buildRig, facing, hitTest, type Item, type Scene } from './draw';
+import { buildRig, drawDim, facing, hitTest, type Item, type Scene } from './draw';
 
 describe('facing', () => {
   it('turns a point on the front to face the viewer, by the shortest way', () => {
@@ -37,5 +37,38 @@ describe('hitTest', () => {
     const scene: Scene = { items: [item('work', 'start')], signals: false };
     expect(hitTest(scene, field, rig, view, 150, 150, 400)).toEqual({ partId: 'work' });
     expect(hitTest(scene, field, rig, view, -500, -500, 24)).toBeUndefined();
+  });
+});
+
+describe('drawDim', () => {
+  it('strokes with butt caps and miter joins, whatever the context held before', () => {
+    const field = buildField();
+    const rig = buildRig(field);
+    const seen: { cap: string; join: string }[] = [];
+    const state = { lineCap: 'round', lineJoin: 'round' };
+    const ctx = new Proxy(state, {
+      get: (t, key) => {
+        if (key === 'stroke') {
+          return () => seen.push({ cap: t.lineCap, join: t.lineJoin });
+        }
+        return Reflect.get(t, key) ?? (() => undefined);
+      },
+    }) as unknown as CanvasRenderingContext2D;
+    const view = { w: 300, h: 300, cam: { yaw: -Math.PI / 2, pitch: 0, zoom: 1 } };
+    vi.stubGlobal(
+      'Path2D',
+      class {
+        moveTo(): void {}
+        lineTo(): void {}
+        rect(): void {}
+      },
+    );
+    try {
+      drawDim(ctx, field, rig, view, false);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+    expect(seen.length).toBeGreaterThan(0);
+    for (const s of seen) expect(s).toEqual({ cap: 'butt', join: 'miter' });
   });
 });

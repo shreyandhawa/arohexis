@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { projectBrainSpace } from '../../domain/brainSpace';
+import type { Plan } from '../../domain/config';
 import { DEFAULT_PARTS } from '../../domain/defaults';
 import { createRenderer, type RenderState } from './brain';
 
@@ -7,10 +8,12 @@ import { createRenderer, type RenderState } from './brain';
 function setup(opts: { reduce?: boolean } = {}) {
   const frames: FrameRequestCallback[] = [];
   const control = { throwOnDraw: false };
+  const calls: Record<string, number> = {};
   const ctx = new Proxy(
     {},
     {
       get: (_t, key) => {
+        if (typeof key === 'string') calls[key] = (calls[key] ?? 0) + 1;
         if (key === 'measureText') return () => ({ width: 10 });
         if (key === 'drawImage')
           return () => {
@@ -95,6 +98,11 @@ function setup(opts: { reduce?: boolean } = {}) {
   };
   /** A press, a move well past the tap slop, and a release on the canvas. */
   const pointer = {
+    /** Presses and drags without releasing, so the loop keeps running. */
+    press: (): void => {
+      listeners.get('pointerdown')?.({ pointerId: 1, clientX: 10, clientY: 20 });
+      listeners.get('pointermove')?.({ pointerId: 1, clientX: 80, clientY: 20 });
+    },
     drag: (): void => {
       const at = (x: number) => ({ pointerId: 1, clientX: x, clientY: 20 });
       listeners.get('pointerdown')?.(at(10));
@@ -102,7 +110,7 @@ function setup(opts: { reduce?: boolean } = {}) {
       listeners.get('pointerup')?.(at(80));
     },
   };
-  return { renderer, canvas, control, pointer, reported, state, flush, frames };
+  return { renderer, canvas, control, pointer, reported, state, flush, frames, calls };
 }
 
 beforeEach(() => vi.useFakeTimers());
@@ -201,5 +209,54 @@ describe('camera moves', () => {
     expect(h.canvas.dataset['zoom']).toBe('1.25');
     expect(h.frames).toHaveLength(0);
     expect(h.canvas.dataset['loop']).toBe('idle');
+  });
+});
+
+describe('the static layer', () => {
+  const plan: Plan = {
+    id: 'p1',
+    place: 'desk',
+    firstAction: 'open it',
+    time: '09:00',
+    days: [1],
+    graceMin: 30,
+    active: true,
+    createdAt: 0,
+    editCount: 0,
+    partId: 'work',
+  };
+
+  it('is redrawn only when the lines change, not on a Still toggle or an equal re-projection', () => {
+    const h = setup();
+    h.renderer.update(h.state());
+    h.flush(0);
+    const rebuilds = (): number => h.calls['fillRect'] ?? 0;
+    const before = rebuilds();
+    expect(before).toBeGreaterThan(0);
+
+    // Same content in new objects, with Still flipped.
+    h.renderer.update(h.state({ still: true }));
+    h.flush(16);
+    expect(rebuilds()).toBe(before);
+
+    // A new line does redraw it.
+    h.renderer.update(
+      h.state({ still: true, space: projectBrainSpace([], [plan], DEFAULT_PARTS, 0) }),
+    );
+    h.flush(32);
+    expect(rebuilds()).toBeGreaterThan(before);
+  });
+});
+
+describe('the draw report', () => {
+  it('first covers more than one frame', () => {
+    const h = setup();
+    h.renderer.update(h.state());
+    h.pointer.press();
+    // Frames at rAF-like times well past one second, as on a real page.
+    h.flush(5000);
+    expect(h.canvas.dataset['drawMean']).toBeUndefined();
+    for (let t = 5016; t < 6100; t += 16) h.flush(t);
+    expect(h.canvas.dataset['drawMean']).toBeDefined();
   });
 });
