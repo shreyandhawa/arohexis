@@ -6,7 +6,7 @@ import type { ArohexisDB } from './db';
 export function readExportData(db: ArohexisDB): Promise<ExportData> {
   return db.transaction(
     'r',
-    [db.events, db.feelings, db.responses, db.taskTypes, db.obstacles, db.plans, db.kv],
+    [db.events, db.feelings, db.responses, db.parts, db.obstacles, db.plans, db.kv],
     async () => ({ ...(await readConfig(db)), events: await db.events.orderBy('at').toArray() }),
   );
 }

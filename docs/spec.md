@@ -1,10 +1,10 @@
 # Arohexis: design spec
 
-Status: **approved** by the owner on 2026-11-11. Decision log: [decisions.md](decisions.md).
+Status: **approved** by the owner on 2026-11-11, and amended with §16 Brain space on 2026-11-12. Decision log: [decisions.md](decisions.md).
 
 ## 1. Summary
 
-Arohexis is a local-first, installable web app for chronic procrastination. It trains **the moment of starting**, not task management. When you are stuck you tap one button and name the feeling. Arohexis shows a short response matched to that feeling, and you take a two-minute first step. Each start is rewarded right away. If-then plans tie a cue (a fixed time and place) to a first action. When a plan doesn't happen, you get a short forgive-and-replan script. The insights show which feelings, hours, task types, and responses lead to starts, plus a weekly check-in on how automatic starting feels.
+Arohexis is a local-first, installable web app for chronic procrastination. It trains **the moment of starting**, not task management. When you are stuck you tap one button and name the feeling. Arohexis shows a short response matched to that feeling, and you take a two-minute first step. Each start is rewarded right away. If-then plans tie a cue (a fixed time and place) to a first action. When a plan doesn't happen, you get a short forgive-and-replan script. The insights show which feelings, hours, parts, and responses lead to starts, plus a weekly check-in on how automatic starting feels. Brain space, the main visual, draws your starts as light in the shape of a brain. It's a picture, not a scan.
 
 "Training" here means ordinary learning: the same cue, a new response, an immediate reward, repeated until it is automatic. Arohexis makes no claims about brain change and does not diagnose or treat any condition.
 
@@ -34,6 +34,8 @@ Accounts, cloud sync, AI chat, social features, native apps, site or app blockin
 | CI on every push; `main` deploys to a public URL | GitHub Actions to Cloudflare |
 | Demo mode shows 10 realistic weeks without touching real data | E2E demo-isolation test |
 | The owner uses it daily for 10–12 weeks | Starts per week and the check-in trend in Insights |
+| Brain space turns without visible stutter on the owner's iPhone | Manual check at each UI milestone, plus the WebKit frame-time guard (§16.13) |
+| Every Brain space action works with the renderer blocked | Playwright E2E (§16.13) |
 
 ## 3. Evidence base and claims policy
 
@@ -89,6 +91,7 @@ Versions were checked against npm and the official docs on 2026-11-11 (see ADR-0
 | Dates | date-fns 4.4 + `@date-fns/tz` 1.5 | Plan times stay correct across daylight-saving changes. Temporal isn't used (unconfirmed on Safari) |
 | IDs | `crypto.randomUUID()`, passed in | Deterministic in tests |
 | Charts | Hand-built SVG, each with a table alternative | Few charts, full control over type and accessibility |
+| Renderer | Canvas 2D, no library | Brain space needs light that adds up, which canvas 2D does with additive blending, inside a 30 kB gzip chunk (ADR-029) |
 | Fonts | Self-hosted with Fontsource | Works offline; no third-party requests |
 | Unit tests | Vitest 5.1, fast-check 4.10, fake-indexeddb 6.2 | |
 | E2E | Playwright 1.65, `@axe-core/playwright` 4.14 | WebKit iPhone preset is the closest match to the owner's device |
@@ -106,22 +109,27 @@ src/
     matcher.ts       pickResponse(...)
     plans.ts         occurrences and occurrence status (timezone-aware)
     lapse.ts         findLapseToRepair(...), applyRepair(...)
-    metrics.ts       starts per week, by feeling/hour/task type, response stats
+    metrics.ts       starts per week, by feeling/hour/part (startsByPart), response stats
+    brainSpace.ts    projectBrainSpace(...): lines, strength, moving or resting (§16.4)
+    focus.ts         focusFor(...): the "What to focus on" line (§16.9)
+    random.ts        mulberry32 PRNG, shared by the demo generator and the geometry
     checkin.ts       SRBAI items, scoring, isCheckinDue(...)
     ics.ts           planToIcs(plan, tz) → string (RFC 5545)
-    defaults.ts      default feelings, responses, task types, obstacles
+    defaults.ts      default feelings, responses, parts, obstacles
     demo.ts          generateDemoData(seed, endDate, tz)
     exportFormat.ts  Valibot schema, parseExport, migrateExport, buildExport
     ports.ts         Clock, IdGen, EventStore, ConfigStore interfaces
     week.ts          week bucketing helpers
+  geometry/        Pure TypeScript. Builds the Brain space field from a seed (§16.5)
   storage/         Dexie database, schema versions, repositories implementing the ports
   app/             React: routes, screens, components, hooks, actions
+    brain/           The Brain space canvas renderer, a lazy chunk (§16.6)
   copy/            Every user-facing string, grouped by screen
   design/          tokens.css, themes, global styles, fonts
 tests/e2e/         Playwright specs
 ```
 
-**Dependency rule:** `app` → `domain` + `storage` + `copy` + `design`. `storage` → `domain`. `domain` imports nothing outside itself except `valibot`, `date-fns`, and `@date-fns/tz`.
+**Dependency rule:** `app` → `domain` + `geometry` + `storage` + `copy` + `design`. `storage` → `domain`. `geometry` → `domain` only. `domain` imports nothing outside itself except `valibot`, `date-fns`, and `@date-fns/tz`.
 
 **Enforcement:**
 - `src/domain/tsconfig.json` sets `lib: ["ES2024"]` and `types: []`, so any `window`, `document`, `indexedDB`, or `navigator` fails type-checking.
@@ -154,7 +162,8 @@ screen ◀─ useLiveQuery ◀─ domain projection (pure) ◀──┘
 | **Feeling** | A user-configurable label for what the user feels when stuck |
 | **Response** | A short, rule-based intervention tied to one feeling, tagged with a **basis** (the technique it uses) |
 | **Basis** | One of `name-the-feeling`, `shrink-the-step`, `self-kindness`, `reframe`, `pair-a-reward`. Each maps to a source in §3 |
-| **Task type** | An optional tag added after a start (writing, study, …) |
+| **Part** | An optional tag added after a start, naming a part of life (work, study, …). Part replaces Task type (ADR-023) |
+| **Brain space terms** | Region, on-cue start, plan line, start line, core spark, strength, settled, and moving or resting are defined in §16.2 |
 | **Plan** | An if-then plan: "If it's [time] on [days] at [place], then I will [first action]" |
 | **Occurrence** | One scheduled instance of a plan on a local date |
 | **Lapse** | An occurrence that closed without a linked start ("slipped") |
@@ -172,12 +181,14 @@ Every event shares the envelope `{ id: string, type, at: number /* epoch ms */, 
 | `response.shown` | `attemptId`, `feelingId`, `responseId`, `basis` |
 | `start.made` | `attemptId`, `planId?`, `occurrence?`, `backfilled: boolean` |
 | `start.undone` | `attemptId` |
-| `start.tagged` | `attemptId`, `taskTypeId`, `label` |
+| `start.tagged` | `attemptId`, `taskTypeId` (now holds a part id), `label` |
 | `timer.closed` | `attemptId`, `elapsedSec`, `outcome: 'kept-going' \| 'stopped'` |
 | `attempt.dismissed` | `attemptId` |
 | `occurrence.resolved` | `planId`, `occurrence: 'YYYY-MM-DD'`, `outcome: 'slipped' \| 'expired'` |
 | `lapse.repaired` | `planId`, `occurrence`, `startedAnyway: boolean`, `obstacleId?`, `obstacleLabel?`, `choice: 'keep' \| 'smaller' \| 'move' \| 'pause'` |
 | `checkin.submitted` | `weekOf: 'YYYY-MM-DD'`, `answers: [n, n, n, n]` (each 1–7) |
+
+The field name `taskTypeId` is kept so old events and backups need no rewrite. From M3, a start made from a plan is also tagged with the plan's part, with a `start.tagged` in the same transaction as `start.made` (§16.3).
 
 A plan's occurrence counts as started when a `start.made` has the same `planId` and `occurrence`, so no separate "started" resolution event is needed.
 
@@ -191,7 +202,7 @@ type Attempt = {
   response?: { id: string; basis: Basis };
   start?: { at: number; backfilled: boolean };
   undone: boolean;
-  taskType?: { id: string; label: string };
+  part?: { id: string; label: string };
   timer?: { elapsedSec: number; outcome: 'kept-going' | 'stopped' };
   dismissed: boolean;
 };
@@ -241,7 +252,7 @@ If `startedAnyway` is true, a backfilled `start.made` is also recorded. It count
 - `startsThisWeek`: the headline count. It only increases within a week.
 - `startsByFeeling`: grouped by `feelingId`, labeled with the newest snapshot. Plan starts made without the stuck flow are grouped as "From a plan".
 - `startsByHour`: 24 counts by the local hour of `start.at` in the start event's `tz`.
-- `startsByTaskType`: includes "Untagged".
+- `startsByPart`: uses `partOfStart` (§16.4) and includes "No part".
 - `responseStats`: per response, `shown`, `ledToStart`, and `rate`, with `earlyDays: shown < 5`.
 - No metric for completions exists or will be added.
 
@@ -277,26 +288,28 @@ interface EventStore {
   list(range?: { from?: number; to?: number }): Promise<AppEvent[]>;
 }
 interface ConfigStore {
-  getConfig(): Promise<Config>;                      // feelings, responses, taskTypes, obstacles, plans, settings
+  getConfig(): Promise<Config>;                      // feelings, responses, parts, obstacles, plans, settings
   applyConfigPatch(patch: ConfigPatch): Promise<void>;
 }
 ```
 
 ## 7. Data schema
 
-### 7.1 IndexedDB (Dexie), database `arohexis`, version 1
+### 7.1 IndexedDB (Dexie), database `arohexis`, version 2
 
 | Table | Index spec | Record |
 |---|---|---|
 | `events` | `id, at, type, attemptId, planId, [type+at]` | event envelope + payload (attemptId/planId lifted to top level for indexing) |
 | `feelings` | `id, order` | `{ id, label, order, enabled, builtIn }` |
 | `responses` | `id, feelingId, order` | `{ id, feelingId, body, basis, enabled, order, builtIn }` |
-| `taskTypes` | `id, order` | `{ id, label, order, enabled }` |
+| `parts` | `id, order` | `{ id, label, order, enabled, colour: 1–6, region: 1–6 }` (replaces `taskTypes`; see §16.3) |
 | `obstacles` | `id, order` | `{ id, label, order, enabled }` |
-| `plans` | `id, active` | `{ id, place, cueDetail?, firstAction, time: 'HH:MM', days: number[], graceMin, active, createdAt, editCount }` |
+| `plans` | `id, active` | `{ id, place, cueDetail?, firstAction, partId? (M3), time: 'HH:MM', days: number[], graceMin, active, createdAt, editCount }` |
 | `kv` | `key` | `{ key, value }` |
 
-`kv` keys: `schemaVersion`, `onboarded`, `theme: 'system' | 'light' | 'dark'`, `weekStartsOn`, `checkinDay`, `checkinDismissedWeek`, `lastExportAt`, `persistRequested`.
+`kv` keys: `schemaVersion`, `onboarded`, `theme: 'system' | 'light' | 'dark'`, `weekStartsOn`, `checkinDay`, `checkinDismissedWeek`, `lastExportAt`, `persistRequested`, `brainStill: 'still' | 'moving'` (§16.8).
+
+Version 1 (shipped in M1) had a `taskTypes` table in place of `parts`. The version 1 to 2 upgrade is in §16.3.
 
 On first open, the defaults in §9 are seeded in one transaction with `builtIn: true`. Built-in items can be edited and disabled, but not deleted (deleting would orphan history labels and break the generic fallback).
 
@@ -311,11 +324,11 @@ On first open, the defaults in §9 are seeded in one transaction with `builtIn: 
 ```json
 {
   "format": "arohexis-export",
-  "version": 1,
+  "version": 2,
   "exportedAt": "2026-11-11T09:00:00.000Z",
   "app": { "name": "Arohexis", "build": "<git sha>" },
   "data": {
-    "feelings": [], "responses": [], "taskTypes": [], "obstacles": [],
+    "feelings": [], "responses": [], "parts": [], "obstacles": [],
     "plans": [], "settings": {}, "events": []
   }
 }
@@ -328,7 +341,7 @@ On first open, the defaults in §9 are seeded in one transaction with `builtIn: 
 
 **Import:**
 1. Parse the file and validate it with Valibot.
-2. A `version` newer than supported is refused with a plain message. An older one is migrated.
+2. A `version` newer than supported is refused with a plain message. An older one is migrated: a version 1 file, which has `taskTypes`, becomes `parts` as in §16.3.
 3. A preview shows counts ("312 events, 4 plans, 6 feelings").
 4. On confirmation, everything is **replaced** in one Dexie transaction, and a failure changes nothing.
 5. Before replacing, the user is offered "Export current data first".
@@ -345,9 +358,10 @@ Merging imports is out of scope for v1.
   - the start rate per attempt rises from about 55% to about 80%;
   - hours cluster around 08–11, 14–16 and 20–22;
   - the feeling mix shifts from anxious and overwhelmed toward bored and unsure;
-  - about 60% of starts are tagged;
+  - about 80% of starts are tagged to a part;
   - about 85% of plan occurrences start, and most slipped ones are repaired;
-  - weekly check-ins rise from about 2.5 to about 4.6, with noise, clamped to 1–7.
+  - weekly check-ins rise from about 2.5 to about 4.6, with noise, clamped to 1–7;
+  - the parts, plan line strengths and on-cue starts that fill Brain space are in §16.11.
 - **Safeguards:**
   - A persistent "Demo" ribbon is shown, with Exit and Reset.
   - Every write in demo mode goes to `arohexis-demo` only.
@@ -378,7 +392,8 @@ Layout: a single column, at most 34rem wide on desktop. The primary action sits 
 | `/checkin` | Weekly check-in |
 | `/settings` | Settings |
 | `/settings/feelings` | Feelings and responses |
-| `/settings/lists` | Task types and obstacles |
+| `/settings/lists` | Obstacles |
+| `/settings/parts` | Parts |
 | `/settings/data` | Data |
 | `/about` | About |
 | `/welcome` | Onboarding |
@@ -388,6 +403,7 @@ The lapse repair is a sheet over Home.
 **Keyboard (desktop):** `S` opens the stuck flow from anywhere, except while typing in a field. On the Feeling screen, number keys `1`–`9` pick feelings in the order shown. `Enter` activates the primary action. `Esc` goes back or dismisses.
 
 ### 8.1 Home (`/`)
+- **Layout:** the Brain space plate sits above everything else, then the card, then the button. The visible heading becomes visually hidden. Home never scrolls at 375×667. See §16.10.
 - **Primary:** a large **I'm stuck** button.
 - **Above it, at most one card**, in this priority order:
   1. lapse to repair;
@@ -418,7 +434,8 @@ The lapse repair is a sheet over Home.
   - A 2:00 countdown, computed from `start.at`, so it stays correct after the phone locks or the app is backgrounded.
   - Screen readers hear `aria-live="polite"` announcements at 1:00 and 0:00 only.
 - **Undo:** a visible **Undo** for the first 10 s. After that it becomes a quiet "Remove this start" link that stays while the Started screen is open (so there's no hard time limit; see §11.3). Either one emits `start.undone`, returns Home, and shows "Start removed."
-- **Task tag:** an optional chip row titled "What is it?" with the enabled task types. One tap emits `start.tagged`, and the choice can be changed while on screen (the latest tag wins in the projection).
+- **Brain space strip:** a strip plate at most 80 px tall shows the burst and the reveal during the timer. See §16.10 and §16.8.
+- **Part tag:** an optional chip row titled "What is it?" with the enabled parts, in one row that scrolls sideways. One tap emits `start.tagged`, and the choice can be changed while on screen (the latest tag wins in the projection).
 - **At 0:00:** "Two minutes done." with **Keep going** and **Done for now** as equal-weight buttons, plus the line "Either is good." Both emit `timer.closed`.
 - **Ending early:** "Done for now" is available at any time and records `elapsedSec`.
 
@@ -429,7 +446,8 @@ The lapse repair is a sheet over Home.
   - days (seven toggles, with presets for Weekdays, Every day, and Weekends);
   - place (text);
   - cue detail (optional text);
-  - first action (text, with the hint "Something your hands can do in under two minutes").
+  - first action (text, with the hint "Something your hands can do in under two minutes");
+  - part (optional, from M3; see §16.3).
 - **Live preview:** the if-then sentence updates as the user types.
 - **Add to calendar:** downloads `<plan>.ics`. The help text explains:
   - it is a one-time import;
@@ -461,26 +479,27 @@ The sections, in order:
 1. **Starts per week:** a column chart of all weeks, with this week highlighted in the accent color and no goal line.
 2. **When you start:** a 24-cell hour strip.
 3. **Feelings:** starts by feeling, as horizontal bars.
-4. **Task types:** including Untagged.
+4. **Parts:** including "No part".
 5. **What helps:** for each feeling, its responses with "shown N · led to a start M", plus "early days" when N < 5.
 6. **How automatic starting feels:** a line chart of weekly check-in means on the 1–7 axis.
 
-Every chart has a visually hidden data table and a one-sentence text summary. Colors are neutral, never red or green. With fewer than 3 starts, a calm empty state reads "Insights appear after a few starts."
+Every chart has a visually hidden data table and a one-sentence text summary. Colors are neutral, never red or green, and charts never use part colors (§16.7). With fewer than 3 starts, a calm empty state reads "Insights appear after a few starts."
 
 ### 8.10 Settings
 - **Feelings and responses:**
   - rename, reorder, enable or disable, and add feelings;
   - edit, add, and disable responses per feeling, with a live word count capped at 40;
   - picking a basis for a new response is optional and defaults to `shrink-the-step`.
-- **Task types and obstacles:** the same list editor.
-- **Preferences:** theme, week start day, check-in day.
+- **Parts** (`/settings/parts`): rename, recolor, enable or disable, and add up to six. Parts are never deleted. See §16.3.
+- **Obstacles:** the same list editor as feelings.
+- **Preferences:** theme, week start day, check-in day, and the **Still** toggle for Brain space (§16.8).
 - **Data:**
   - export and import;
   - last backup;
   - storage persistence status;
   - delete everything;
   - enter or exit demo.
-- **About:** what Arohexis is, the evidence table from §3 with links, the not-medical-advice note, the SRBAI attribution, the version and build.
+- **About:** what Arohexis is, the evidence table from §3 with links, the not-medical-advice note, the SRBAI attribution, the Brain space paragraph (§16.9), the version and build.
 
 ### 8.11 Onboarding (`/welcome`, first run only, at most 3 steps)
 1. "Arohexis helps you practice one thing: starting. When you're stuck, tap the button, name the feeling, and take a two-minute first step." Followed by the not-medical-advice note.
@@ -527,14 +546,15 @@ US English throughout. All copy lives in `src/copy/`.
 | reframe | Rozental et al. 2018 (cognitive techniques used in CBT) |
 | pair-a-reward | Garg et al. 2025 |
 
-### 9.3 Task types
-Writing · Study · Admin & email · Chores · Creative · Other.
+### 9.3 Parts
+Work · Study · Health · Home · Money. Region 6 stays free for the user (§16.3).
 
 ### 9.4 Obstacles
 Timing didn't fit · Low energy · First step felt too big · Something came up · Forgot.
 
 ### 9.5 Copy rules (enforced by `copy.test.ts`)
-- **Banned words**, matched as whole words and case-insensitively across `src/copy/**` and default content: streak, fail, failed, failure, lazy, missed, miss, broke, broken, behind, wasted, should have, must, hurry.
+- **Banned words**, matched as whole words and case-insensitively across `src/copy/**` and default content: streak, fail, failed, failure, lazy, missed, miss, broke, broken, behind, wasted, should have, must, hurry, rewire, rewires, rewired, rewiring, neural, neuron, neurons, synapse, synapses, plasticity, neuroplasticity, fire, fired, firing (§16.9).
+- **Anatomy words** are also banned across `src/**` and `tests/**`, per the list in §16.5.
 - No exclamation marks.
 - Response bodies are 40 words or fewer.
 - The UI never shows a comparison between weeks as a judgement: no "down 3 from last week".
@@ -580,7 +600,7 @@ Timing didn't fit · Low energy · First step felt too big · Something came up 
   - generous space;
   - restrained color, with a single accent reserved for the primary action and the "Started." moment.
 - **Avoid** the generic dashboard look (cards in grids, KPI tiles, gradient charts) and gamification (confetti, badges, streak flames, points).
-- **Visual direction gate.** Before any UI is built, two distinct visual directions for the stuck flow (Home, Feeling, Response, Started) are presented as private Artifacts. The owner picks one. Typefaces, palette and motion character are decided there and recorded in an ADR.
+- **Visual direction gate.** The gate is complete (ADR-018). Brain space's look is gated by the owner's review of the built Home screen (ADR-021). Part colors are data, not accents (§16.7).
 
 ### 11.2 Tokens (`src/design/tokens.css`)
 Two layers of CSS custom properties: primitives (`--ink-900`, `--paper-50`, `--size-5`, …) and semantic tokens (`--color-bg`, `--color-text`, `--color-accent`, `--color-focus`, `--space-stack-lg`, `--motion-calm`, …). Components use semantic tokens only.
@@ -592,9 +612,10 @@ Two layers of CSS custom properties: primitives (`--ink-900`, `--paper-50`, `--s
 - **Type:** a fluid modular scale (`clamp()`), with at most two families (display and text), self-hosted. Body text is at least 17px on mobile. Tabular numbers are used for the timer and counts.
 - **Space:** a 4-px base scale.
 - **Radius:** a small set (`--radius-s`, `--radius-m`, `--radius-pill`).
+- **Plate:** Brain space adds plate tokens (`--plate-bg`, `--plate-dim-point`, `--plate-dim-trace`, `--plate-waiting`, `--plate-core`) and six part colors. They are the same in both themes. See §16.7.
 - **Motion:**
   - `--motion-quick: 120ms`, `--motion-calm: 240ms`, `--motion-slow: 480ms`, with a single standard easing;
-  - no motion is decorative or looping;
+  - no motion is decorative or looping, with one exception: Brain space's state motion (signals along plan lines), which stops with **Still** or while resting (§16.8);
   - under `prefers-reduced-motion: reduce`, transforms are removed and only opacity fades of 120 ms or less remain.
 
 ### 11.3 Accessibility (WCAG 2.2 AA)
@@ -604,9 +625,11 @@ Two layers of CSS custom properties: primitives (`--ink-900`, `--paper-50`, `--s
 - **Screen readers:** the timer announces sparingly. Every chart has a text equivalent. The lapse sheet traps and restores focus.
 - **Zoom:** content reflows at 320 CSS px wide and at 200% zoom.
 - **Language:** `lang="en-US"`; headings in order; landmarks.
+- **Brain space:** the canvas is never needed. A text equivalent carries everything it shows, **Still** is on every plate (2.2.2), and the turn buttons replace dragging (2.5.7). See §16.10.
 
 ## 12. Privacy and security
 - **No network requests after load:** no analytics, no fonts or scripts from third parties, no error reporting service.
+- **Same origin only:** "no network requests" means no requests to other origins. The app's own same-origin chunks are precached, and may be fetched from the origin on the very first visit before the service worker is ready.
 - **Headers** (Cloudflare `_headers`):
   - `Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'`;
   - `Referrer-Policy: no-referrer`;
@@ -621,6 +644,8 @@ Two layers of CSS custom properties: primitives (`--ink-900`, `--paper-50`, `--s
 ## 13. Testing strategy
 
 ### Layers
+
+Brain space adds its own tests in §16.13.
 
 | Layer | Tool | Scope |
 |---|---|---|
@@ -644,7 +669,7 @@ Two layers of CSS custom properties: primitives (`--ink-900`, `--paper-50`, `--s
 **E2E scenarios:**
 1. Stuck flow: at most 3 taps from Home to the timer; no scroll at 375×667; reward visible; count increments.
 2. Undo within 10 s removes the start from the count.
-3. Task tag after the start appears in Insights.
+3. Part tag after the start appears in Insights.
 4. Offline: load, `context.setOffline(true)`, reload, complete the stuck flow. The result is recorded and visible after going back online.
 5. Persistence: data survives a reload and a new page in the same context.
 6. Plans: create a plan, then use `page.clock` to move into the open window (due card, Start now, linked start) and past the grace period (lapse sheet, repair, plan updated).
@@ -657,7 +682,7 @@ Two layers of CSS custom properties: primitives (`--ink-900`, `--paper-50`, `--s
 13. Keyboard-only stuck flow on desktop (`S`, a number key, `Enter`).
 
 ### CI (GitHub Actions, every push and PR)
-1. **`check`:** install, lint, typecheck (app and domain projects), unit, property, storage, and copy tests with the coverage gate, then build. It also checks the bundle against a budget of 150 kB gzip of initial JS.
+1. **`check`:** install, lint, typecheck (app, domain and geometry projects), unit, property, storage, and copy tests with the coverage gate (the geometry gate is lines ≥ 90%), then build. It also checks the bundle against a budget of 150 kB gzip of initial JS.
 2. **`e2e`:** Playwright on all three projects against `vite preview`. The report is uploaded as an artifact.
 3. **`deploy`:**
    - on `main`, only after `check` and `e2e` pass: `wrangler deploy` (secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`);
@@ -674,7 +699,316 @@ Two layers of CSS custom properties: primitives (`--ink-900`, `--paper-50`, `--s
 | Shame creeps into copy over time | Banned-word test in CI; copy review in every UI PR |
 | A lot of setup before anything is usable | Milestones each end in something usable, with the stuck flow first (in `docs/plan.md`, written after this spec is approved) |
 | Library churn (React Router 8, vite-plugin-pwa 2, a pre-1.0 PWA core in the ecosystem) | Exact versions pinned; Dependabot weekly; E2E guards upgrades |
+| Brain space is slow on the iPhone | Canvas 2D with static layers cached, render on demand, a WebKit frame-time guard, and the owner's iPhone check at each UI milestone (§16.6, §16.13) |
+| Resting is read as a loss | One fixed dim step that never goes further, and neutral copy that never calls it a loss (§16.4, §16.9) |
+| The picture is read as a brain claim | The About paragraph, the wording rules, and the banned neuroscience and anatomy words (§16.9, §16.5) |
+| The plate crowds Home or Started at 375×667 | A measured height budget per card, and an E2E test that checks there is no scroll (§16.10, §16.13) |
 
 ## 15. Out of scope for v1, by design
 
 Push notifications (v1.1 candidate, §10), merging imports, multiple devices and sync, an accounts backend, AI features, localization (all copy is already in `src/copy/`, so it could be added later), task lists, completions, and blocking.
+
+## 16. Brain space
+
+Status: **approved** by the owner on 2026-11-12. Decisions: ADR-021 to ADR-034 in [decisions.md](decisions.md). The changes listed in §16.12 have been folded into the sections they name.
+
+Reference material: `docs/reference/brain-space/` (stills and a canvas prototype; the owner adds them in M2 Task 1). Brain space matches the reference's look and behaviour. Its field geometry, the seeded layout of fibres and strands, is reused with neutral names in `src/geometry/field.ts` (the owner's decision on 2026-11-12). None of its other code is reused.
+
+### 16.1 What it is
+
+Brain space is the main visual: a picture of your starts, drawn as a brain made of light on black. Every start leaves light in it. A plan you start on cue draws a line that gets brighter and thicker in steps.
+
+- **It is a picture, not a scan.** The shape is a fixed drawing, the same for everyone, and nothing in it is measured from a body. Arohexis still makes no claim about brain change (§1, §3). About says so (§16.9).
+- **It is cumulative only.** It never shows weeks, comparisons between weeks, streaks, goals or completions.
+- **Dark by default.** A new user sees a field of dim points and faint traces with no outline. The shape comes only from where the points sit.
+
+### 16.2 Concepts
+
+| Term | Meaning |
+|---|---|
+| **Part** | A part of life the user names, such as "Portfolio". It has a colour from a fixed set and a fixed region of the drawing. Part replaces Task type (ADR-023) |
+| **Region** | One of six fixed areas of the drawing. A seventh area, the **core**, holds light that has no part |
+| **On-cue start** | A counted start whose attempt is linked to a plan occurrence: it carries both `planId` and `occurrence`. That covers **Start now** and **I'm stuck on this** (§8.6) and **Yes, I started** (§8.7). Each occurrence counts once |
+| **Plan line** | One line per plan and part. Dashed while the plan has no on-cue start, then solid, growing in steps with on-cue starts |
+| **Start line** | A faint line left in its part by any other counted start. It never grows |
+| **Core spark** | A faint point near the core, left by a counted start that has no part |
+| **Strength** | The step a plan line has reached, from its count of on-cue starts |
+| **Settled** | A start's light settles when a later attempt opens. Until then it is the newest light, and only it can move (§16.4) |
+| **Moving / resting** | Moving while the newest counted start is at most 48 hours old; resting otherwise |
+
+### 16.3 Parts
+
+- **Limits:** at most 6 parts, one per region. Each part has a name (1 to 24 characters), a colour id from 1 to 6 (§16.7), and `enabled`. Each colour id belongs to at most one part. Tokens map colour ids to values, so storage never holds hex.
+- **Regions are fixed.** A part gets the lowest free region when it is created and keeps it for life. Renaming, recolouring or reordering never moves light.
+- **Nothing is deleted.** Parts can be renamed, recoloured and disabled, never deleted. A disabled part leaves the "What is it?" row and the plan editor, and its light stays.
+- **Defaults for a new user:** Work, Study, Health, Home, Money. Region 6 stays free for the user.
+- **Existing data (Dexie version 1 to 2):** each enabled task type except `other-task` becomes a part with the same id and label, taking regions and colour ids in `order`. `other-task` maps to no part, so starts tagged "Other" become core sparks. If more than six would qualify (only possible from a hand-edited import), the first six by `order` become parts and the rest map to no part. Past `start.tagged` events keep their label snapshots.
+- **Tagging:** "What is it?" on Started (§8.4) lists the enabled parts in one row that scrolls sideways. One optional tap tags the start, and the latest tag wins, as today (ADR-005). An untagged start still counts and leaves a core spark.
+- **Plans (M3):** a plan has an optional part. A start made from a plan is tagged with the plan's part automatically, with a `start.tagged` in the same transaction as `start.made`. The user can still change the tag on Started.
+
+### 16.4 Lines, strength and state
+
+A pure projection in `src/domain/brainSpace.ts` decides which lines exist, and each one's part, strength and state. It reads only `Attempt[]` (§6.3), the plans, the parts and `now`.
+
+**Rules:**
+1. Every counted start (`isCountedStart`) leaves light. An undone start's light is removed. Undo is the one way an event removes light, because it corrects the record (ADR-004).
+2. An on-cue start re-fires the line for its plan in its part: there is one plan line per plan and part. `onCueStarts` counts distinct occurrences.
+3. Any other counted start leaves one start line in its part, or a core spark if it has no part.
+4. **A start's part** is `partOfStart(attempt)`: its latest tag. Insights' `startsByPart` uses the same function, so counts agree everywhere. Light places a start by its part when it settles (when a later attempt opens). A tag made after that, which only a stale second tab could send, changes counts but not light.
+5. Plan line strength comes from `onCueStarts`:
+
+| On-cue starts | Strength | Label | Drawn as |
+|---|---|---|---|
+| 0 | waiting | Waiting | dashed pale line with a ring at its end |
+| 1 to 4 | 1 | New | hairline |
+| 5 to 14 | 2 | Repeated | thicker; signals travel it while moving |
+| 15 to 39 | 3 | Steady | thicker, with a faint halo |
+| 40 or more | 4 | Well-worn | thickest, with a halo and a white core |
+
+   Start lines and core sparks are drawn fainter than strength 1 and never change.
+6. **Nothing is removed by time or by new events.**
+   - Apart from undo, appending an event never removes settled light, lowers a strength, or moves settled light or its fibre.
+   - The newest, unsettled light moves only when its own start is re-tagged.
+   - An undone start keeps its fibre reserved and draws nothing, so no other light moves.
+   - A paused plan keeps its line. A paused plan with no on-cue start shows nothing.
+   - Changing a plan's part starts a new line for it in the new part from its next on-cue start. The old line stays where it is.
+   - Deleting everything or importing a backup replaces all data (§7.3). That is the only other way light leaves.
+7. **Moving and resting.** Brain space is moving when the newest counted start, backfilled ones included, is at most 48 hours before `now`. Otherwise it is resting: signals stop and lit light dims by one fixed step, to 85% brightness. It never dims further, however long the rest lasts. One counted start makes it moving again. No copy describes resting as a loss.
+8. **Waiting:** a plan line is waiting while the plan is active and has no on-cue start.
+
+```ts
+export const RESTING_AFTER_MS = 48 * 60 * 60 * 1000;
+export const RESTING_BRIGHTNESS = 0.85;
+export const STRENGTH_STEPS = [1, 5, 15, 40] as const;   // on-cue starts needed for strengths 1–4
+export type Strength = 'waiting' | 1 | 2 | 3 | 4;
+export type BrainLine =
+  | { kind: 'plan'; id: string /* `${planId}:${partId ?? 'core'}` */; planId: string; partId: string | null; onCueStarts: number; strength: Strength; order: number }
+  | { kind: 'start'; id: string /* attemptId */; partId: string | null /* null = core spark */; at: number; order: number; settled: boolean; undone: boolean };
+export type PartLight = { partId: string | null; starts: number; planLines: number; startLines: number };
+export type BrainSpace = { lines: BrainLine[]; parts: PartLight[]; motion: 'moving' | 'resting'; totalStarts: number };
+export function isOnCue(a: Attempt): boolean;              // counted start with planId and occurrence
+export function partOfStart(a: Attempt): string | null;    // latest tag, or null
+export function strengthFor(onCueStarts: number): Strength;
+export function projectBrainSpace(attempts: readonly Attempt[], plans: readonly Plan[], parts: readonly Part[], now: number): BrainSpace;
+```
+
+- `PartLight.starts` counts counted starts with `partOfStart` equal to that part. It is the same number Insights shows.
+- `order` places a line in time: its first on-cue start (or the plan's `createdAt` while waiting) for a plan line, and `start.at` for a start line. Undone starts stay in `lines` with `undone: true`, so fibre assignment never shifts.
+
+### 16.5 Geometry
+
+- **Generated locally from a seed.** `src/geometry/` builds the drawing from a fixed `BRAIN_SEED`, using the mulberry32 PRNG in `src/domain/random.ts`, which the demo generator (M5) also uses. Every device draws the same field. There is no network request, no shipped data file, and no real tractography or scan data (ADR-028).
+- **The field:**
+  - about 670 fibres across the six regions and the core;
+  - each fibre a bundle of about 8 strands of 8 to 22 points, about 83,000 vertices in all;
+  - a point at every strand end, about 6,000 points of light.
+
+  The counts are named constants, checked by tests.
+- **Shape from placement only:** two halves, a central core and a lower rear area. No outline, hull or border is ever drawn around the brain or a part.
+- **Stable assignment:** `assignFibres(lines, field)` maps each line to a fibre in its region, taken in `order`, choosing by a hash of the line id and probing over free fibres. Each region keeps 12 fibres for plan lines.
+- **Overflow:** when a region's start-line fibres are all used, each further start line adds one lit point at the next strand end of the earliest start-line fibre that still has an unlit end, in order. Once every end in the region is lit, further starts add no new visible light there but still count everywhere else.
+- **Shade per line:** each line's colour is a slight shade of its part's colour, set by the line id: hue within ±8° and lightness within ±6 points.
+- **Pulling apart:** each region has a fixed direction it moves in when zooming pulls the parts apart.
+- **No anatomy names anywhere:**
+  - they are kept out of copy, code, identifiers, tests and comments;
+  - regions are `region-1` to `region-6` and `core`, and the two sides are "halves";
+  - the banned list lives in `tests/purity/anatomy.ts`, which the scan skips. It covers: cortex, cortical, lobe, lobes, frontal, parietal, occipital, cerebellum, cerebellar, callosum, cingulum, cingulate, arcuate, fasciculus, uncinate, thalamus, hippocampus, amygdala, brainstem, hemisphere, hemispheres, neuron, neurons, axon, axons, dendrite, dendrites, synapse, synapses, tract, tracts, tractography;
+  - a test matches them as whole words, case-insensitively, across `src/**` and `tests/**`.
+- **Purity:** `src/geometry` has its own `tsconfig.json` (`lib: ["ES2024"]`, `types: []`) and the domain's ESLint bans. It may import from `src/domain` and nothing else. Its coverage gate is lines ≥ 90%, and CI typechecks it like the domain.
+
+### 16.6 Rendering
+
+- **UI only, loaded late.** The renderer lives in `src/app/brain/` and is a lazy chunk, imported after Home's first paint. It is canvas 2D with no library (ADR-029). The initial bundle stays at most 150 kB gzip, and the Brain space chunk at most 30 kB gzip.
+- **Draw order:** the dim field (points and faint traces) with normal blending, then light with additive blending (`lighter`) so crossing lines add up, then waiting lines and rings. Static layers are cached offscreen and redrawn only when the camera or the data changes.
+- **Hairlines:** strength 1 is 0.6 CSS px, rising per §16.4. No outlines around strokes, no gradients on UI, no pastel.
+- **Device pixel ratio** is capped at 2.
+- **Render on demand:** the loop runs only while something moves: signals (moving and not Still), a burst, a reveal, a camera ease or a drag. Otherwise it draws once and stops. It pauses while the page is hidden.
+- **Touch:** the canvas uses `touch-action: none` while the page doesn't scroll. When it does scroll (at 200% zoom, for example), it uses `pan-y`, so a vertical drag scrolls the page, and turning up and down moves to the turn buttons.
+- **Fallback:** if the chunk fails to load, the plate shows the text equivalent (§16.10), and every action still works.
+
+### 16.7 Look and colour
+
+**Plate tokens.** They are the same in both themes (ADR-026).
+
+| Token | Value | Use |
+|---|---|---|
+| `--plate-bg` | `#05060A` | plate background, and the opaque backing behind labels |
+| `--plate-dim-point` | `#8E98AC` | unlit points, alpha 0.05 to 0.5 by depth |
+| `--plate-dim-trace` | `#7C8598` | unlit traces, alpha 0.04 to 0.2 by depth |
+| `--plate-waiting` | `#EEF1F6` | waiting lines and their rings |
+| `--plate-core` | `#9AA3B5` | core sparks |
+
+**Part colours.** Six saturated hues, with no red and no pastel. Ids 1 to 5 start from the reference:
+- 1 cyan `hsl(190 92% 62%)`
+- 2 magenta `hsl(322 92% 66%)`
+- 3 green `hsl(140 82% 58%)`
+- 4 amber `hsl(38 95% 60%)`
+- 5 violet `hsl(262 92% 72%)`
+
+Id 6 is blue `hsl(225 90% 76%)`. M2 Task 6 chose it from two candidates: blue at its starting lightness of 70% fails deuteranopia, and lime `hsl(85 80% 55%)` doesn't pass within ±10 points.
+
+**Checks** (unit tests on the token values):
+- every base part colour is at least 4.5:1 against `--plate-bg`, so labels pass as text;
+- both ends of each colour's shade range are at least 3:1 against `--plate-bg`;
+- `--plate-waiting` is at least 3:1 against `--plate-bg`;
+- base colours stay apart:
+  - CIEDE2000 ΔE of at least 12 between every pair in normal vision;
+  - at least 6 under each of protanopia, deuteranopia and tritanopia, simulated with Machado et al. (2009) at full severity.
+
+  The reference's five colours measure 19.8, 8.6, 8.7 and 6.6 at their closest, in that order (measured in M2 Task 6; an earlier estimate said 13.3, 9.0, 8.6 and 6.6). Shades within one part aren't compared;
+- colour is never the only cue: each part is named on its label, its chip, its card and in the text equivalent (WCAG 1.4.1).
+
+**What Brain space conveys, and where.** Everything Brain space conveys is also in DOM text: the text equivalent and the part card. So the canvas's lines and points are supplementary graphics, not the only carrier of information (WCAG 1.4.11). Start lines are drawn fainter than 3:1 by design. Controls on the plate meet 3:1, and their text meets 4.5:1.
+
+**Part colours are data, not accents.** Chrome keeps ADR-018's single mono accent. Part colours appear only on the plate and as a swatch beside a part's name on its chip and card. Text is never set in a part colour outside the plate; the card heading uses `--color-text`. Insights stays neutral (§8.9).
+
+**Labels** on the plate use Atkinson Hyperlegible Next at weight 600, at least type step −1, on an opaque `--plate-bg` backing.
+
+### 16.8 Motion
+
+§11.2 says no motion is decorative or looping. Brain space adds only motion that carries state or marks an event (ADR-027).
+
+- **State motion:** while Brain space is moving, small signals travel along plan lines of strength 2 or more. They mean "you started in the last 48 hours". Resting stops them.
+- **Event motion:**
+  - **Burst:** when a start is counted on Started, one burst of light from the core, at most 1.8 s, once per start. It is a single rise and fall, never more than one flash in any second, and stays within WCAG 2.3.1's general flash threshold.
+  - **Reveal:** during the two-minute timer, the new light is drawn from the core out to its place. Progress comes from `timerState(start.at, now)`, so it stays right after the phone locks or the page reloads. If the start is re-tagged mid-reveal, the reveal carries on, at the same progress, to the new place. For an on-cue start, the reveal runs a bright pass along the plan's existing line, and a new strength step takes effect when the pass ends.
+  - **Settle:** a small ring settles at the line's end when the reveal finishes.
+  - **Backfilled starts** (**Yes, I started**) have no burst and no reveal, because they aren't made on Started. Their light simply appears, and they count for moving like any start.
+- **Interaction motion:** the camera eases to a tapped part or a zoom step over `--motion-slow`.
+- **Never:** auto-rotation, idle drift, looping decoration, or motion on chrome.
+- **The light exists from the tap** (ADR-004). The reveal only animates it. Leaving Started early or tapping **Done for now** never leaves a partial line: Home always shows it whole.
+- **Still:** a visible toggle on every plate, on Home and on Started, labelled **Still**, with `aria-pressed`, at least 48×48 px.
+  - It stops state and event motion: signals stop, the burst becomes a fade of at most 120 ms, and new light appears whole.
+  - Drag, zoom and the turn buttons still work, and camera moves snap instead of easing.
+  - The choice is stored in `kv.brainStill` as `'still' | 'moving'`. Unset means "follow the system", so it is Still under `prefers-reduced-motion: reduce` and moving otherwise. The same toggle appears in Settings → Preferences.
+  - This meets WCAG 2.2.2 (Pause, Stop, Hide).
+- **Reduced motion:** with `kv.brainStill` unset, Brain space is Still. Fades are opacity only and at most 120 ms. A user who turns Still off has set `'moving'`, and that choice is kept.
+- **Constants:** `EXPLODE_FROM_ZOOM = 1.1`, `UNSELECTED_ALPHA = 0.15`, `ZOOM_MIN = 0.8`, `ZOOM_MAX = 3.2`, `BURST_MS = 1800`, `TURN_STEP_RAD = π/8`.
+
+### 16.9 Copy
+
+All new copy lives in `src/copy/brain.ts` and passes `copy.test.ts`.
+
+- **Summary line**, on the plate: `` `${starts} ${starts === 1 ? 'start' : 'starts'} · ${lines} ${lines === 1 ? 'line' : 'lines'}` ``. "Lines" counts plan lines that aren't waiting, plus start lines; core sparks are not lines. With no starts: `"Your starts will light up here."`
+- **Strength labels:** Waiting, New, Repeated, Steady, Well-worn. Each is shown with its count, as in `"Steady · 18 starts on cue"`. The reference's "Automatic" is not used, because the weekly check-in is the measure of how automatic starting feels.
+- **Motion sentence** in the text equivalent: `"Signals are moving."` or `"Signals are resting. One start sets them moving again."`
+- **Controls:** `"Still"`, `"Zoom in"`, `"Zoom out"`, `"Turn left"`, `"Turn right"`, `"All"`.
+- **Part card:**
+  - the part name as its heading, in the text colour, with a swatch;
+  - `` `${n} starts` ``;
+  - its plan lines with label and count, then `` `${n} start lines` ``;
+  - from M3, each of its plans as a sentence, with **Start now** while an occurrence is open, and otherwise `"Next: 9:00 today"`, `"Next: 9:00 tomorrow"` or `"Next: 9:00 Thursday"` (time formatted as in `planSentence`);
+  - one "What to focus on" line, linked to About.
+- **About paragraph** (M2): "Brain space draws your starts as lines of light in the shape of a brain. It's a picture of your starts, not a scan, and the shape is the same for everyone. Arohexis makes no claim that your brain changes." M4 adds: "How automatic starting feels is what the weekly check-in measures."
+- **Banned words** gain: rewire, rewires, rewired, rewiring, neural, neuron, neurons, synapse, synapses, plasticity, neuroplasticity, fire, fired, firing. The anatomy list (§16.5) also applies to copy.
+
+**What to focus on.** `focusFor(input)` in `src/domain/focus.ts` is pure, and the first rule that matches wins. Its input is the part's plans (with `partId`), its plan lines from `projectBrainSpace`, and `recentLapses(events, now)`. That helper lists plans with an `occurrence.resolved { outcome: 'slipped' }` or a `lapse.repaired` in the last 7 days. Each line ties to a source row of §3 (the brief's "basis"), and three of them are also `Basis` values.
+
+| # | When | Line | §3 source |
+|---|---|---|---|
+| 1 | a plan in this part had a lapse in the last 7 days | "Go easy on the one that didn't happen. In one study, forgiving yourself was associated with less procrastination later." | Wohl et al. 2010 (self-kindness) |
+| 2 | a plan in this part is waiting | "Make the plan's first step small enough to do in two minutes." | Garg et al. 2025 (shrink-the-step) |
+| 3 | a plan line in this part is at strength 2 or more | "Keep the same time and place. A stable cue may help. In one review, habits took a median of about two months to form, and the range was wide." | Singh et al. 2024 |
+| 4 | this part has no plan (from M3) | "An if-then plan, with a set time, place and first step, may help these starts happen." | Gollwitzer & Sheeran 2006 |
+| 5 | otherwise | "When you're stuck here, name the feeling, then pick a first step your hands can do." | Garg et al. 2025 (name-the-feeling) |
+
+Parts are named by the user, so no line gives advice about one kind of part. The reference's lines about studying and money are not used.
+
+### 16.10 Placement and accessibility
+
+**Layout budget at 375×667.** These figures were measured on the M1 build (2026-11-12): about 372 px between Home's heading and **I'm stuck**, and 80 to 94 px free on Started between the chips and **Done for now**.
+
+**Home (§8.1)**, top to bottom: the plate, the one card (if any), **I'm stuck** in the thumb zone, then the quiet links.
+- **What goes on the plate:** the visible heading moves into a visually hidden `h1`. The summary line, the controls (**Still**, zoom, turn) and the parts row all sit on the plate, on its dark tokens, so they cost no height.
+- **Plate height:** it takes all the height left, and at least 200 px at 375×667 with the tallest card and the Demo ribbon showing.
+- **Card budgets:** plan card at most 180 px, check-in card 120, update card 96, Demo ribbon 40.
+- **The stuck flow is unchanged.** Home never scrolls at 375×667, **I'm stuck** stays where it is, and Stuck to timer stays at 3 taps.
+- **Loading:** the renderer loads after **I'm stuck** is on screen. Until then the plate shows the summary line.
+- **Parts row:** an **All** chip and one chip per part with its swatch, 48 px tall, scrolling sideways. A chip does what tapping its part on the plate does.
+- **Tapping a part**, on the plate or its chip: the rest fades to `UNSELECTED_ALPHA`, the camera eases to it, and its card opens as a sheet. The sheet traps focus, Esc closes it, and focus returns, like the lapse sheet.
+- **Navigation:** drag turns. **Turn left** and **Turn right** turn by `TURN_STEP_RAD` (WCAG 2.5.7). Pinch, the wheel, or **Zoom in** and **Zoom out** zoom. Zooming past `EXPLODE_FROM_ZOOM` pulls the regions apart and labels them.
+
+**Started (§8.4):**
+- **A strip plate:** a plate at most 80 px tall sits between "What is it?" and the timer's actions. The camera frames the new light from the core to its place, for the burst and the reveal. **Still** sits in its corner.
+- **"What is it?"** is one row of chips that scrolls sideways, so six parts take one row.
+- **The reward is unchanged:** it keeps its single 240 ms settle, and the burst stays on the strip.
+- **No scrolling:** the screen still doesn't scroll at 375×667, which the existing E2E test checks.
+- **If the strip doesn't fit:** M2 Task 8 decides it from measurement. The strip may shrink to 64 px. Anything smaller goes back to the owner; it never falls back to playing the reveal on Home.
+
+**Accessibility (ADR-033):**
+- **The canvas is never needed.** It is `aria-hidden="true"` and never focusable. Every action is a DOM control: part chips, **Still**, zoom and turn buttons, and the part card.
+- **Text equivalent:** a list inside the plate's region (`role="region"`, `aria-label="Brain space"`), visually hidden except the summary line. For each part it reads, for example, "Portfolio: 30 starts. Plan lines: Steady, 18 starts on cue; New, 3 starts on cue. 9 start lines." Then "No part: 4 starts.", then the motion sentence. It follows the projection and is not announced live.
+- **Targets and focus:** touch targets are at least 48×48 px. Controls on the plate use the dark theme's tokens, including its focus ring (ADR-026).
+- **Keyboard:** Tab reaches the chips and every plate control. Enter or Space activates, and Esc closes the card. While a plate control has focus, ← and → turn, and + and − zoom. `S` still opens the stuck flow.
+- **WCAG:** 2.2.2 is met by **Still**. 2.3.1 is met by one burst under the flash threshold. 2.5.7 is met by the turn buttons. 1.4.1 is met because colour is never alone.
+
+### 16.11 Demo
+
+The 10-week demo fills the brain (ADR-034) and keeps §7.4's bands:
+- **Parts:** 5 named parts (Portfolio, Studies, Fitness, Money, Home), with about 80% of starts tagged.
+- **Plans:** the 3 plans of §7.4, started in turn, with on-cue starts at about 85% of occurrences:
+  - weekdays from week 1, about 42 on-cue starts, so Well-worn;
+  - Monday, Wednesday and Friday from week 3, about 20, so Steady;
+  - Tuesday and Thursday from week 6, about 7, so Repeated.
+- **Weekly totals:** about 6 starts in week 1 and 15 in week 10.
+- **What you see:** every part has light, every strength from New to Well-worn appears, and the generator places a start on `endDate` so a demo entered today is moving.
+- **Nothing is faked for the picture:** it is the same projection over the generated events.
+
+### 16.12 Changes made to earlier sections (folded in on 2026-11-12)
+
+| Section | Change |
+|---|---|
+| §1 | "task types" becomes "parts". Add: "Brain space, the main visual, draws your starts as light in the shape of a brain. It's a picture, not a scan." |
+| §2 | Add success criteria: Brain space turns without visible stutter on the owner's iPhone (manual check at each UI milestone, plus the WebKit frame-time guard); every Brain space action works with the renderer blocked (E2E) |
+| §5.1 | Add a Renderer row: canvas 2D, no library (ADR-029) |
+| §5.2 | Add `src/domain/brainSpace.ts`, `focus.ts` and `random.ts`, `src/geometry/` and `src/app/brain/`. `defaults.ts` holds default parts; `metrics.ts` has `startsByPart`. Dependency rule: `app` may import `geometry`; `geometry` may import `domain` only |
+| §6.1 | Task type becomes Part. Add the terms in §16.2 |
+| §6.2 | `start.tagged.taskTypeId` now holds a part id. The field name is kept so old events and backups need no rewrite. Plan starts are tagged with the plan's part in the same transaction (M3) |
+| §6.3 | `Attempt.taskType` becomes `Attempt.part` (latest tag wins, unchanged) |
+| §6.4 | `startsByTaskType` becomes `startsByPart`, using `partOfStart`, with "No part" in place of "Untagged" |
+| §6.5 | `ConfigStore` returns `parts` in place of `taskTypes` |
+| §7.1 | Version 2: a `parts` table (`id, order`; `{ id, label, order, enabled, colour: 1–6, region: 1–6 }`) replaces `taskTypes`. `plans` gains `partId?` (M3). `kv` gains `brainStill` |
+| §7.3 | Export `version: 2`, with `parts` in place of `taskTypes`. Version 1 files migrate on import per §16.3 |
+| §7.4 | Demo per §16.11 |
+| §8 routes | `/settings/lists` keeps obstacles. Add `/settings/parts` |
+| §8.1 | Home per §16.10. The visible heading becomes visually hidden |
+| §8.4 | Started per §16.10. "What is it?" lists parts in one sideways-scrolling row |
+| §8.5 | The plan editor gains an optional part (M3) |
+| §8.9 | Section 4 becomes "Parts", including "No part". Charts stay neutral, with no part colours |
+| §8.10 | Settings → Parts: rename, colour, enable, add up to six. Preferences gains Still. About gains the paragraph in §16.9 |
+| §9.3 | Default parts (§16.3) replace the default task types |
+| §9.5 | Add the banned words in §16.9 and the anatomy list in §16.5 |
+| §11.1 | The direction gate is complete (ADR-018). Brain space's gate is the owner's review of the built Home screen (ADR-021). Part colours are data, not accents |
+| §11.2 | Motion per §16.8: the one exception to "no looping motion" is Brain space's state motion, which stops with Still or while resting. Add the plate tokens |
+| §11.3 | Add the text equivalent, Still on every plate, and the turn buttons (2.5.7) |
+| §12 | The CSP stays exactly as written. "No network requests after load" means no requests to other origins. The app's own same-origin chunks are precached, and may be fetched from the origin on the very first visit before the service worker is ready |
+| §13 | Add the tests in §16.13. Scenario 3 tags a part. CI typechecks `src/geometry` and gates its coverage at lines ≥ 90% |
+| §14 | Add the risks: frame rate on the iPhone; resting read as a loss; the picture read as a brain claim; the plate's height at 375×667 |
+
+### 16.13 Tests
+
+- **Domain properties.** These are over realistic flows, where tags and undos come only from an attempt's own Started screen:
+  - light adds up: on-cue starts plus start lines plus core sparks equal counted starts;
+  - undone starts draw nothing and keep their fibre;
+  - no event moves or removes another attempt's light, or any settled light, except by undo;
+  - only on-cue starts change a plan line's strength, and each occurrence counts once;
+  - moving exactly when the newest counted start is at most 48 hours before `now`;
+  - `PartLight.starts` equals `startsByPart`;
+  - a unit test pins the two-tab case: a tag on a settled attempt changes counts and not light.
+- **Geometry:** the same seed gives the same field (checked by hash); counts stay within bounds; every region has fibres and 12 reserved for plans; assignment is stable when lines are appended; overflow lights ends in order and removes nothing.
+- **Tokens:** the checks in §16.7.
+- **Copy:** new copy passes; the anatomy ban across `src/**` and `tests/**`; the new banned words.
+- **E2E**, WebKit iPhone first:
+  - the stuck flow is still 3 taps with no scroll at 375×667, with the plate, the tallest card and the Demo ribbon showing;
+  - Started doesn't scroll with six parts and the strip;
+  - **Still** toggles on both plates, survives a reload, and stops the render loop (the plate's `data-motion` reads `still`);
+  - reduced motion with nothing set starts Still;
+  - the text equivalent's counts match a known set of events;
+  - a part chip opens the card with focus trapped, and Esc returns focus;
+  - the turn and zoom buttons work without a pointer drag;
+  - offline, the renderer chunk is precached and Brain space draws;
+  - with the chunk blocked, every action still works;
+  - zero CSP violations with the renderer running;
+  - axe on Home and Started with the plate, in light and dark.
+- **Performance guard:** on the WebKit iPhone preset, a Playwright check drags the plate for 5 s and fails if the mean draw time exceeds the threshold set in M2 Task 2 (ADR-029). The owner checks the real iPhone at each UI milestone's acceptance.
+- **Bundle:** initial JS stays at most 150 kB gzip, and the Brain space chunk at most 30 kB gzip.

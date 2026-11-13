@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import rawTokensCss from './tokens.css?raw';
 import rawGlobalCss from './global.css?raw';
 import { contrastRatio } from './contrast';
+import { hslToHex } from './colour';
+import { PART_COLOURS, PLATE } from './partColours';
 
 // Prettier prefers single quotes in selectors; compare without caring which.
 const tokensCss = rawTokensCss.replaceAll('"', "'");
@@ -236,5 +238,44 @@ describe('global.css', () => {
     const block = blockAfter(globalCss, ':focus-visible');
     expect(block).toMatch(/outline:\s*2px solid var\(--color-focus\)/);
     expect(block).toMatch(/outline-offset:\s*3px/);
+  });
+});
+
+describe('plate tokens', () => {
+  it('mirror partColours.ts', () => {
+    expect(light['--plate-bg']!.toLowerCase()).toBe(PLATE.bg.toLowerCase());
+    expect(light['--plate-dim-point']!.toLowerCase()).toBe(PLATE.dimPoint.toLowerCase());
+    expect(light['--plate-dim-trace']!.toLowerCase()).toBe(PLATE.dimTrace.toLowerCase());
+    expect(light['--plate-waiting']!.toLowerCase()).toBe(PLATE.waiting.toLowerCase());
+    expect(light['--plate-core']!.toLowerCase()).toBe(PLATE.core.toLowerCase());
+    for (const id of [1, 2, 3, 4, 5, 6] as const) {
+      const { h, s, l } = PART_COLOURS[id];
+      expect(light[`--part-${id}`], `--part-${id}`).toBe(`hsl(${h} ${s}% ${l}%)`);
+      expect(hslToHex({ h, s, l })).toMatch(/^#[0-9a-f]{6}$/);
+    }
+  });
+
+  it('are declared only outside the theme blocks', () => {
+    expect(attrDarkBlock).not.toMatch(/--plate-|--part-/);
+    expect(mediaDarkBlock).not.toMatch(/--plate-|--part-/);
+  });
+
+  it('.plate-scope equals the dark block', () => {
+    const scope = declarations(blockAfter(tokensCss, '.plate-scope'));
+    expect(Object.keys(scope).length).toBeGreaterThan(10);
+    expect(scope).toEqual(dark);
+  });
+
+  it('.plate-scope sets its own text colour, so descendants do not inherit the light theme', () => {
+    expect(blockAfter(tokensCss, '.plate-scope')).toMatch(/(^|[\s;])color:\s*var\(--color-text\)/);
+  });
+});
+
+describe('global.css utilities', () => {
+  it('has a .visually-hidden class', () => {
+    const block = blockAfter(globalCss, '.visually-hidden');
+    expect(block).toMatch(/position:\s*absolute/);
+    expect(block).toMatch(/clip-path:\s*inset\(50%\)|clip:\s*rect/);
+    expect(block).toMatch(/width:\s*1px/);
   });
 });

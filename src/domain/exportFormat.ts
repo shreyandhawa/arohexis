@@ -1,10 +1,11 @@
 import * as v from 'valibot';
 import type { Config } from './config';
 import type { AppEvent } from './events';
+import { migrateTaskTypes, validateParts } from './parts';
 import { localDate } from './week';
 
 export const EXPORT_FORMAT = 'arohexis-export';
-export const EXPORT_VERSION = 1;
+export const EXPORT_VERSION = 2;
 
 /** User-facing import messages. They live here because the domain cannot import src/copy. */
 export const EXPORT_MESSAGES = {
@@ -29,6 +30,16 @@ const basis = v.picklist([
   'reframe',
   'pair-a-reward',
 ]);
+
+const colourOrRegion = v.picklist([1, 2, 3, 4, 5, 6]);
+const part = v.strictObject({
+  id: v.string(),
+  label: v.string(),
+  order: v.number(),
+  enabled: v.boolean(),
+  colour: colourOrRegion,
+  region: colourOrRegion,
+});
 
 const listItem = v.strictObject({
   id: v.string(),
@@ -109,50 +120,76 @@ const eventSchema = v.variant('type', [
   }),
 ]);
 
-const exportSchema = v.strictObject({
+const dataEntries = {
+  feelings: v.array(v.strictObject({ ...listItem.entries, builtIn: v.boolean() })),
+  responses: v.array(
+    v.strictObject({
+      id: v.string(),
+      feelingId: v.string(),
+      body: v.string(),
+      basis,
+      enabled: v.boolean(),
+      order: v.number(),
+      builtIn: v.boolean(),
+    }),
+  ),
+  obstacles: v.array(listItem),
+  plans: v.array(
+    v.strictObject({
+      id: v.string(),
+      place: v.string(),
+      cueDetail: v.exactOptional(v.string()),
+      firstAction: v.string(),
+      time: v.string(),
+      days: v.array(weekDay),
+      graceMin: v.number(),
+      active: v.boolean(),
+      createdAt: v.number(),
+      editCount: v.number(),
+      partId: v.exactOptional(v.string()),
+    }),
+  ),
+  events: v.array(eventSchema),
+};
+const settingsEntries = {
+  theme: v.picklist(['system', 'light', 'dark']),
+  weekStartsOn: weekDay,
+  checkinDay: weekDay,
+  checkinDismissedWeek: v.exactOptional(v.string()),
+  lastExportAt: v.exactOptional(v.number()),
+  persistRequested: v.boolean(),
+  onboarded: v.boolean(),
+};
+
+const envelopeEntries = {
   format: v.literal(EXPORT_FORMAT),
   version: v.pipe(v.number(), v.integer(), v.minValue(1)),
   exportedAt: v.string(),
   app: v.strictObject({ name: v.literal('Arohexis'), build: v.string() }),
+};
+
+const exportSchemaV2 = v.strictObject({
+  ...envelopeEntries,
   data: v.strictObject({
-    feelings: v.array(v.strictObject({ ...listItem.entries, builtIn: v.boolean() })),
-    responses: v.array(
-      v.strictObject({
-        id: v.string(),
-        feelingId: v.string(),
-        body: v.string(),
-        basis,
-        enabled: v.boolean(),
-        order: v.number(),
-        builtIn: v.boolean(),
-      }),
-    ),
-    taskTypes: v.array(listItem),
-    obstacles: v.array(listItem),
-    plans: v.array(
-      v.strictObject({
-        id: v.string(),
-        place: v.string(),
-        cueDetail: v.exactOptional(v.string()),
-        firstAction: v.string(),
-        time: v.string(),
-        days: v.array(weekDay),
-        graceMin: v.number(),
-        active: v.boolean(),
-        createdAt: v.number(),
-        editCount: v.number(),
-      }),
+    ...dataEntries,
+    parts: v.pipe(
+      v.array(part),
+      v.check((parts) => validateParts(parts).length === 0),
     ),
     settings: v.strictObject({
-      theme: v.picklist(['system', 'light', 'dark']),
-      weekStartsOn: weekDay,
-      checkinDay: weekDay,
-      checkinDismissedWeek: v.exactOptional(v.string()),
-      lastExportAt: v.exactOptional(v.number()),
-      persistRequested: v.boolean(),
-      onboarded: v.boolean(),
+      ...settingsEntries,
+      brainStill: v.exactOptional(v.picklist(['still', 'moving'])),
     }),
-    events: v.array(eventSchema),
+  }),
+});
+
+/** Version 1 (M1): `taskTypes` in place of `parts`, and no `brainStill`. */
+const exportSchemaV1 = v.strictObject({
+  ...envelopeEntries,
+  data: v.strictObject({
+    ...dataEntries,
+    taskTypes: v.array(listItem),
+    settings: v.strictObject(settingsEntries),
   }),
 });
 
@@ -179,11 +216,24 @@ function isNewerVersion(input: unknown): boolean {
   );
 }
 
-/** Validates untrusted JSON. Never throws. */
+/** Validates untrusted JSON. Never throws. Version 1 files migrate to version 2 (spec §16.3). */
 export function parseExport(input: unknown): ParseResult {
   if (isNewerVersion(input)) return { ok: false, message: EXPORT_MESSAGES.newerVersion };
-  const result = v.safeParse(exportSchema, input);
-  if (!result.success) return { ok: false, message: EXPORT_MESSAGES.notABackup };
+  const notABackup: ParseResult = { ok: false, message: EXPORT_MESSAGES.notABackup };
+  const isV1 = (input as { version?: unknown } | null)?.version === 1;
+  if (isV1) {
+    const result = v.safeParse(exportSchemaV1, input);
+    if (!result.success) return notABackup;
+    const { taskTypes, ...rest } = result.output.data;
+    const parts = migrateTaskTypes(taskTypes);
+    if (validateParts(parts).length > 0) return notABackup;
+    return {
+      ok: true,
+      file: { ...result.output, version: EXPORT_VERSION, data: { ...rest, parts } },
+    };
+  }
+  const result = v.safeParse(exportSchemaV2, input);
+  if (!result.success) return notABackup;
   return { ok: true, file: result.output };
 }
 

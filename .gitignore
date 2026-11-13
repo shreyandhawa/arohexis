@@ -36,3 +36,9 @@ playwright/.cache/
 .vscode/*
 !.vscode/extensions.json
 *.swp
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Lead-managed parallel worktrees (M2)
+.worktrees/

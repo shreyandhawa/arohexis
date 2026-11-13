@@ -13,7 +13,7 @@ test('home shows one large stuck button', async ({ page }) => {
 test('S opens the stuck flow', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'keyboard shortcut is desktop only');
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1 })).toBeAttached();
   await page.keyboard.press('s');
   await expect(page).toHaveURL(/\/stuck$/);
 });
@@ -53,7 +53,7 @@ for (const scheme of ['light', 'dark'] as const) {
   test(`home, settings and about are accessible in ${scheme}`, async ({ page }) => {
     await setTheme(page, scheme);
     await page.goto('/');
-    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 })).toBeAttached();
     await expectAccessible(page);
     await page.goto('/settings');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
@@ -141,6 +141,6 @@ test('the install note goes away once the database has data', async ({ page }, t
 test('other browsers do not see the install note', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'iphone', 'iOS Safari shows it');
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1 })).toBeAttached();
   await expect(page.getByText(/add Arohexis to your Home Screen/)).toHaveCount(0);
 });

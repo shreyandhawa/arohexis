@@ -1,5 +1,5 @@
 import { findAttempt, isCountedStart } from './attempts';
-import type { Feeling, FeelingResponse, ListItem } from './config';
+import type { Feeling, FeelingResponse, Part } from './config';
 import { createEvent } from './events';
 import type { AppEvent, AttemptOpened, EventDeps, ResponseShown } from './events';
 import { pickResponse } from './matcher';
@@ -77,15 +77,15 @@ export function tagStart(
   deps: EventDeps,
   attemptEvents: readonly AppEvent[],
   attemptId: string,
-  taskType: ListItem,
+  part: Pick<Part, 'id' | 'label'>,
 ): AppEvent[] {
   const a = findAttempt(attemptEvents, attemptId);
   if (!a || !isCountedStart(a)) return [];
   return [
     createEvent(deps, 'start.tagged', {
       attemptId,
-      taskTypeId: taskType.id,
-      label: taskType.label,
+      taskTypeId: part.id,
+      label: part.label,
     }),
   ];
 }

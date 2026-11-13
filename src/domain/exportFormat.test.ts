@@ -1,6 +1,8 @@
 import * as fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_SETTINGS } from './config';
+import { DEFAULT_PARTS } from './defaults';
+import { migrateTaskTypes, validateParts } from './parts';
 import {
   EXPORT_FORMAT,
   EXPORT_MESSAGES,
@@ -118,7 +120,7 @@ const EVERY_EVENT: AppEvent[] = [
 const BASE: ExportData = {
   feelings: [],
   responses: [],
-  taskTypes: [],
+  parts: [],
   obstacles: [],
   plans: [],
   settings: { ...DEFAULT_SETTINGS },
@@ -170,6 +172,84 @@ describe('export format', () => {
     expect(EXPORT_MESSAGES.newerVersion).toBe(
       'This backup is from a newer version of Arohexis. Update the app, then try again.',
     );
+  });
+
+  it('rejects version 3 with the newer-version message', () => {
+    expect(parseExport(file({ version: 3 }))).toEqual({
+      ok: false,
+      message: EXPORT_MESSAGES.newerVersion,
+    });
+  });
+
+  it('parseExport migrates a version 1 backup', () => {
+    const taskTypes = [
+      { id: 'writing', label: 'Writing', order: 1, enabled: true },
+      { id: 'study', label: 'Study', order: 2, enabled: true },
+      { id: 'admin', label: 'Admin & email', order: 3, enabled: true },
+      { id: 'chores', label: 'Chores', order: 4, enabled: true },
+      { id: 'creative', label: 'Creative', order: 5, enabled: true },
+      { id: 'other-task', label: 'Other', order: 6, enabled: true },
+    ];
+    const v1Base: Partial<ExportData> = { ...BASE };
+    delete v1Base.parts;
+    const v1 = JSON.parse(
+      JSON.stringify({
+        ...buildExport(BASE, META),
+        version: 1,
+        data: { ...v1Base, taskTypes, events: EVERY_EVENT },
+      }),
+    ) as unknown;
+    const r = parseExport(v1);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.file.version).toBe(2);
+    expect(r.file.data.parts).toEqual(migrateTaskTypes(taskTypes));
+    expect(r.file.data).not.toHaveProperty('taskTypes');
+    expect(r.file.data.events).toEqual(EVERY_EVENT);
+    expect(r.file.data.settings).not.toHaveProperty('brainStill');
+    const broken = JSON.parse(
+      JSON.stringify({ ...(v1 as object), data: { events: [] } }),
+    ) as unknown;
+    expect(parseExport(broken)).toEqual({ ok: false, message: EXPORT_MESSAGES.notABackup });
+  });
+
+  it.each([
+    ['an empty label', [{ id: 'a', label: '', order: 1, enabled: true }]],
+    ['a 30-character label', [{ id: 'a', label: 'x'.repeat(30), order: 1, enabled: true }]],
+    [
+      'a duplicate id',
+      [
+        { id: 'a', label: 'A', order: 1, enabled: true },
+        { id: 'a', label: 'B', order: 2, enabled: true },
+      ],
+    ],
+  ])('a version 1 backup with %s imports with valid parts', (_name, taskTypes) => {
+    const v1Base: Partial<ExportData> = { ...BASE };
+    delete v1Base.parts;
+    const r = parseExport(
+      JSON.parse(
+        JSON.stringify({
+          ...buildExport(BASE, META),
+          version: 1,
+          data: { ...v1Base, taskTypes },
+        }),
+      ),
+    );
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(validateParts(r.file.data.parts)).toEqual([]);
+      expect(r.file.data.parts.length).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('rejects invalid parts and a bad brainStill', () => {
+    const dup = DEFAULT_PARTS.map((p) => ({ ...p, colour: 1 }));
+    expect(parseExport(file({}, { parts: dup })).ok).toBe(false);
+    expect(parseExport(file({}, { parts: [{ ...DEFAULT_PARTS[0], colour: 9 }] })).ok).toBe(false);
+    expect(parseExport(file({}, { settings: { ...DEFAULT_SETTINGS, brainStill: 'x' } })).ok).toBe(
+      false,
+    );
+    expect(parseExport(file({}, { parts: DEFAULT_PARTS })).ok).toBe(true);
   });
 
   it('rejects a file that is not an Arohexis backup', () => {

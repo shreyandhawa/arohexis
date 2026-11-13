@@ -17,8 +17,18 @@ export type FeelingResponse = {
   order: number;
   builtIn: boolean;
 };
-/** Task types and obstacles. */
+/** Obstacles (and M1's task types, which only the migration reads). */
 export type ListItem = { id: string; label: string; order: number; enabled: boolean };
+export type ColourId = 1 | 2 | 3 | 4 | 5 | 6;
+export type RegionId = 1 | 2 | 3 | 4 | 5 | 6;
+export type Part = {
+  id: string;
+  label: string;
+  order: number;
+  enabled: boolean;
+  colour: ColourId;
+  region: RegionId;
+};
 export type Plan = {
   id: string;
   place: string;
@@ -30,6 +40,8 @@ export type Plan = {
   active: boolean;
   createdAt: number;
   editCount: number;
+  /** Set from M3. */
+  partId?: string;
 };
 export type Settings = {
   theme: 'system' | 'light' | 'dark';
@@ -39,6 +51,8 @@ export type Settings = {
   lastExportAt?: number;
   persistRequested: boolean;
   onboarded: boolean;
+  /** Unset follows the system's reduced-motion setting. */
+  brainStill?: 'still' | 'moving';
 };
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
@@ -50,10 +64,10 @@ export const DEFAULT_SETTINGS: Settings = {
 export type Config = {
   feelings: Feeling[];
   responses: FeelingResponse[];
-  taskTypes: ListItem[];
+  parts: Part[];
   obstacles: ListItem[];
   plans: Plan[];
   settings: Settings;
 };
-/** Extended in M2 and M5. */
-export type ConfigPatch = { settings?: Partial<Settings> };
+/** Parts are upserted by id. Extended by later milestones: plans (M3), import (M5). */
+export type ConfigPatch = { settings?: Partial<Settings>; parts?: readonly Part[] };

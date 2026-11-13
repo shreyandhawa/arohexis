@@ -12,6 +12,8 @@ import { useAttempt } from '../hooks/useAttempt';
 import { useConfig } from '../hooks/useConfig';
 import { useNow } from '../hooks/useNow';
 import { useStartsThisWeek } from '../hooks/useStartsThisWeek';
+import { PlateBoundary } from '../plate/PlateBoundary';
+import { Strip } from '../plate/Strip';
 import styles from './Started.module.css';
 
 const TICK_MS = 250;
@@ -42,9 +44,7 @@ export function Started() {
 
   const startAt = attempt.start.at;
   const { remainingSec, done } = timerState(startAt, now);
-  const taskTypes = (config?.taskTypes ?? [])
-    .filter((t) => t.enabled)
-    .sort((a, b) => a.order - b.order);
+  const parts = (config?.parts ?? []).filter((p) => p.enabled).sort((a, b) => a.order - b.order);
 
   // Spoken announcements change only at one minute left and at zero.
   const status = done ? copy.timerDone : remainingSec <= WARNING_SEC ? copy.oneMinuteLeft : '';
@@ -66,10 +66,10 @@ export function Started() {
     void navigate('/', { replace: true, ...(notice && { state: { notice } }) });
   }
 
-  async function onTag(taskTypeId: string) {
+  async function onTag(partId: string) {
     setFailed(false);
     try {
-      await tag(deps, attemptId, taskTypeId);
+      await tag(deps, attemptId, partId);
     } catch (error) {
       console.error(error);
       setFailed(true);
@@ -100,17 +100,17 @@ export function Started() {
       <div className={styles['tags']}>
         <h2 className={styles['tagsTitle']}>{copy.tagsTitle}</h2>
         <div className={styles['chips']}>
-          {taskTypes.map((t) => (
-            <Chip
-              key={t.id}
-              pressed={attempt.taskType?.id === t.id}
-              onClick={() => void onTag(t.id)}
-            >
-              {t.label}
+          {parts.map((p) => (
+            <Chip key={p.id} pressed={attempt.part?.id === p.id} onClick={() => void onTag(p.id)}>
+              {p.label}
             </Chip>
           ))}
         </div>
       </div>
+
+      <PlateBoundary>
+        <Strip attempt={attempt} />
+      </PlateBoundary>
 
       <div className={styles['actions']}>
         {done && (

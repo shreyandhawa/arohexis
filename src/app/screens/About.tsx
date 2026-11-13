@@ -7,6 +7,10 @@ export function About() {
       <h1 className={styles['title']}>{about.title}</h1>
       <p>{about.intro}</p>
       <p className={styles['note']}>{about.notMedicalAdvice}</p>
+      <h2 id="brain-space" className={styles['subtitle']}>
+        {about.brainSpaceTitle}
+      </h2>
+      <p>{about.brainSpace}</p>
       <h2 className={styles['subtitle']}>{about.evidenceTitle}</h2>
       <p className={styles['muted']}>{about.evidenceIntro}</p>
       <ul className={styles['evidence']}>

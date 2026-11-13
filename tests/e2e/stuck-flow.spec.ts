@@ -117,15 +117,29 @@ test('remove this start after ten seconds', async ({ page }) => {
   await expect(page.getByText('Start removed.')).toBeVisible();
 });
 
+test.describe('parts row at 375px', () => {
+  test.use({ viewport: { width: 375, height: 667 } });
+
+  test('the parts row is one line', async ({ page }) => {
+    await toStarted(page);
+    const tops = await page
+      .getByRole('heading', { name: 'What is it?' })
+      .locator('xpath=following-sibling::div[1]/button')
+      .evaluateAll((chips) => chips.map((c) => (c as HTMLElement).offsetTop));
+    expect(tops.length).toBe(5);
+    expect(new Set(tops).size).toBe(1);
+  });
+});
+
 test('tags the task', async ({ page }) => {
   await toStarted(page);
-  const writing = page.getByRole('button', { name: 'Writing' });
+  const work = page.getByRole('button', { name: 'Work' });
   const study = page.getByRole('button', { name: 'Study' });
-  await writing.click();
-  await expect(writing).toHaveAttribute('aria-pressed', 'true');
+  await work.click();
+  await expect(work).toHaveAttribute('aria-pressed', 'true');
   await study.click();
   await expect(study).toHaveAttribute('aria-pressed', 'true');
-  await expect(writing).toHaveAttribute('aria-pressed', 'false');
+  await expect(work).toHaveAttribute('aria-pressed', 'false');
 });
 
 test('timer end offers two equal choices', async ({ page }) => {
@@ -153,7 +167,7 @@ test('returning after the phone locks shows two minutes done', async ({ page }) 
   await page.clock.install();
   await toStarted(page);
   const attemptId = attemptIdFromUrl(page);
-  // Pause so no interval can fire; only the visibilitychange handler may refresh.
+  // Pause so no interval runs; only the visibilitychange handler may refresh.
   const before = await page.evaluate(() => Date.now());
   await page.clock.pauseAt(before + 1000);
   await page.clock.setSystemTime(before + 10 * 60 * 1000);
@@ -254,7 +268,7 @@ test('Esc goes back from Feeling and runs Not now on Response', async ({ page },
 test('Esc is ignored while an input is focused', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'keyboard shortcuts are desktop only');
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1 })).toBeAttached();
   await page.keyboard.press('s');
   await expect(page.getByRole('button', { name: 'Anxious' })).toBeEnabled();
   await page.evaluate(() => {
@@ -306,7 +320,7 @@ for (const scheme of ['light', 'dark'] as const) {
     await expectAccessible(page);
     await startBtn(page).click();
     await expect(page.getByText('Started.', { exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Writing' }).click();
+    await page.getByRole('button', { name: 'Work' }).click();
     await settled(page);
     await expectAccessible(page);
   });
@@ -326,7 +340,7 @@ test('a failed Done for now shows a message and can be retried', async ({ page }
 test('a failed undo and tag show a message', async ({ page }) => {
   await toStarted(page);
   await breakStorage(page);
-  await page.getByRole('button', { name: 'Writing' }).click();
+  await page.getByRole('button', { name: 'Work' }).click();
   await expect(page.getByText(failedCopy)).toBeVisible();
   await page.getByRole('button', { name: 'Undo' }).click();
   await expect(page.getByText(failedCopy)).toBeVisible();

@@ -55,7 +55,7 @@ describe('stuck-flow actions', () => {
     const id = await beginStuck(d);
     await chooseFeeling(d, id, 'anxious');
     await start(d, id);
-    await tag(d, id, 'writing');
+    await tag(d, id, 'work');
     await finishTimer(d, id, 'kept-going');
     const [a] = await attempts(d);
     expect(a?.feeling).toBeDefined();
@@ -124,7 +124,23 @@ describe('stuck-flow actions', () => {
     const id = await beginStuck(d);
     await expect(chooseFeeling(d, id, 'nope-feeling')).rejects.toThrow('nope-feeling');
     await start(d, id);
-    await expect(tag(d, id, 'nope-task')).rejects.toThrow('nope-task');
+    await expect(tag(d, id, 'nope-part')).rejects.toThrow('nope-part');
+  });
+
+  it("tag records the part's label", async () => {
+    const { d } = await setup();
+    const id = await beginStuck(d);
+    await start(d, id);
+    await tag(d, id, 'study');
+    const [a] = await attempts(d);
+    expect(a?.part).toEqual({ id: 'study', label: 'Study' });
+  });
+
+  it('tag rejects an unknown part', async () => {
+    const { d } = await setup();
+    const id = await beginStuck(d);
+    await start(d, id);
+    await expect(tag(d, id, 'nope-part')).rejects.toThrow('Unknown part: nope-part');
   });
 
   it('undo reverses the counted start', async () => {

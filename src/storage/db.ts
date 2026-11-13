@@ -1,6 +1,7 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { Feeling, FeelingResponse, ListItem, Plan } from '../domain/config';
+import type { Feeling, FeelingResponse, ListItem, Part, Plan } from '../domain/config';
 import type { AppEvent } from '../domain/events';
+import { migrateTaskTypes } from '../domain/parts';
 
 export type DbName = 'arohexis' | 'arohexis-demo' | `test-${string}`;
 export type KvRow = { key: string; value: unknown };
@@ -9,7 +10,7 @@ export class ArohexisDB extends Dexie {
   events!: EntityTable<AppEvent, 'id'>;
   feelings!: EntityTable<Feeling, 'id'>;
   responses!: EntityTable<FeelingResponse, 'id'>;
-  taskTypes!: EntityTable<ListItem, 'id'>;
+  parts!: EntityTable<Part, 'id'>;
   obstacles!: EntityTable<ListItem, 'id'>;
   plans!: EntityTable<Plan, 'id'>;
   kv!: EntityTable<KvRow, 'key'>;
@@ -25,5 +26,12 @@ export class ArohexisDB extends Dexie {
       plans: 'id, active',
       kv: 'key',
     });
+    // M1's task types become parts (spec §16.3). Version 1 stays declared so the upgrade can read it.
+    this.version(2)
+      .stores({ parts: 'id, order', taskTypes: null })
+      .upgrade(async (tx) => {
+        const taskTypes = await tx.table<ListItem>('taskTypes').toArray();
+        await tx.table<Part>('parts').bulkPut(migrateTaskTypes(taskTypes));
+      });
   }
 }

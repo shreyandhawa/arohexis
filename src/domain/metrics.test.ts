@@ -12,6 +12,7 @@ function attempt(over: Partial<Attempt> & { startTz?: string; startAt?: number }
     tz: NY,
     source: 'stuck',
     undone: false,
+    tags: [],
     dismissed: false,
     ...(startAt !== undefined
       ? { start: { at: startAt, tz: startTz ?? NY, backfilled: false } }

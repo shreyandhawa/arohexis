@@ -31,6 +31,19 @@
   --color-selected: #0a0a0a;
   --color-on-selected: #f5f5f2;
 
+  /* Plate and part colours (spec §16.7, ADR-026): the same in both themes. */
+  --plate-bg: #05060a;
+  --plate-dim-point: #8e98ac;
+  --plate-dim-trace: #7c8598;
+  --plate-waiting: #eef1f6;
+  --plate-core: #9aa3b5;
+  --part-1: hsl(190 92% 62%);
+  --part-2: hsl(322 92% 66%);
+  --part-3: hsl(140 82% 58%);
+  --part-4: hsl(38 95% 60%);
+  --part-5: hsl(262 92% 72%);
+  --part-6: hsl(225 90% 76%);
+
   /* Type. */
   --font-display: 'Newsreader Variable', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
   --font-text:
@@ -92,6 +105,26 @@
 
 /* Dark theme chosen explicitly. Keep identical to the block above. */
 :root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-bg: #0a0a0a;
+  --color-surface: #141414;
+  --color-hover: #1f1f1f;
+  --color-text: #e6e6e2;
+  --color-text-muted: #a3a39f;
+  --color-border: #a3a39f;
+  --color-rule: #a3a39f;
+  --color-accent: #e6e6e2;
+  --color-accent-pressed: #d6d6d2;
+  --color-on-accent: #0a0a0a;
+  --color-focus: #e6e6e2;
+  --color-selected: #e6e6e2;
+  --color-on-selected: #0a0a0a;
+}
+
+/* Controls on the plate keep the dark theme's tokens in either theme (ADR-026).
+   Keep identical to the dark blocks above. */
+.plate-scope {
+  color: var(--color-text);
   color-scheme: dark;
   --color-bg: #0a0a0a;
   --color-surface: #141414;

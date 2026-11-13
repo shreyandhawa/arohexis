@@ -1,6 +1,6 @@
 import * as fc from 'fast-check';
 import type { AppEvent, Basis } from '../events';
-import type { Config, Settings, WeekDay } from '../config';
+import type { ColourId, Config, Part, Plan, RegionId, Settings, WeekDay } from '../config';
 
 const BASES: Basis[] = [
   'name-the-feeling',
@@ -143,6 +143,32 @@ const arbListItem = fc.record({
   enabled: fc.boolean(),
 });
 
+const ALL_SLOTS: readonly ColourId[] = [1, 2, 3, 4, 5, 6];
+
+/** Valid part sets only: up to six, with distinct regions and colours. */
+export function arbParts(): fc.Arbitrary<Part[]> {
+  return fc
+    .tuple(
+      fc.shuffledSubarray([...ALL_SLOTS]),
+      fc.shuffledSubarray([...ALL_SLOTS]),
+      fc.array(fc.tuple(arbText, fc.boolean()), { maxLength: 6 }),
+    )
+    .map(([regions, colours, texts]) => {
+      const n = Math.min(regions.length, colours.length, texts.length);
+      return Array.from({ length: n }, (_, i) => {
+        const [label, enabled] = texts[i] as [string, boolean];
+        return {
+          id: `part${i}`,
+          label: label.trim().slice(0, 24).trim() || 'Part',
+          order: i + 1,
+          enabled,
+          colour: colours[i] as ColourId,
+          region: regions[i] as RegionId,
+        };
+      });
+    });
+}
+
 const arbFeeling = fc.record({
   id: arbText,
   label: arbText,
@@ -173,6 +199,7 @@ const arbPlan = fc.record(
     active: fc.boolean(),
     createdAt: fc.nat(),
     editCount: fc.nat({ max: 50 }),
+    partId: arbText,
   },
   {
     requiredKeys: [
@@ -198,6 +225,7 @@ const arbSettings = fc.record(
     lastExportAt: fc.nat(),
     persistRequested: fc.boolean(),
     onboarded: fc.boolean(),
+    brainStill: fc.constantFrom<'still' | 'moving'>('still', 'moving'),
   },
   { requiredKeys: ['theme', 'weekStartsOn', 'checkinDay', 'persistRequested', 'onboarded'] },
 );
@@ -207,9 +235,109 @@ export function arbConfig(): fc.Arbitrary<Config> {
   return fc.record({
     feelings: fc.array(arbFeeling, { maxLength: 4 }),
     responses: fc.array(arbResponse, { maxLength: 4 }),
-    taskTypes: fc.array(arbListItem, { maxLength: 4 }),
+    parts: arbParts(),
     obstacles: fc.array(arbListItem, { maxLength: 4 }),
     plans: fc.array(arbPlan, { maxLength: 4 }),
     settings: arbSettings,
   });
+}
+
+type Body = AppEvent extends infer E
+  ? E extends AppEvent
+    ? Omit<E, 'id' | 'at' | 'tz' | 'v'>
+    : never
+  : never;
+
+export type Flow = { events: AppEvent[]; plans: Plan[]; parts: Part[]; now: number };
+
+const FLOW_PARTS: Part[] = [1, 2, 3].map((n) => ({
+  id: `p${n}`,
+  label: `Part ${n}`,
+  order: n,
+  enabled: true,
+  colour: n as ColourId,
+  region: n as RegionId,
+}));
+const FLOW_TAGS = ['p1', 'p2', 'p3', 'other-task', 'ghost'] as const;
+const MINUTE = 60_000;
+const HOUR = 60 * MINUTE;
+
+/**
+ * A realistic flow: attempts one after another, each opened, sometimes started, and then
+ * only its own Started actions (tags, a timer, an undo). Some attempts link to a plan
+ * occurrence, and plans and parts match. Every prefix of `events` is itself a realistic flow.
+ */
+export function arbFlow(): fc.Arbitrary<Flow> {
+  const arbSpec = fc.record({
+    plan: fc.option(fc.constantFrom(0, 1), { nil: undefined }),
+    occurrence: fc.constantFrom('o0', 'o1'),
+    named: fc.boolean(),
+    started: fc.boolean(),
+    backfilled: fc.boolean(),
+    tags: fc.array(fc.constantFrom(...FLOW_TAGS), { maxLength: 3 }),
+    timer: fc.boolean(),
+    undo: fc.boolean(),
+    gap: fc.constantFrom(1, 30, 24 * 60, 50 * 60),
+  });
+  const arbPlans = fc.array(
+    fc.record({
+      active: fc.boolean(),
+      partId: fc.option(fc.constantFrom('p1', 'p2', 'p3', 'ghost'), { nil: undefined }),
+    }),
+    { minLength: 2, maxLength: 2 },
+  );
+  return fc
+    .tuple(
+      fc.array(arbSpec, { maxLength: 8 }),
+      arbPlans,
+      fc.shuffledSubarray(FLOW_PARTS),
+      fc.constantFrom(0, HOUR, 47 * HOUR, 48 * HOUR, 48 * HOUR + 1, 100 * HOUR),
+    )
+    .map(([specs, planSpecs, parts, tail]) => {
+      const events: AppEvent[] = [];
+      let at = Date.UTC(2026, 10, 1);
+      const tz = 'America/New_York';
+      const push = (e: Body) => {
+        at += MINUTE;
+        events.push({ ...e, id: `e${events.length}`, at, tz, v: 1 } as AppEvent);
+      };
+      specs.forEach((s, n) => {
+        const attemptId = `a${n}`;
+        const link =
+          s.plan === undefined ? {} : { planId: `plan${s.plan}`, occurrence: s.occurrence };
+        push({
+          type: 'attempt.opened',
+          attemptId,
+          source: s.plan === undefined ? ('stuck' as const) : ('plan' as const),
+          ...link,
+        });
+        if (s.named) {
+          push({ type: 'feeling.named', attemptId, feelingId: 'anxious', label: 'Anxious' });
+        }
+        if (s.started) {
+          push({ type: 'start.made', attemptId, backfilled: s.backfilled, ...link });
+          s.tags.forEach((id) =>
+            push({ type: 'start.tagged', attemptId, taskTypeId: id, label: id }),
+          );
+          if (s.timer) {
+            push({ type: 'timer.closed', attemptId, elapsedSec: 60, outcome: 'stopped' });
+          }
+          if (s.undo) push({ type: 'start.undone', attemptId });
+        }
+        at += s.gap * MINUTE;
+      });
+      const plans: Plan[] = planSpecs.map((p, i) => ({
+        id: `plan${i}`,
+        place: 'desk',
+        firstAction: 'open it',
+        time: '09:00',
+        days: [1, 2, 3, 4, 5],
+        graceMin: 30,
+        active: p.active,
+        createdAt: Date.UTC(2026, 9, 1) + i,
+        editCount: 0,
+        ...(p.partId !== undefined && { partId: p.partId }),
+      }));
+      return { events, plans, parts, now: at + tail };
+    });
 }

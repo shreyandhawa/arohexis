@@ -1,0 +1,198 @@
+/* The plate is dark in both themes; .plate-scope supplies the dark tokens (ADR-026). */
+.plate {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 200px;
+  padding-top: env(safe-area-inset-top, 0px);
+  overflow: hidden;
+  border-radius: 0 0 var(--radius-m) var(--radius-m);
+  background: var(--plate-bg);
+}
+
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+/*
+ * The free band: the part of the stage between the top row (summary and Still) and the bottom
+ * control row (turn and zoom). The renderer frames the brain to it. Registered as lengths so
+ * getComputedStyle returns resolved px, not the calc() text.
+ */
+@property --brain-inset-top {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --brain-inset-bottom {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+.canvas {
+  --brain-inset-top: calc(var(--space-2) + var(--target-min) + var(--space-1));
+  --brain-inset-bottom: calc(var(--space-1) + var(--target-min) + var(--space-1));
+
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: pan-y;
+}
+
+.summary {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-3);
+  right: calc(var(--target-min) + var(--space-4));
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--step--1);
+  font-weight: 600;
+  line-height: 1.3;
+  pointer-events: none;
+}
+
+.summary,
+.notice {
+  text-shadow:
+    0 0 6px var(--plate-bg),
+    0 0 2px var(--plate-bg);
+}
+
+.still {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+}
+
+.still[aria-pressed='false'] {
+  background: var(--plate-bg);
+}
+
+.pair {
+  position: absolute;
+  bottom: var(--space-1);
+  display: flex;
+  gap: var(--space-2);
+}
+
+.pairStart {
+  left: var(--space-2);
+}
+
+.pairEnd {
+  right: var(--space-2);
+}
+
+.control {
+  display: inline-flex;
+  width: var(--target-min);
+  height: var(--target-min);
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-m);
+  background: var(--plate-bg);
+  background: color-mix(in srgb, var(--plate-bg) 78%, transparent);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: transform var(--motion-quick) var(--ease-standard);
+}
+
+.control:active {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) {
+  .control:hover {
+    background: var(--color-hover);
+  }
+}
+
+/* Opacity-only fade; --motion-calm is 0ms under reduced motion. */
+.notice {
+  position: absolute;
+  /* Spans the plate between its gutters, in a row above the bottom control pairs. */
+  right: var(--space-3);
+  bottom: calc(var(--space-1) + var(--target-min) + var(--space-2));
+  left: var(--space-3);
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--step--1);
+  font-weight: 600;
+  text-align: center;
+  animation: noticeIn var(--motion-calm) var(--ease-standard) both;
+}
+
+@keyframes noticeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.partsRow {
+  display: flex;
+  flex: none;
+  gap: var(--space-2);
+  /* One chip row tall, filled or not, so the plate's size is the same before and after data. */
+  min-height: calc(var(--target-min) + 2 * var(--space-2));
+  /* Room for the 5 px focus ring inside the scroller. */
+  padding: var(--space-2);
+  overflow-x: auto;
+  background: var(--plate-bg);
+  scrollbar-width: none;
+}
+
+.partsRow::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  display: inline-flex;
+  flex: none;
+  gap: var(--space-2);
+  align-items: center;
+  padding-inline: var(--space-3);
+  white-space: nowrap;
+}
+
+.swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-pill);
+}
+
+.swatch[data-colour='1'] {
+  background: var(--part-1);
+}
+
+.swatch[data-colour='2'] {
+  background: var(--part-2);
+}
+
+.swatch[data-colour='3'] {
+  background: var(--part-3);
+}
+
+.swatch[data-colour='4'] {
+  background: var(--part-4);
+}
+
+.swatch[data-colour='5'] {
+  background: var(--part-5);
+}
+
+.swatch[data-colour='6'] {
+  background: var(--part-6);
+}

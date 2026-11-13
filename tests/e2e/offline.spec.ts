@@ -27,7 +27,7 @@ test('works offline after first load', async ({ page, context }, testInfo) => {
   await swReady(page);
   await context.setOffline(true);
   await page.reload();
-  await expect(page.getByRole('heading', { level: 1, name: 'Arohexis' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Arohexis' })).toBeAttached();
   await completeStuckFlow(page);
   await page.goto('/');
   await expect(page.getByText('1 start this week')).toBeVisible();
@@ -53,4 +53,17 @@ test('data survives reload and a new page', async ({ page, context }, testInfo) 
   const second = await context.newPage();
   await second.goto('/');
   await expect(second.getByText('1 start this week')).toBeVisible();
+});
+
+test('offline, the chunk is precached and Brain space draws', async ({
+  page,
+  context,
+}, testInfo) => {
+  skipIphone(testInfo.project.name);
+  await page.goto('/');
+  await swReady(page);
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page.getByRole('region', { name: 'Brain space' })).toBeVisible();
+  await expect(page.locator('canvas')).toHaveAttribute('data-loop', /./, { timeout: 15_000 });
 });

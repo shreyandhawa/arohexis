@@ -58,12 +58,12 @@ export async function undo(d: AppDeps, attemptId: string): Promise<void> {
   await d.events.appendForAttempt(attemptId, (evts) => undoStart(deps, evts, attemptId));
 }
 
-export async function tag(d: AppDeps, attemptId: string, taskTypeId: string): Promise<void> {
+export async function tag(d: AppDeps, attemptId: string, partId: string): Promise<void> {
   const deps = eventDeps(d);
-  const { taskTypes } = await d.config.getConfig();
-  const taskType = taskTypes.find((t) => t.id === taskTypeId);
-  if (!taskType) throw new Error(`Unknown task type: ${taskTypeId}`);
-  await d.events.appendForAttempt(attemptId, (evts) => tagStart(deps, evts, attemptId, taskType));
+  const { parts } = await d.config.getConfig();
+  const part = parts.find((p) => p.id === partId);
+  if (!part) throw new Error(`Unknown part: ${partId}`);
+  await d.events.appendForAttempt(attemptId, (evts) => tagStart(deps, evts, attemptId, part));
 }
 
 export async function finishTimer(
