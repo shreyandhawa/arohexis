@@ -1,0 +1,95 @@
+.chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  min-width: 0;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.bar {
+  fill: var(--color-text-muted);
+}
+
+.current {
+  fill: var(--color-accent);
+}
+
+.axis {
+  stroke: var(--color-rule);
+  stroke-width: 1;
+}
+
+.grid {
+  stroke: var(--color-rule);
+  stroke-width: 0.5;
+  stroke-dasharray: 2 3;
+}
+
+.cell {
+  fill: var(--color-text);
+  stroke: var(--color-rule);
+  stroke-width: 0.5;
+}
+
+.line {
+  fill: none;
+  stroke: var(--color-text);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.dot {
+  fill: var(--color-text);
+}
+
+.tick {
+  fill: var(--color-text-muted);
+  font-family: var(--font-text);
+  font-size: 9px;
+}
+
+.scale {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text-muted);
+  font-size: var(--step--1);
+}
+
+.summary {
+  margin: 0;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-1) var(--space-3);
+  overflow-wrap: anywhere;
+}
+
+.rowBar {
+  grid-column: 1 / -1;
+  height: 10px;
+}
+
+.count {
+  font-variant-numeric: tabular-nums;
+}

@@ -67,6 +67,9 @@ export function Home() {
           <Link to="/plans" className={styles['link']}>
             {nav.plans}
           </Link>
+          <Link to="/insights" className={styles['link']}>
+            {nav.insights}
+          </Link>
           <Link to="/settings" className={styles['link']}>
             {nav.settings}
           </Link>
