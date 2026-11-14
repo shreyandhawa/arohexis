@@ -1,5 +1,6 @@
 import type { Plan, WeekDay } from '../../domain/config';
 import { planToIcs } from '../../domain/ics';
+import { planWords } from '../../copy/plans';
 import { validatePlan } from '../../domain/plans';
 import type { AppDeps } from '../data/DataProvider';
 
@@ -96,7 +97,7 @@ export function icsFileName(plan: Plan, fallback: string): string {
 
 /** Downloads the plan as an .ics file (spec §8.5). */
 export function downloadIcs(d: AppDeps, plan: Plan, fallback: string): void {
-  const text = planToIcs(plan, d.clock.timeZone(), d.clock.now());
+  const text = planToIcs(plan, d.clock.timeZone(), d.clock.now(), planWords);
   const file = new File([text], icsFileName(plan, fallback), { type: 'text/calendar' });
   const url = URL.createObjectURL(file);
   const a = document.createElement('a');

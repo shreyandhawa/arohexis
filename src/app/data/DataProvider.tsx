@@ -29,6 +29,7 @@ type State = { status: 'opening' } | { status: 'failed' } | { status: 'ready'; d
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<State>({ status: 'opening' });
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -61,9 +62,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
       cancelled = true;
       opened?.close();
     };
-  }, []);
+  }, [attempt]);
 
-  if (state.status === 'failed') return <StorageError />;
+  const retry = () => {
+    setState({ status: 'opening' });
+    setAttempt((n) => n + 1);
+  };
+
+  if (state.status === 'failed') return <StorageError onRetry={retry} />;
   if (state.status === 'opening') return null;
   return <DataContext value={state.deps}>{children}</DataContext>;
 }

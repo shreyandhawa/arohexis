@@ -26,6 +26,27 @@ export function createEventStore(db: ArohexisDB): EventStore {
         .toArray();
       return rows as EventOf<T>[];
     },
+    async appendResolutions(events) {
+      if (events.length === 0) return;
+      await db.transaction('rw', db.events, async () => {
+        const done = new Set<string>();
+        for (const type of ['occurrence.resolved', 'lapse.repaired'] as const) {
+          const rows = await db.events
+            .where('[type+at]')
+            .between([type, Dexie.minKey], [type, Dexie.maxKey], true, true)
+            .toArray();
+          for (const r of rows as (EventOf<'occurrence.resolved'> | EventOf<'lapse.repaired'>)[])
+            done.add(`${r.planId}|${r.occurrence}`);
+        }
+        const fresh = events.filter((e) => {
+          const key = `${e.planId}|${e.occurrence}`;
+          if (done.has(key)) return false;
+          done.add(key);
+          return true;
+        });
+        if (fresh.length) await db.events.bulkAdd(fresh);
+      });
+    },
     appendForAttempt(attemptId, decide) {
       return db.transaction('rw', db.events, async () => {
         const events = await db.events.where('attemptId').equals(attemptId).sortBy('at');

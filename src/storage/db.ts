@@ -6,6 +6,10 @@ import { migrateTaskTypes } from '../domain/parts';
 export type DbName = 'arohexis' | 'arohexis-demo' | `test-${string}`;
 export type KvRow = { key: string; value: unknown };
 
+function reloadPage(): void {
+  if (typeof location !== 'undefined') location.reload();
+}
+
 export class ArohexisDB extends Dexie {
   events!: EntityTable<AppEvent, 'id'>;
   feelings!: EntityTable<Feeling, 'id'>;
@@ -15,8 +19,14 @@ export class ArohexisDB extends Dexie {
   plans!: EntityTable<Plan, 'id'>;
   kv!: EntityTable<KvRow, 'key'>;
 
-  constructor(name: DbName) {
+  constructor(name: DbName, options: { onVersionChange?: () => void } = {}) {
     super(name);
+    // Let a newer version in another tab upgrade; never hold it up.
+    this.on('versionchange', () => {
+      this.close();
+      (options.onVersionChange ?? reloadPage)();
+      return false;
+    });
     this.version(1).stores({
       events: 'id, at, type, attemptId, planId, [type+at]',
       feelings: 'id, order',

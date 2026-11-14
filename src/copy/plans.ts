@@ -42,6 +42,16 @@ export const plans = {
   fileFallback: 'plan',
 } as const;
 
+/** The words the domain builds plan sentences from. */
+export const planWords = {
+  dayNames: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+  today: 'today',
+  tomorrow: 'tomorrow',
+  weekdays: 'weekdays',
+  everyDay: 'every day',
+  weekends: 'weekends',
+} as const;
+
 /** The plan-due card on Home (spec §8.6). */
 export const planDue = {
   region: 'Plan due now',

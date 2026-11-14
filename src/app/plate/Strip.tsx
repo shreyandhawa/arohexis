@@ -6,6 +6,7 @@ import { Chip } from '../components/Chip';
 import { useData } from '../data/DataProvider';
 import { useBrainSpace } from '../hooks/useBrainSpace';
 import { useStill } from '../hooks/useStill';
+import { revealLineId } from './StripReveal';
 import { useRenderer } from './useRenderer';
 import styles from './Strip.module.css';
 
@@ -25,15 +26,13 @@ export function Strip({ attempt }: { attempt: Attempt }) {
     const known = partId !== undefined && data.parts.some((p) => p.id === partId);
     const part = known ? partId : null;
     // A start line is named for its attempt; an on-cue start lights its plan's line.
-    const lineId = data.space.lines.some((l) => l.id === attempt.id)
-      ? attempt.id
-      : `${attempt.planId ?? ''}:${part ?? 'core'}`;
+    const lineId = revealLineId(data.space, attempt.id, attempt.planId, part);
     return {
       space: data.space,
       parts: data.parts,
       selected: null,
       still,
-      reveal: { lineId, startAt },
+      ...(lineId !== undefined && { reveal: { lineId, startAt } }),
       burstAt: startAt,
     };
   }, [data, attempt.id, attempt.planId, partId, startAt, still]);

@@ -111,16 +111,24 @@ export function nextOccurrence(
   );
 }
 
+/** The words plan text is built from; the English ones live in src/copy/plans.ts. */
+export type PlanWords = {
+  dayNames: readonly string[];
+  today: string;
+  tomorrow: string;
+  weekdays: string;
+  everyDay: string;
+  weekends: string;
+};
+
 /** "today", "tomorrow" or a weekday name, for the day of `at` as seen from `now`. */
-export function dayWord(at: number, now: number, tz: string): string {
+export function dayWord(at: number, now: number, tz: string, words: PlanWords): string {
   const date = localDate(at, tz);
   const today = localDate(now, tz);
-  if (date === today) return 'today';
-  if (date === addDays(today, 1)) return 'tomorrow';
-  return DAY_NAMES[weekdayOf(date)] as string;
+  if (date === today) return words.today;
+  if (date === addDays(today, 1)) return words.tomorrow;
+  return words.dayNames[weekdayOf(date)] as string;
 }
-
-const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 /** "9:00" or "13:30". */
 export function formatPlanTime(time: string): string {
@@ -128,14 +136,14 @@ export function formatPlanTime(time: string): string {
   return `${Number(h)}:${m}`;
 }
 
-export function daysPhrase(days: readonly WeekDay[]): string {
+export function daysPhrase(days: readonly WeekDay[], words: PlanWords): string {
   const key = [...new Set(days)].sort().join('');
-  if (key === '12345') return 'weekdays';
-  if (key === '0123456') return 'every day';
-  if (key === '06') return 'weekends';
+  if (key === '12345') return words.weekdays;
+  if (key === '0123456') return words.everyDay;
+  if (key === '06') return words.weekends;
   return [...new Set(days)]
     .sort((a, b) => a - b)
-    .map((d) => (DAY_NAMES[d] as string).slice(0, 3))
+    .map((d) => (words.dayNames[d] as string).slice(0, 3))
     .join(', ');
 }
 
@@ -147,13 +155,13 @@ function trimAction(text: string): string {
  * "If it's 9:00 on weekdays at my desk, then I will open the essay doc."
  * The `calendar` form drops the days and "I will": "If it's 9:00 at my desk, then open the essay doc".
  */
-export function planSentence(plan: Plan, form: 'full' | 'calendar' = 'full'): string {
+export function planSentence(plan: Plan, form: 'full' | 'calendar', words: PlanWords): string {
   const place = plan.place.trim();
   const detail = plan.cueDetail?.trim();
   const where = [place, detail].filter((s): s is string => !!s).join(', ');
   const when = [
     `If it's ${formatPlanTime(plan.time)}`,
-    form === 'full' && plan.days.length > 0 ? `on ${daysPhrase(plan.days)}` : '',
+    form === 'full' && plan.days.length > 0 ? `on ${daysPhrase(plan.days, words)}` : '',
     where ? (place ? `at ${where}` : where) : '',
   ]
     .filter(Boolean)

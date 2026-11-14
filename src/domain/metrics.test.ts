@@ -70,6 +70,18 @@ describe('insights metrics', () => {
     expect(startsByWeek([], now, NY, 1)).toEqual([]);
   });
 
+  it('startsByWeek begins at the first counted start, not at an earlier opened attempt', () => {
+    const list = [
+      attempt({ id: 'a', openedAt: t(2) }),
+      attempt({ id: 'b', openedAt: t(9), startAt: t(9) }),
+    ];
+    expect(startsByWeek(list, now, NY, 1)).toEqual([
+      { weekOf: '2026-11-09', count: 1 },
+      { weekOf: '2026-11-16', count: 0 },
+    ]);
+    expect(startsByWeek([attempt({ id: 'a', openedAt: t(2) })], now, NY, 1)).toEqual([]);
+  });
+
   it('groups by feeling with From a plan, hour, and part', () => {
     const list = [
       attempt({ id: 'a', startAt: t(2, 14), feeling: { id: 'bored', label: 'Bored' } }),

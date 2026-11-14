@@ -1,5 +1,5 @@
 import { localDate } from '../../domain/week';
-import { openStorage } from '../../storage/open';
+import { OPEN_TIMEOUT_MS, openStorageWithin } from '../../storage/open';
 import { replaceAllData } from '../../storage/importData';
 import type { ArohexisDB } from '../../storage/db';
 import { writeDbChoice } from '../data/dbChoice';
@@ -15,8 +15,12 @@ async function freshDemo(d: Pick<AppDeps, 'clock'>) {
 }
 
 /** Fills `arohexis-demo` and points at it. The caller reloads so the app opens that database. */
-export async function enterDemo(d: Pick<AppDeps, 'clock'>): Promise<void> {
-  const opened = await openStorage('arohexis-demo');
+export async function enterDemo(
+  d: Pick<AppDeps, 'clock'>,
+  openTimeoutMs: number = OPEN_TIMEOUT_MS,
+): Promise<void> {
+  // Another tab holding an older version blocks the upgrade, so the open gives up instead of hanging.
+  const opened = await openStorageWithin('arohexis-demo', openTimeoutMs);
   if (!opened.ok) throw opened.error;
   try {
     await replaceAllData(opened.db, await freshDemo(d));

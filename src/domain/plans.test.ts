@@ -15,10 +15,20 @@ import {
   offsetMinutes,
   planSentence,
   validatePlan,
+  type PlanWords,
 } from './plans';
 import { testDeps } from './testing/fixtures';
 
 const MIN = 60_000;
+const words: PlanWords = {
+  dayNames: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+  today: 'today',
+  tomorrow: 'tomorrow',
+  weekdays: 'weekdays',
+  everyDay: 'every day',
+  weekends: 'weekends',
+};
+
 const plan = (over: Partial<Plan> = {}): Plan => ({
   id: 'p1',
   place: 'my desk',
@@ -155,22 +165,22 @@ describe('occurrenceStatus', () => {
 
 describe('planSentence', () => {
   it('reads as an if-then sentence', () => {
-    expect(planSentence(plan())).toBe(
+    expect(planSentence(plan(), 'full', words)).toBe(
       "If it's 9:00 on weekdays at my desk, then I will open the essay doc.",
     );
     expect(
-      planSentence(plan({ cueDetail: 'after coffee', firstAction: 'open it.' }), 'calendar'),
+      planSentence(plan({ cueDetail: 'after coffee', firstAction: 'open it.' }), 'calendar', words),
     ).toBe("If it's 9:00 at my desk, after coffee, then open it");
-    expect(planSentence(plan({ place: ' ', time: '13:05', days: [0, 6] }))).toBe(
+    expect(planSentence(plan({ place: ' ', time: '13:05', days: [0, 6] }), 'full', words)).toBe(
       "If it's 13:05 on weekends, then I will open the essay doc.",
     );
-    expect(planSentence(plan({ place: '', cueDetail: 'after coffee', days: [] }))).toBe(
-      "If it's 9:00 after coffee, then I will open the essay doc.",
-    );
+    expect(
+      planSentence(plan({ place: '', cueDetail: 'after coffee', days: [] }), 'full', words),
+    ).toBe("If it's 9:00 after coffee, then I will open the essay doc.");
   });
   it('names days', () => {
-    expect(daysPhrase([0, 1, 2, 3, 4, 5, 6])).toBe('every day');
-    expect(daysPhrase([3, 1])).toBe('Mon, Wed');
+    expect(daysPhrase([0, 1, 2, 3, 4, 5, 6], words)).toBe('every day');
+    expect(daysPhrase([3, 1], words)).toBe('Mon, Wed');
     expect(formatPlanTime('00:00')).toBe('0:00');
   });
 });
@@ -210,8 +220,8 @@ describe('openOccurrence, nextOccurrence and dayWord', () => {
 
   it('words the day', () => {
     const at = instantOf('2026-11-12', '09:00', tz);
-    expect(dayWord(nine, nine - 60 * MIN, tz)).toBe('today');
-    expect(dayWord(instantOf('2026-11-10', '09:00', tz), nine, tz)).toBe('tomorrow');
-    expect(dayWord(at, nine, tz)).toBe('Thursday');
+    expect(dayWord(nine, nine - 60 * MIN, tz, words)).toBe('today');
+    expect(dayWord(instantOf('2026-11-10', '09:00', tz), nine, tz, words)).toBe('tomorrow');
+    expect(dayWord(at, nine, tz, words)).toBe('Thursday');
   });
 });

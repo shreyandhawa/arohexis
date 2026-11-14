@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { plans as copy } from '../../copy/plans';
+import { plans as copy, planWords } from '../../copy/plans';
 import type { Config, Plan, WeekDay } from '../../domain/config';
 import { planSentence } from '../../domain/plans';
 import {
@@ -88,7 +88,7 @@ function Form({ plan, config }: { plan: Plan | undefined; config: Config }) {
           {copy.preview}
         </h2>
         <p className={styles['preview']} aria-live="polite" data-testid="plan-preview">
-          {planSentence(shown)}
+          {planSentence(shown, 'full', planWords)}
         </p>
       </section>
       <div className={styles['field']}>
