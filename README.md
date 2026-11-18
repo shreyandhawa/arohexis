@@ -173,3 +173,4 @@ No licence file is present, so all rights are reserved.
 - [docs/plan.md](docs/plan.md): the implementation plan and milestones.
 - [docs/case-study.md](docs/case-study.md): the decisions and what changed.
 - [docs/v1-success-criteria.md](docs/v1-success-criteria.md): the v1.0 success criteria and their evidence.
+- [docs/v2-success-criteria.md](docs/v2-success-criteria.md): the v2.0 "Night sky" success criteria and their evidence.
