@@ -109,8 +109,8 @@ async function linkPreview(page) {
   // about:blank has no CSP, so the frame can use an inline style.
   await frame.setContent(
     `<body style="margin:0;height:630px;overflow:hidden;display:grid;place-items:center;background:${bg}">` +
-      // The plate leaves room around the brain for its controls; a 1.25 scale trims that margin.
-      `<img src="${image}" style="height:${Math.round(630 * 1.25)}px"></body>`,
+      // The plate leaves room around the brain for its controls; a 1.15 scale trims that margin.
+      `<img src="${image}" style="height:${Math.round(630 * 1.15)}px"></body>`,
   );
   await frame.locator('img').evaluate((img) => img.decode());
   await frame.screenshot({ path: 'public/og.png' });

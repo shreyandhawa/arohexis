@@ -13,7 +13,7 @@
 
 @media (min-width: 64rem) {
   .stage {
-    height: min(64dvh, 40rem);
+    height: min(56dvh, 40rem);
   }
 }
 

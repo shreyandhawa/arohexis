@@ -56,13 +56,13 @@ export function Welcome() {
         {kind === 'intro' && (
           <>
             <WelcomeHero />
+            <p>{copy.intro}</p>
             <div className={styles['choice']}>
               <Button variant="quiet" onClick={() => void explore()}>
                 {copy.exploreDemo}
               </Button>
               <p className={shell['muted']}>{copy.exploreDemoHint}</p>
             </div>
-            <p>{copy.intro}</p>
             <p className={shell['muted']}>{copy.notMedicalAdvice}</p>
           </>
         )}

@@ -151,6 +151,16 @@ test.describe('onboarding', () => {
     if (names.includes('arohexis')) expect(await mainEventCount(page)).toBe(0);
   });
 
+  test('a first visit is dark on any device until a theme is chosen', async ({ page }) => {
+    await setTheme(page, 'light');
+    await page.goto('/welcome');
+    // Once the hero has drawn, the default 'system' setting has loaded too; it isn't a choice.
+    await expect(page.locator('canvas[data-field-ms]')).toBeAttached();
+    await page.waitForTimeout(300);
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await expectAccessible(page);
+  });
+
   test('Explore the demo from step 1 opens the demo', async ({ page }) => {
     await page.goto('/welcome');
     await page.getByRole('button', { name: 'Explore the demo' }).click();

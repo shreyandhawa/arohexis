@@ -59,14 +59,13 @@ export function WelcomeHero() {
     state,
   );
 
-  // Plays once, 30 frames over 2.5 s, only when the renderer and the data are both in.
+  // Plays once, 30 frames over 2.5 s, once the renderer and the data are both in. The frame only
+  // grows, so a Still toggle or a remount never starts it over.
   useEffect(() => {
-    if (!ready || !loaded || still) return;
-    const ids: number[] = [];
-    for (let f = 1; f <= FRAMES; f++)
-      ids.push(window.setTimeout(() => setFrame(f), (HERO_MS * f) / FRAMES));
-    return () => ids.forEach((id) => window.clearTimeout(id));
-  }, [ready, loaded, still]);
+    if (!ready || !loaded || still || frame >= FRAMES) return;
+    const id = window.setTimeout(() => setFrame(frame + 1), HERO_MS / FRAMES);
+    return () => window.clearTimeout(id);
+  }, [ready, loaded, still, frame]);
 
   return (
     <div role="img" aria-label={copy.heroLabel} className={`plate plate-scope ${styles.hero}`}>

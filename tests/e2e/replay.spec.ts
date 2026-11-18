@@ -51,12 +51,17 @@ test('under reduced motion there is no Play, and scrubbing still works', async (
   await expect(slider(page)).toHaveAttribute('aria-valuetext', /^Start 1 of 6, /);
 });
 
-test('with the renderer chunk blocked, Replay still scrubs', async ({ page }) => {
-  await page.route('**/assets/brain-*.js', (r) => r.abort());
-  await replay(page);
-  await slider(page).focus();
-  await page.keyboard.press('Home');
-  await expect(region(page).getByText(/^1 start · /)).toBeVisible();
+test.describe('with the renderer chunk blocked', () => {
+  // page.route can't see requests the service worker answers.
+  test.use({ serviceWorkers: 'block' });
+
+  test('Replay still scrubs', async ({ page }) => {
+    await page.route('**/assets/brain-*.js', (r) => r.abort());
+    await replay(page);
+    await slider(page).focus();
+    await page.keyboard.press('Home');
+    await expect(region(page).getByText(/^1 start · /)).toBeVisible();
+  });
 });
 
 for (const scheme of ['light', 'dark'] as const) {
