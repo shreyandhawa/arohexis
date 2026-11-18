@@ -4,6 +4,7 @@ import { demo } from '../../copy/demo';
 import { stepOf, welcome as copy } from '../../copy/welcome';
 import { enterDemo } from '../actions/demo';
 import { setPreference } from '../actions/preferences';
+import { WelcomeHero } from './WelcomeHero';
 import { Button } from '../components/Button';
 import { markWelcomed } from '../data/dbChoice';
 import { useData } from '../data/DataProvider';
@@ -54,12 +55,19 @@ export function Welcome() {
         </h1>
         {kind === 'intro' && (
           <>
+            <WelcomeHero />
+            <div className={styles['choice']}>
+              <Button variant="quiet" onClick={() => void explore()}>
+                {copy.exploreDemo}
+              </Button>
+              <p className={shell['muted']}>{copy.exploreDemoHint}</p>
+            </div>
             <p>{copy.intro}</p>
             <p className={shell['muted']}>{copy.notMedicalAdvice}</p>
           </>
         )}
         {kind === 'ios' && <p>{copy.ios}</p>}
-        {kind === 'choose' ? (
+        {kind === 'choose' && (
           <>
             <div className={styles['choice']}>
               <Button onClick={startFresh}>{copy.startFresh}</Button>
@@ -71,13 +79,10 @@ export function Welcome() {
               </Button>
               <p className={shell['muted']}>{copy.exploreDemoHint}</p>
             </div>
-            <div aria-live="polite">
-              {failed && <p className={styles['error']}>{demo.failed}</p>}
-            </div>
           </>
-        ) : (
-          <Button onClick={() => setStep((n) => n + 1)}>{copy.next}</Button>
         )}
+        {kind !== 'choose' && <Button onClick={() => setStep((n) => n + 1)}>{copy.next}</Button>}
+        <div aria-live="polite">{failed && <p className={styles['error']}>{demo.failed}</p>}</div>
       </main>
     </div>
   );

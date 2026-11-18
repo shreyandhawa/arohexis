@@ -135,6 +135,61 @@ test.describe('onboarding', () => {
     await expect(page.getByRole('region', { name: 'Demo' })).toBeVisible();
   });
 
+  test('the Welcome hero plays without touching any database', async ({ page }) => {
+    await page.goto('/welcome');
+    await expect(
+      page.getByRole('img', { name: /lit by ten weeks of sample starts/ }),
+    ).toBeVisible();
+    // It plays once (the loop runs), then rests and stays at rest: it never loops.
+    const canvas = page.locator('canvas');
+    await expect(canvas).toHaveAttribute('data-loop', 'running');
+    await expect(canvas).toHaveAttribute('data-loop', 'idle', { timeout: 5000 });
+    await page.waitForTimeout(1500);
+    await expect(canvas).toHaveAttribute('data-loop', 'idle');
+    const names = await page.evaluate(async () => (await indexedDB.databases()).map((d) => d.name));
+    expect(names).not.toContain('arohexis-demo');
+    if (names.includes('arohexis')) expect(await mainEventCount(page)).toBe(0);
+  });
+
+  test('Explore the demo from step 1 opens the demo', async ({ page }) => {
+    await page.goto('/welcome');
+    await page.getByRole('button', { name: 'Explore the demo' }).click();
+    await expect(page.getByRole('region', { name: 'Demo' })).toBeVisible();
+  });
+
+  test.describe('with reduced motion', () => {
+    test.use({ reducedMotion: 'reduce' });
+    test('the hero rests at once and stays at rest', async ({ page }) => {
+      await page.goto('/welcome');
+      // The final frame is drawn once, and the loop never starts.
+      const canvas = page.locator('canvas[data-field-ms]');
+      await expect(canvas).toBeAttached();
+      await page.waitForTimeout(1500);
+      await expect(canvas).toHaveAttribute('data-loop', 'idle');
+    });
+  });
+
+  test.describe('with the renderer chunk blocked', () => {
+    test.use({ serviceWorkers: 'block' });
+    test('the hero keeps its label, Next and the demo still work', async ({ page }) => {
+      const errors: string[] = [];
+      page.on('pageerror', (e) => errors.push(e.message));
+      page.on('console', (m) => {
+        if (m.type() === 'error' && !/Failed to load resource|ERR_FAILED|brain-/.test(m.text()))
+          errors.push(m.text());
+      });
+      await page.route('**/assets/brain-*.js', (r) => r.abort());
+      await page.goto('/welcome');
+      await expect(page.getByRole('img', { name: /sample starts/ })).toBeVisible();
+      await page.getByRole('button', { name: 'Next' }).click();
+      await expect(page.getByRole('button', { name: 'Start fresh' })).toBeVisible();
+      await page.goto('/welcome');
+      await page.getByRole('button', { name: 'Explore the demo' }).click();
+      await expect(page.getByRole('region', { name: 'Demo' })).toBeVisible();
+      expect(errors).toEqual([]);
+    });
+  });
+
   test.describe('in Safari on an iPhone', () => {
     test.use({
       userAgent:

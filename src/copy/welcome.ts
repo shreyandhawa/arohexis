@@ -9,6 +9,7 @@ export const welcome = {
   choose: 'How would you like to begin?',
   startFresh: 'Start fresh',
   startFreshHint: 'Begin with an empty record.',
+  heroLabel: 'Brain space, lit by ten weeks of sample starts',
   exploreDemo: 'Explore the demo',
   exploreDemoHint: 'Ten weeks of sample data. Nothing touches your own.',
 } as const;
