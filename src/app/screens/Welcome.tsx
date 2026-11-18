@@ -29,7 +29,7 @@ export function Welcome() {
 
   function startFresh() {
     // Night sky is the default for a new record (ADR-036); Settings offers Light and System.
-    void setPreference(deps, { theme: 'dark' });
+    setPreference(deps, { theme: 'dark' }).catch((error: unknown) => console.error(error));
     markWelcomed();
     void navigate('/', { replace: true });
   }
