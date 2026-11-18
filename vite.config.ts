@@ -78,6 +78,8 @@ export default defineConfig({
         // Fonts must render offline, but only the latin and latin-ext subsets
         // are needed; the other subsets load on demand and are not precached.
         globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}', 'assets/*-latin-*.woff2'],
+        // The link-preview image is for other sites' crawlers, never needed offline.
+        globIgnores: ['og.png'],
         cleanupOutdatedCaches: true,
         // Takes control of the first visit, so offline works without a second load.
         // skipWaiting stays off: an update waits for the person to press Reload.
