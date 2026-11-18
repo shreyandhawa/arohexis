@@ -5,7 +5,7 @@
   margin: auto auto 0;
   padding: var(--space-4);
   overflow-y: auto;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-rule);
   border-bottom: 0;
   border-radius: var(--radius-m) var(--radius-m) 0 0;
   background: var(--color-surface);
@@ -14,6 +14,44 @@
 
 .sheet::backdrop {
   background: rgb(0 0 0 / 60%);
+}
+
+/* The sheet rises in and out (ADR-036). Browsers without @starting-style just show it. */
+.sheet,
+.sheet::backdrop {
+  transition:
+    translate var(--motion-calm) var(--ease-standard),
+    opacity var(--motion-calm) var(--ease-standard),
+    overlay var(--motion-calm) allow-discrete,
+    display var(--motion-calm) allow-discrete;
+}
+
+.sheet:not([open]) {
+  translate: 0 24px;
+  opacity: 0;
+}
+
+.sheet:not([open])::backdrop {
+  opacity: 0;
+}
+
+@starting-style {
+  .sheet[open] {
+    translate: 0 24px;
+    opacity: 0;
+  }
+
+  .sheet[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet,
+  .sheet::backdrop {
+    translate: none;
+    transition-duration: var(--motion-quick);
+  }
 }
 
 .body {

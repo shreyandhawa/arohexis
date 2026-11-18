@@ -54,3 +54,42 @@ body {
   white-space: nowrap;
   border: 0;
 }
+
+/* Route transitions (ADR-036): the old screen fades out, the new one settles in.
+   React names the pseudo-elements; these classes come from <ViewTransition> in Shell. */
+::view-transition-old(.page-exit) {
+  animation: page-out var(--motion-quick) var(--ease-standard) both;
+}
+
+::view-transition-new(.page-enter) {
+  animation: page-in var(--motion-calm) var(--ease-standard) both;
+}
+
+@keyframes page-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-new(.page-enter) {
+    animation: page-fade var(--motion-quick) linear both;
+  }
+
+  ::view-transition-old(.page-exit) {
+    animation: none;
+  }
+}
+
+@keyframes page-fade {
+  from {
+    opacity: 0;
+  }
+}
