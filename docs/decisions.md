@@ -732,4 +732,4 @@ Statuses:
 - **Consequences:**
   - ADR-018's "no hue in chrome" and ADR-026's "Insights stays neutral" no longer hold; spec §8, §8.9, §11.1, §11.2 and §16.7 say so;
   - `tokens.test.ts` checks the new dark surfaces against the same contrast rules;
-  - a user who had no stored theme and a light system theme sees dark after the update, and can pick System.
+  - a new record (**Start fresh**) and the demo start in Dark, and first paint is dark until a choice is stored; existing records keep their stored theme.

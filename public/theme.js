@@ -1,7 +1,9 @@
 /* global localStorage, document */
 try {
   const t = localStorage.getItem('arohexis:theme');
-  if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+  // Night sky (ADR-036): dark unless the person chose light or their device's setting.
+  if (t !== 'system')
+    document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
 } catch {
-  /* storage unavailable: the system theme applies */
+  document.documentElement.setAttribute('data-theme', 'dark');
 }

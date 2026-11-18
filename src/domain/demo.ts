@@ -262,7 +262,7 @@ export function generateDemoData(seed: number, endDate: string, tz: string): Exp
     obstacles: [...DEFAULT_OBSTACLES],
     plans,
     settings: {
-      theme: 'system',
+      theme: 'dark',
       weekStartsOn: 1,
       checkinDay: 0,
       persistRequested: false,

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { demo } from '../../copy/demo';
 import { stepOf, welcome as copy } from '../../copy/welcome';
 import { enterDemo } from '../actions/demo';
+import { setPreference } from '../actions/preferences';
 import { Button } from '../components/Button';
 import { markWelcomed } from '../data/dbChoice';
 import { useData } from '../data/DataProvider';
@@ -27,6 +28,8 @@ export function Welcome() {
   const kind = step === 1 ? 'intro' : step === 2 && ios ? 'ios' : 'choose';
 
   function startFresh() {
+    // Night sky is the default for a new record (ADR-036); Settings offers Light and System.
+    void setPreference(deps, { theme: 'dark' });
     markWelcomed();
     void navigate('/', { replace: true });
   }

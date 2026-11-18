@@ -14,8 +14,7 @@ function ThemeSync() {
     const root = document.documentElement;
     // theme.js reads this mirror before first paint, so there is no flash.
     try {
-      if (theme === 'system') localStorage.removeItem(THEME_MIRROR);
-      else localStorage.setItem(THEME_MIRROR, theme);
+      localStorage.setItem(THEME_MIRROR, theme);
     } catch {
       // Storage may be unavailable; the stored setting still applies.
     }
