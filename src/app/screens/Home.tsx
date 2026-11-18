@@ -74,13 +74,13 @@ export function Home() {
         <StuckButton variant="primary" />
         {starts > 0 && <p className={styles['muted']}>{startsThisWeek(starts)}</p>}
         <nav aria-label={nav.label} className={styles['nav']}>
-          <Link to="/plans" className={styles['link']}>
+          <Link to="/plans" className={styles['navLink']}>
             {nav.plans}
           </Link>
-          <Link to="/insights" className={styles['link']}>
+          <Link to="/insights" className={styles['navLink']}>
             {nav.insights}
           </Link>
-          <Link to="/settings" className={styles['link']}>
+          <Link to="/settings" className={styles['navLink']}>
             {nav.settings}
           </Link>
         </nav>

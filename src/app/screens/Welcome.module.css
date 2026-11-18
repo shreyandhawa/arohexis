@@ -32,3 +32,9 @@
 .error {
   color: var(--color-text-muted);
 }
+
+@media (min-width: 64rem) {
+  .page {
+    max-width: 40rem;
+  }
+}

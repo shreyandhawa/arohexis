@@ -10,6 +10,10 @@
   flex-direction: column;
   margin: 0;
   padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-m);
+  background: var(--color-surface);
   list-style: none;
 }
 
@@ -17,8 +21,8 @@
   border-top: 1px solid var(--color-rule);
 }
 
-.item:last-child {
-  border-bottom: 1px solid var(--color-rule);
+.item:first-child {
+  border-top: 0;
 }
 
 .itemLink {
@@ -26,7 +30,7 @@
   min-height: var(--target-min);
   flex-direction: column;
   gap: var(--space-1);
-  padding-block: var(--space-3);
+  padding: var(--space-3) var(--space-4);
   color: var(--color-text);
   text-decoration: none;
   overflow-wrap: anywhere;
@@ -96,7 +100,8 @@
 .preview {
   margin: 0;
   padding: var(--space-4);
-  border-left: 4px solid var(--color-rule);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-m);
   background: var(--color-surface);
   font-family: var(--font-display);
   font-size: var(--step-1);

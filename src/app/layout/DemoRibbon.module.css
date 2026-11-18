@@ -1,16 +1,19 @@
 .ribbon {
   display: flex;
-  min-height: var(--target-min);
+  height: 40px;
   align-items: center;
-  gap: var(--space-3);
-  border-bottom: 1px solid var(--color-rule);
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+  padding-inline: var(--space-4) var(--space-2);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-pill);
   background: var(--color-surface);
 }
 
 .label {
   margin: 0;
   font-family: var(--font-display);
-  font-size: var(--step-1);
+  font-size: var(--step-0);
   font-weight: 500;
 }
 
@@ -18,17 +21,35 @@
   flex: 1;
 }
 
+/* The target is 48px tall and overhangs the 40px bar; the visible pill is 32px. */
 .action {
+  position: relative;
+  isolation: isolate;
   display: inline-flex;
   min-width: var(--target-min);
   min-height: var(--target-min);
   align-items: center;
-  padding: 0;
+  margin-block: -4px;
+  padding: 0 var(--space-3);
   border: 0;
   background: none;
   color: var(--color-text);
   font: inherit;
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
+  font-size: var(--step--1);
   cursor: pointer;
+}
+
+.action::before {
+  position: absolute;
+  inset: 8px 0;
+  z-index: -1;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  content: '';
+}
+
+@media (hover: hover) {
+  .action:hover::before {
+    background: var(--color-hover);
+  }
 }
