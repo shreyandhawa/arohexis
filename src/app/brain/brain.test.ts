@@ -15,6 +15,7 @@ function setup(opts: { reduce?: boolean } = {}) {
   const frames: FrameRequestCallback[] = [];
   const control = { throwOnDraw: false };
   const calls: Record<string, number> = {};
+  const images: { width: number }[] = [];
   const ctx = new Proxy(
     {},
     {
@@ -22,7 +23,8 @@ function setup(opts: { reduce?: boolean } = {}) {
         if (typeof key === 'string') calls[key] = (calls[key] ?? 0) + 1;
         if (key === 'measureText') return () => ({ width: 10 });
         if (key === 'drawImage')
-          return () => {
+          return (image: { width: number }) => {
+            images.push(image);
             if (control.throwOnDraw) throw new Error('draw failed');
           };
         return () => undefined;
@@ -117,7 +119,19 @@ function setup(opts: { reduce?: boolean } = {}) {
       listeners.get('pointerup')?.(at(80));
     },
   };
-  return { renderer, canvas, clock, control, pointer, reported, state, flush, frames, calls };
+  return {
+    renderer,
+    canvas,
+    clock,
+    control,
+    pointer,
+    reported,
+    state,
+    flush,
+    frames,
+    calls,
+    images,
+  };
 }
 
 beforeEach(() => vi.useFakeTimers());
@@ -325,6 +339,32 @@ describe('the static layer', () => {
     );
     h.flush(32);
     expect(rebuilds()).toBeGreaterThan(before);
+  });
+});
+
+describe('the glow', () => {
+  // The glow canvas is a quarter of the 300 px cache.
+  const glowDraws = (h: ReturnType<typeof setup>): number =>
+    h.images.filter((i) => i.width === 75).length;
+
+  it('is drawn once per settled cache key', () => {
+    const h = setup();
+    h.renderer.update(h.state());
+    h.flush(0);
+    const before = glowDraws(h);
+    expect(before).toBeGreaterThan(0);
+    h.renderer.update(h.state({ still: true }));
+    h.flush(16);
+    expect(glowDraws(h)).toBe(before);
+  });
+
+  it('is skipped while the view is moving', () => {
+    const h = setup();
+    h.renderer.update(h.state());
+    h.pointer.press();
+    h.flush(0);
+    h.flush(16);
+    expect(glowDraws(h)).toBe(0);
   });
 });
 

@@ -29,3 +29,6 @@ export const STILL_FADE_MS = 120;
 export const DRAW_MEAN_BUDGET_MS = 2;
 // R40: CI's Linux WebKit draws in software (88–103 ms mean on the first run), so CI has its own guard.
 export const CI_DRAW_MEAN_BUDGET_MS = 250;
+
+/** How strongly the blurred light is added back around lit lines. */
+export const GLOW_ALPHA = 0.9;

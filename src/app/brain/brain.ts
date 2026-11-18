@@ -20,6 +20,7 @@ import {
   BRAIN_CENTRE,
   BURST_MS,
   EASE_MS,
+  GLOW_ALPHA,
   MIN_STRIP_BAND,
   SETTLE_MS,
   STILL_FADE_MS,
@@ -160,6 +161,12 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   let framedFor = '';
   const cache = document.createElement('canvas');
   const cacheCtx = cache.getContext('2d');
+  /** The light alone, so a blurred copy of it can be added back as a halo. */
+  const litLayer = document.createElement('canvas');
+  const litCtx = litLayer.getContext('2d');
+  /** A quarter-size copy of the light; scaling it back up is a cheap blur that works on iOS. */
+  const glow = document.createElement('canvas');
+  const glowCtx = glow.getContext('2d');
   const samples: number[] = [];
   /** Starts at the loop's first frame, so the first mean covers about a second of frames. */
   let lastReport: number | null = null;
@@ -343,6 +350,10 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     canvas.height = Math.round(h * dpr);
     cache.width = canvas.width;
     cache.height = canvas.height;
+    litLayer.width = canvas.width;
+    litLayer.height = canvas.height;
+    glow.width = Math.ceil(canvas.width / 4);
+    glow.height = Math.ceil(canvas.height / 4);
     cacheKey = '';
     return true;
   }
@@ -399,7 +410,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       current.revealing && current.item
         ? { ...scene, items: scene.items.filter((i) => i !== current.item) }
         : scene;
-    if (cacheCtx) {
+    if (cacheCtx && litCtx && glowCtx) {
       if (key !== cacheKey) {
         cacheCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
         cacheCtx.globalCompositeOperation = 'source-over';
@@ -409,8 +420,30 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
         cacheCtx.save();
         clipToBand(cacheCtx, view);
         drawDim(cacheCtx, f, r, view, detailed, state.selected !== null);
-        drawLit({ ...lit, ctx: cacheCtx, scene: settled });
+        litCtx.setTransform(1, 0, 0, 1, 0, 0);
+        litCtx.clearRect(0, 0, litLayer.width, litLayer.height);
+        litCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        litCtx.save();
+        clipToBand(litCtx, view);
+        drawLit({ ...lit, ctx: litCtx, scene: settled });
+        litCtx.restore();
         cacheCtx.restore();
+        // Additive light on the dim field matches drawing it there directly.
+        cacheCtx.setTransform(1, 0, 0, 1, 0, 0);
+        cacheCtx.globalCompositeOperation = 'lighter';
+        cacheCtx.drawImage(litLayer, 0, 0);
+        if (detailed) {
+          // Glow is skipped on motion frames so they cost what they did before.
+          glowCtx.setTransform(1, 0, 0, 1, 0, 0);
+          glowCtx.clearRect(0, 0, glow.width, glow.height);
+          glowCtx.imageSmoothingEnabled = true;
+          glowCtx.imageSmoothingQuality = 'high';
+          glowCtx.drawImage(litLayer, 0, 0, glow.width, glow.height);
+          cacheCtx.globalAlpha = GLOW_ALPHA;
+          cacheCtx.drawImage(glow, 0, 0, cache.width, cache.height);
+        }
+        cacheCtx.globalAlpha = 1;
+        cacheCtx.globalCompositeOperation = 'source-over';
         cacheKey = key;
       }
       ctx.setTransform(1, 0, 0, 1, 0, 0);
