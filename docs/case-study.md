@@ -28,6 +28,24 @@ Arohexis is for chronic procrastination, and it trains one thing: the moment of 
 
 **R44, plan lapses.** Plans now carry `activeSince`, and lapses count only occurrences after the last resume or schedule change. The point is that a pause or a schedule change never counts earlier occurrences against the plan, in keeping with the product's calm tone.
 
+## Night sky (v2)
+
+**Why (ADR-036).** v1 had two visual languages. The plate was additive light on black, and everything around it was monochrome hairlines, so the main visual read as a widget inside another app. Three options were weighed: keep the mono chrome and upgrade only the plate, night sky everywhere with the light theme kept, or night sky only. The decision was night sky everywhere with the light theme kept. The dark page background is the plate's background, so the plate has no frame and merges into the page. Part colours may appear outside the plate as data, in swatches and Insights bars, but never as text colour unless it meets 4.5:1.
+
+**What was learned.** Route transitions were tried and dropped. React's `<ViewTransition>` held later navigations back in headless Chromium, and a CSS rise on each screen upset the pixel-exact target-size and contrast checks while it played. Chrome motion stays limited to what carries state.
+
+**The glow pass.** In `src/app/brain/brain.ts` the lit layer is drawn to its own canvas. A quarter-scale copy is drawn with smoothing on. Scaling it back up acts as a cheap blur that works on iOS. That copy is added back over the cached layer with `lighter` compositing at `GLOW_ALPHA`. The pass is skipped on drag and camera-ease frames, so motion frames cost what they did before. The brain chunk stayed at 11.0 of 30 kB.
+
+## Replay (v2)
+
+**The rule (ADR-037).** Replay shows the light arriving, start by start. It is cumulative only, so a frame never compares one time with another. It never moves light, and it respects Still: under Still or reduced motion there is no Play button, and scrubbing still works.
+
+**A frame is a projection.** `projectAt` is `projectBrainSpace` over the starts made by time t, with no plans. A property test shows that every line in a frame sits on the fibre it has in today's picture, because assignment walks lines in order and never moves an earlier one. The known exception is a start re-tagged from a stale second tab (ADR-035), which can sit in another part mid-replay.
+
+**No renderer change.** Each frame is new state for the existing renderer, so the brain chunk did not grow and the canvas-blocked fallback applies for free.
+
+**The Welcome hero reuses that path.** The demo is generated in memory and plays 30 frames over 2.5 seconds once, then rests. Motion under 5 seconds also keeps clear of WCAG 2.2.2. Nothing is written to the database. The hero lives in the lazy-loaded Welcome chunk, because initial JS was at 149.3 of 150 kB gzip.
+
 ## Trade-offs worth naming
 
 - **Device proof is manual.** Automated tests cover behavior. Smoothness on an iPhone and the 30-second flow need a person with the phone, so those checks are recorded as owner checks.
@@ -35,3 +53,4 @@ Arohexis is for chronic procrastination, and it trains one thing: the moment of 
 - **No comparisons between weeks.** Insights show starts per week and the check-in trend, but never compute streaks, completions or week-over-week change. This is a product rule, and it limits what the charts can say.
 - **A small bundle.** The initial bundle stays under 150 kB gzip, and Brain space loads lazily with its own 30 kB budget.
 - **Copy as code.** Every user-facing string lives in one place and a test enforces the banned words, the no-exclamation rule and the 40-word cap. That makes copy changes slower and the tone consistent.
+- **Little headroom.** Under 1 kB of the initial-JS budget remains, so every new screen loads on demand.
