@@ -11,6 +11,8 @@
   width: 100%;
   height: auto;
   overflow: visible;
+  /* Charts are drawn in light (ADR-036): a soft halo, none in the light theme. */
+  filter: drop-shadow(0 0 6px var(--color-glow));
 }
 
 .bar {
@@ -19,6 +21,34 @@
 
 .current {
   fill: var(--color-accent);
+}
+
+.track {
+  fill: var(--color-rule);
+}
+
+.bar[data-colour='1'] {
+  fill: var(--part-1);
+}
+
+.bar[data-colour='2'] {
+  fill: var(--part-2);
+}
+
+.bar[data-colour='3'] {
+  fill: var(--part-3);
+}
+
+.bar[data-colour='4'] {
+  fill: var(--part-4);
+}
+
+.bar[data-colour='5'] {
+  fill: var(--part-5);
+}
+
+.bar[data-colour='6'] {
+  fill: var(--part-6);
 }
 
 .axis {
@@ -33,9 +63,7 @@
 }
 
 .cell {
-  fill: var(--color-text);
-  stroke: var(--color-rule);
-  stroke-width: 0.5;
+  fill: var(--color-accent);
 }
 
 .line {
@@ -109,7 +137,10 @@
 
 .rowBar {
   grid-column: 1 / -1;
-  height: 10px;
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  filter: drop-shadow(0 0 6px var(--color-glow));
 }
 
 .count {

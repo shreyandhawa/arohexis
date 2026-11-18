@@ -4,7 +4,7 @@ import styles from './Charts.module.css';
 
 const CELL = 12.5;
 
-/** 24 cells, one per local hour; a cell's depth shows its share of the busiest hour. */
+/** 24 cells of light, one per local hour; a cell's brightness shows its share of the busiest hour. */
 export function HourStrip({ hours, summary }: { hours: readonly number[]; summary: string }) {
   const max = Math.max(1, ...hours);
   return (
@@ -13,10 +13,11 @@ export function HourStrip({ hours, summary }: { hours: readonly number[]; summar
         {hours.map((n, h) => (
           <rect
             key={h}
-            x={h * CELL}
+            x={h * CELL + 1}
             y="0"
-            width={CELL}
+            width={CELL - 2}
             height="28"
+            rx="2"
             className={styles['cell']}
             fillOpacity={n === 0 ? 0 : 0.2 + 0.8 * (n / max)}
           />
