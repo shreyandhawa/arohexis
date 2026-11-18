@@ -728,6 +728,7 @@ Statuses:
   - **Chrome may carry light.** The primary action and focus may glow softly, and rules and borders use the plate's dim tones. Glow is a `box-shadow` or `drop-shadow` in a token, never a gradient fill, never on body text.
   - **Part colours may appear outside the plate as data:** swatches, part bars in Insights, and line glyphs. Text is still never set in a part colour unless it meets 4.5:1 on its background.
   - **Desktop:** at 64rem and wider, Home is a stage (the plate) with a rail (card, **I'm stuck**, links). Other screens keep a readable column.
+  - **Motion:** the sheet rises in over its fading backdrop, and closes at once. Route transitions were tried and left out. React's `<ViewTransition>` held later navigations back in headless Chromium, and a CSS rise on each screen broke the pixel-exact target and contrast checks while it played. §11.2 already keeps chrome motion to what carries state.
   - **Unchanged:** the typefaces, the contrast checks in both themes, the plate tokens and part colours, motion tokens, **Still**, the copy rules, the CSP, and no gamification.
 - **Consequences:**
   - ADR-018's "no hue in chrome" and ADR-026's "Insights stays neutral" no longer hold; spec §8, §8.9, §11.1, §11.2 and §16.7 say so;

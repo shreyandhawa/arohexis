@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, ViewTransition } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { backToHome } from '../../copy/common';
@@ -58,10 +58,7 @@ export function Shell() {
       {/* Home shows the update card in its own card slot (spec §8.1, ADR-035). */}
       {needRefresh && !home && !flow && <UpdateCard onReload={reload} />}
       <main className={home ? `${styles['main']} ${styles['mainHome']}` : styles['main']}>
-        {/* Each route enters and leaves as one view transition (ADR-036); styles in global.css. */}
-        <ViewTransition key={pathname} enter="page-enter" exit="page-exit" default="none">
-          <Outlet context={context} />
-        </ViewTransition>
+        <Outlet context={context} />
       </main>
       {!home && !flow && (
         <footer className={styles['footer']}>
