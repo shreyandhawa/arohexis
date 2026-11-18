@@ -1645,8 +1645,18 @@ export function setPartEnabled(d: AppDeps, id: string, enabled: boolean): Promis
 ## Ledger
 
 - [x] M1: The stuck button, on the iPhone
-- [ ] M2: Brain space
-- [ ] M3: If-then plans and reminders
-- [ ] M4: Insights and the weekly check-in
-- [ ] M5: Demo mode, restore and onboarding
-- [ ] M6: Your configuration, About, v1.0
+- [x] M2: Brain space
+- [x] M3: If-then plans and reminders
+- [x] M4: Insights and the weekly check-in
+- [x] M5: Demo mode, restore and onboarding
+- [x] M6: Your configuration, About, v1.0
+
+## v2 "Night sky" (M7 to M11)
+
+Plan approved by the owner on 2026-11-18. One branch, `v2-night-sky`, with a draft PR to `main`; one commit per step, pushed as it lands. Decisions: ADR-036 and ADR-037.
+
+- [ ] M7: Night sky foundation: ADR-036, dark-first tokens, chrome, desktop stage and rail, route and sheet motion
+- [ ] M8: A brighter brain: a glow pass on the lit layer, a borderless plate
+- [ ] M9: Insights in light: charts in the plate's language, part bars in part colours
+- [ ] M10: Replay, "watch it grow": a cumulative scrubber over the final projection
+- [ ] M11: Live demo first: a Welcome hero from in-memory demo light, link previews, README and case study, v2.0.0

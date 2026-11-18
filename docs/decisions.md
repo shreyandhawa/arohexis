@@ -230,7 +230,7 @@ Statuses:
 
 ## ADR-018: Visual direction C "Contrast"
 
-- Date: 2026-11-11 · Status: **Accepted** · Amended by ADR-021: "no hue" applies to chrome; Brain space's plate carries part colours
+- Date: 2026-11-11 · Status: **Accepted** · Amended by ADR-021: "no hue" applies to chrome; Brain space's plate carries part colours · Amended by ADR-036: night sky, chrome may carry light
 - **Context:** Task 1 produced three mockups (`.superpowers/sdd/plan/design/`) for the owner to choose between. Task 11 turns this ADR into the CSS tokens, so the values below are exact. Spec §11.1 describes one accent reserved for the primary action and the "Started." moment.
 - **Options:**
   - A "Paper": warm cream, sepia and blue ink with serif display. Not chosen as-is: the owner asked for higher contrast (an off-white background with jet-black text, inverted in dark mode) and kept Paper's typefaces and layout rhythm as the base for C.
@@ -463,7 +463,7 @@ Statuses:
 
 ## ADR-026: The plate is always dark, with its own contrast checks
 
-- Date: 2026-11-12 · Status: **Accepted** (owner approval, 2026-11-12)
+- Date: 2026-11-12 · Status: **Accepted** (owner approval, 2026-11-12) · Amended by ADR-036: the app is dark by default, and Insights may use part colours as data
 - **Context:** Additive light only reads on black. The app has light and dark themes and a contrast rule of 4.5:1 for text and 3:1 for UI parts (spec §11.2). The review measured that a part colour as text on the light theme fails (cyan is about 1.6:1), and that labels on a translucent backing over bright light drop below 4.5:1.
 - **Options:**
   - the plate is always dark, and chrome follows the theme;
@@ -714,3 +714,22 @@ Statuses:
   - the owner approved these with the M2 plan on 2026-11-12.
 
 - R44: plans carry activeSince; lapses count only occurrences after the last resume or schedule change.
+
+## ADR-036: Night sky, the app is built around Brain space's light
+
+- Date: 2026-11-18 · Status: **Accepted** (owner decision, 2026-11-18) · Amends ADR-018, ADR-021 and ADR-026
+- **Context:** v1 has two visual languages. The plate is additive light on black, and everything around it is monochrome hairlines, so the main visual reads as a widget inside a different app. A laptop shows a 34rem phone column. The owner wants v2 built around the lines of light.
+- **Options:**
+  - keep mono chrome and upgrade only the plate;
+  - night sky everywhere, with the light theme kept as an option;
+  - night sky only, with the light theme dropped.
+- **Decision:** night sky everywhere, light theme kept.
+  - **Dark by default.** With no stored choice the app is dark. Settings offers Dark, Light and System. The dark page background is `--plate-bg`, so the plate has no frame and merges into the page.
+  - **Chrome may carry light.** The primary action and focus may glow softly, and rules and borders use the plate's dim tones. Glow is a `box-shadow` or `drop-shadow` in a token, never a gradient fill, never on body text.
+  - **Part colours may appear outside the plate as data:** swatches, part bars in Insights, and line glyphs. Text is still never set in a part colour unless it meets 4.5:1 on its background.
+  - **Desktop:** at 64rem and wider, Home is a stage (the plate) with a rail (card, **I'm stuck**, links). Other screens keep a readable column.
+  - **Unchanged:** the typefaces, the contrast checks in both themes, the plate tokens and part colours, motion tokens, **Still**, the copy rules, the CSP, and no gamification.
+- **Consequences:**
+  - ADR-018's "no hue in chrome" and ADR-026's "Insights stays neutral" no longer hold; spec §8, §8.9, §11.1, §11.2 and §16.7 say so;
+  - `tokens.test.ts` checks the new dark surfaces against the same contrast rules;
+  - a user who had no stored theme and a light system theme sees dark after the update, and can pick System.
