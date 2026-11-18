@@ -8,6 +8,7 @@ export const nav = {
   label: 'Main',
   plans: 'Plans',
   insights: 'Insights',
+  replay: 'Replay',
   settings: 'Settings',
 } as const;
 

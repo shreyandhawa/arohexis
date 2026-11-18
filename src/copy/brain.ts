@@ -7,6 +7,15 @@ const plural = (n: number, one: string, many: string): string => `${n} ${n === 1
 export const brain = {
   regionLabel: 'Brain space',
   empty: 'Your starts will light up here.',
+  /** Replay, "watch it grow" (ADR-037): cumulative only, never a comparison. */
+  replay: {
+    title: 'Replay',
+    empty: 'Replay appears after your first start.',
+    moment: 'Moment',
+    position: (k: number, n: number, date: string): string => `Start ${k} of ${n}, ${date}`,
+    play: 'Play',
+    pause: 'Pause',
+  },
   noPart: 'No part',
   moving: 'Signals are moving.',
   resting: 'Signals are resting. One start sets them moving again.',

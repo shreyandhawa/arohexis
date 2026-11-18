@@ -1659,5 +1659,6 @@ Plan approved by the owner on 2026-11-18. One branch, `v2-night-sky`, with a dra
 - [x] M8: A brighter brain: a glow pass on the lit layer, a borderless plate
 - [x] M9: Insights in light: charts in the plate's language, part bars in part colours
   - M7 to M9 notes (2026-11-18): route transitions were left out (ADR-036, Motion). The plate went borderless through the tokens, with no plate CSS change. One code review found three issues, all fixed: a one-time dark paint for v1 "System" records, an unhandled theme write, and a 1.3:1 border on the Feeling rows. The design-critic gate moves to M11, so one Opus pass covers M7 to M11. Budgets after M9: initial JS 147.8 of 150 kB, brain chunk 11.0 of 30 kB. Replay and the Welcome hero must stay in lazy chunks.
-- [ ] M10: Replay, "watch it grow": a cumulative scrubber over the final projection
+- [x] M10: Replay, "watch it grow": a cumulative scrubber over the final projection
+  - M10 notes (2026-11-18): Replay needed no renderer change. `Plate` takes an override `data`, and `/replay` feeds it `projectAt` frames. Tests: `tests/e2e/replay.spec.ts` plus the domain and geometry properties.
 - [ ] M11: Live demo first: a Welcome hero from in-memory demo light, link previews, README and case study, v2.0.0

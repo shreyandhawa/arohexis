@@ -389,6 +389,7 @@ Layout: a single column, at most 34rem wide, except Home at 64rem and wider, whi
 | `/plans/new` | New plan |
 | `/plans/:id` | Edit plan |
 | `/insights` | Insights |
+| `/replay` | Replay (§16.14) |
 | `/checkin` | Weekly check-in |
 | `/settings` | Settings |
 | `/settings/feelings` | Feelings and responses |
@@ -985,6 +986,10 @@ The 10-week demo fills the brain (ADR-034) and keeps §7.4's bands:
 | §12 | The CSP stays exactly as written. "No network requests after load" means no requests to other origins. The app's own same-origin chunks are precached, and may be fetched from the origin on the very first visit before the service worker is ready |
 | §13 | Add the tests in §16.13. Scenario 3 tags a part. CI typechecks `src/geometry` and gates its coverage at lines ≥ 90% |
 | §14 | Add the risks: frame rate on the iPhone; resting read as a loss; the picture read as a brain claim; the plate's height at 375×667 |
+
+### 16.14 Replay (v2, ADR-037)
+
+`/replay` shows the plate as it stood after each counted start, from the first to now. A frame is `projectAt(attempts, parts, t)`, which projects the starts made by `t` with no waiting lines, so every line keeps today's fibre. A range input scrubs the starts ("Start 12 of 98, March 3"). **Play** runs the whole history once in about 8 s, and it's absent under **Still** or reduced motion. The wording is cumulative only.
 
 ### 16.13 Tests
 

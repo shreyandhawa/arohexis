@@ -80,6 +80,9 @@ export function Home() {
           <Link to="/insights" className={styles['navLink']}>
             {nav.insights}
           </Link>
+          <Link to="/replay" className={styles['navLink']}>
+            {nav.replay}
+          </Link>
           <Link to="/settings" className={styles['navLink']}>
             {nav.settings}
           </Link>

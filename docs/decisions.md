@@ -734,3 +734,18 @@ Statuses:
   - ADR-018's "no hue in chrome" and ADR-026's "Insights stays neutral" no longer hold; spec §8, §8.9, §11.1, §11.2 and §16.7 say so;
   - `tokens.test.ts` checks the new dark surfaces against the same contrast rules;
   - a new record (**Start fresh**) and the demo start in Dark, and first paint is dark until a choice is stored; existing records keep their stored theme.
+
+## ADR-037: Replay, "watch it grow"
+
+- Date: 2026-11-18 · Status: **Accepted** (owner decision, 2026-11-18)
+- **Context:** Brain space shows where light stands now. The owner chose one new feature for v2: watching it arrive, start by start. It must stay cumulative (spec §16.1). It must not move light (§16.4 rule 6), and it must respect **Still** (ADR-027).
+- **Decision:** a lazy route, `/replay`, linked from Home's nav. It reuses the plate with an override picture.
+  - **A frame is a projection.** `projectAt(attempts, parts, t)` is `projectBrainSpace` over the starts made by `t`, with no plans, so there are no waiting lines. `replayMoments` lists each counted start's time. A property test shows that every line in a frame sits on the same fibre it has in today's picture: assignment walks lines in order and never moves an earlier one. The one known exception is a start re-tagged from a stale second tab after a later attempt opened (ADR-035). It can sit in another part mid-replay.
+  - **Controls.**
+    - A range input over the starts. Its `aria-valuetext` reads "Start 12 of 98, March 3", and the arrow keys and Home and End scrub it.
+    - **Play** steps through the whole history in about 8 s, then stops. It never loops.
+    - Under **Still** or reduced motion there is no **Play**; scrubbing still works.
+  - **No new renderer code.** Each frame is new state for the existing renderer, so the brain chunk doesn't grow and the canvas-blocked fallback applies.
+- **Consequences:**
+  - only cumulative wording appears. A frame never compares one time with another;
+  - the part card opened from Replay shows today's counts, not the frame's.

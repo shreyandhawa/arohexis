@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { brain } from '../../copy/brain';
-import { summaryLines } from '../../domain/brainSpace';
+import { summaryLines, type BrainSpace } from '../../domain/brainSpace';
+import type { Part } from '../../domain/config';
 import { Chip } from '../components/Chip';
 import { useData } from '../data/DataProvider';
 import { useBrainSpace } from '../hooks/useBrainSpace';
@@ -19,11 +20,14 @@ type Props = {
   onSelect(partId: string | null): void;
   /** A line shown on the plate's bottom edge, such as "Start removed." */
   notice?: string | undefined;
+  /** A picture to show in place of the live one, such as a Replay frame. */
+  data?: { space: BrainSpace; parts: readonly Part[] } | undefined;
 };
 
-export function Plate({ selected, onSelect, notice }: Props) {
+export function Plate({ selected, onSelect, notice, data: frame }: Props) {
   const { clock } = useData();
-  const data = useBrainSpace();
+  const live = useBrainSpace();
+  const data = frame ?? live;
   const { still, toggle } = useStill();
   const canvas = useRef<HTMLCanvasElement>(null);
   const root = useRef<HTMLElement>(null);
