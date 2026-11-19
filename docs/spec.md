@@ -616,7 +616,7 @@ Two layers of CSS custom properties: primitives (`--ink-900`, `--paper-50`, `--s
 - **Plate:** Brain space adds plate tokens (`--plate-bg`, `--plate-dim-point`, `--plate-dim-trace`, `--plate-waiting`, `--plate-core`) and six part colors. See §16.7.
 - **Motion:**
   - `--motion-quick: 120ms`, `--motion-calm: 240ms`, `--motion-slow: 480ms`, with a single standard easing;
-  - no motion is decorative or looping, with one exception: Brain space's state motion (signals along plan lines), which stops with **Still** or while resting (§16.8);
+  - no motion is decorative or looping, with one exception: Brain space's motion (signals along plan lines, and the sky's slow twinkle, ADR-040), which stops with **Still** (§16.8); signals also stop while resting;
   - under `prefers-reduced-motion: reduce`, transforms are removed and only opacity fades of 120 ms or less remain.
 
 ### 11.3 Accessibility (WCAG 2.2 AA)
@@ -877,7 +877,8 @@ Id 6 is blue `hsl(225 90% 76%)`. M2 Task 6 chose it from two candidates: blue at
   - **Backfilled starts** (**Yes, I started**) have no burst and no reveal, because they aren't made on Started. Their light simply appears, and they count for moving like any start.
   - **Landing (Home):** when the newest counted start is newer than `kv.lastSeenStart`, Home lights that start's line once, reusing the burst, and the camera eases to face it. Under Still there is no ease, only the fade of at most 120 ms. On a first visit (no `lastSeenStart`) only a start from the last hour lands, so old starts are not replayed. The demo never writes `lastSeenStart`.
 - **Interaction motion:** hovering or focusing a part's chip previews that part's lines (no card, no camera move); the camera eases to a tapped part or a zoom step over `--motion-slow`.
-- **Never:** auto-rotation, idle drift, looping decoration, or motion on chrome.
+- **Living sky (ADR-040):** at rest, about 64 dim field points fade in and out on their own periods of 4 to 9 s, redrawn at about 12 fps. Nothing changes position. It stops under **Still** (the reduced-motion default), when the tab is hidden, when the plate is off-screen, and on the Started strip.
+- **Never:** auto-rotation, drift, a change of position, looping decoration, or motion on chrome. (The twinkle above is the one idle motion.)
 - **The light exists from the tap** (ADR-004). The reveal only animates it. Leaving Started early or tapping **Done for now** never leaves a partial line: Home always shows it whole.
 - **Still:** a visible toggle on every plate, on Home and on Started, labelled **Still**, with `aria-pressed`, at least 48×48 px.
   - It stops state and event motion: signals stop, the burst becomes a fade of at most 120 ms, and new light appears whole.
@@ -982,7 +983,7 @@ The 10-week demo fills the brain (ADR-034) and keeps §7.4's bands:
 | §9.3 | Default parts (§16.3) replace the default task types |
 | §9.5 | Add the banned words in §16.9 and the anatomy list in §16.5 |
 | §11.1 | The direction gate is complete (ADR-018). Brain space's gate is the owner's review of the built Home screen (ADR-021). Part colours are data, not accents |
-| §11.2 | Motion per §16.8: the one exception to "no looping motion" is Brain space's state motion, which stops with Still or while resting. Add the plate tokens |
+| §11.2 | Motion per §16.8: the one exception to "no looping motion" is Brain space's motion (state motion and the sky's twinkle, ADR-040), which stops with Still; signals also stop while resting. Add the plate tokens |
 | §11.3 | Add the text equivalent, Still on every plate, and the turn buttons (2.5.7) |
 | §12 | The CSP stays exactly as written. "No network requests after load" means no requests to other origins. The app's own same-origin chunks are precached, and may be fetched from the origin on the very first visit before the service worker is ready |
 | §13 | Add the tests in §16.13. Scenario 3 tags a part. CI typechecks `src/geometry` and gates its coverage at lines ≥ 90% |

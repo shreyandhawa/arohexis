@@ -772,3 +772,16 @@ Statuses:
   - **Sizes:** Home's primary stays 72 px tall. The quiet footer variant stays 48 px and keeps the ring.
   - **Unchanged:** the `/stuck` route, the `S` key, "What's in the way?", the 3-tap path, the copy rules and the CSP. The change is CSS and a small inline SVG, so the initial bundle barely moves.
 - **Consequences:** the e2e suites find the button as "Light a line"; spec §2, §8.1, §8.2 and §16.10 say so.
+
+## ADR-040: The living sky
+
+- Date: 2026-11-19 · Status: **Accepted** (owner decision, 2026-11-19) · Amends ADR-027 and spec §11.2 and §16.8 on idle drift
+- **Context:** the owner wants the brain to feel alive while staying calm. ADR-027 allowed only state motion at rest.
+- **Decision:** at rest, a fixed set of about 64 dim field points twinkles.
+  - **Look:** each point's alpha is `base·(0.6+0.4·sin(2πt/period+seed))`, with a period of 4 to 9 s taken from the point's index. Nothing changes position: no drift, no rotation.
+  - **Cost:** the points are redrawn over the cached image at about 12 fps. Nothing is added to the initial bundle.
+  - **Stops when:** Still is on (the reduced-motion default), the tab is hidden, the plate is off-screen (IntersectionObserver), or it is the Started strip.
+- **Consequences:**
+  - ADR-027's "never drift" stays; the twinkle is the one idle motion and moves nothing;
+  - WCAG 2.2.2 is met because Still is on every plate;
+  - the loop now runs at rest, so the owner checks battery and smoothness on the iPhone.

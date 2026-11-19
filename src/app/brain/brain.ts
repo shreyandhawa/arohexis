@@ -39,6 +39,7 @@ import {
   drawLabels,
   drawLit,
   drawSignals,
+  drawTwinkle,
   drawWaiting,
   facing,
   hitTest,
@@ -85,6 +86,8 @@ const TAP_SLOP = 6;
 const TAP_RADIUS = 24;
 const LINE_RADIUS = 16;
 const DRAW_SAMPLES = 120;
+/** The living sky redraws about 12 times a second (ADR-040). */
+const TWINKLE_MS = 83;
 const REVEAL_MS = TIMER_SECONDS * 1000;
 
 type Motion = {
@@ -153,6 +156,9 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   let insetBottom = 0;
   let dpr = 1;
   let raf = 0;
+  /** Whether the plate is in view; the sky rests when it is not. */
+  let onScreen = true;
+  let lastTwinkle = -Infinity;
   let running = false;
   let dragging = false;
   let settling = false;
@@ -320,8 +326,10 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     cam.zoom !== target.zoom ||
     !sameLook(cam.look, target.look);
   const signalsOn = (): boolean => scene.signals && state?.space.motion === 'moving' && !still();
+  /** The living sky: on the plate only, at rest, never under Still, and only while in view (ADR-040). */
+  const twinkleOn = (): boolean => !strip && !still() && onScreen && state !== undefined;
   const needsLoop = (): boolean =>
-    !document.hidden && (dragging || easing() || signalsOn() || current.animating);
+    !document.hidden && (dragging || easing() || signalsOn() || current.animating || twinkleOn());
 
   function syncTouchAction(): void {
     const scrolls = document.documentElement.scrollHeight > window.innerHeight + 1;
@@ -492,6 +500,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       const end = endPointOf(lit, arriving);
       if (end) drawSettle(ctx, end, arriving.css, current.settle);
     }
+    if (twinkleOn()) drawTwinkle(ctx, f, r, view, time);
     if (signalsOn()) drawSignals(lit);
     drawWaiting(lit);
     drawLabels(ctx, r, state.parts, view, { selected: sel, lit: { scene, field: f } });
@@ -554,6 +563,19 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     try {
       at = opts.now();
       current = motionAt(at);
+      // When only the sky is moving, most frames are skipped to hold about 12 fps.
+      if (
+        twinkleOn() &&
+        !dragging &&
+        !easing() &&
+        !signalsOn() &&
+        !current.animating &&
+        time - lastTwinkle < TWINKLE_MS
+      ) {
+        raf = requestAnimationFrame(frame);
+        return;
+      }
+      lastTwinkle = time;
       stepCamera(time);
       const moving = dragging || easing();
       const t0 = performance.now();
@@ -782,6 +804,14 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   }
   document.addEventListener('visibilitychange', onVisibility);
   window.addEventListener('resize', syncTouchAction);
+  const seen =
+    !strip && typeof IntersectionObserver === 'function'
+      ? new IntersectionObserver((entries) => {
+          onScreen = entries.at(-1)?.isIntersecting ?? true;
+          if (onScreen) request();
+        })
+      : undefined;
+  seen?.observe(canvas);
   const observer = new ResizeObserver(resize);
   observer.observe(canvas);
   size();
@@ -841,6 +871,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       destroyed = true;
       cancelAnimationFrame(raf);
       observer.disconnect();
+      seen?.disconnect();
       dprWatch?.removeEventListener('change', onDpr);
       canvas.removeEventListener('pointerdown', onDown);
       canvas.removeEventListener('pointermove', onMove);
