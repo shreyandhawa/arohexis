@@ -34,7 +34,7 @@ Brain space draws your starts as lines of light in the shape of a brain. It's a 
 
 ## Night sky
 
-The app is dark first and built around the light of the plate. Replay (`/replay`) shows the light arriving start by start. It is cumulative only and never moves light. Here is [a recording of Replay](docs/media/replay.webm). The Welcome screen plays the demo brain lighting up once.
+The app is dark only and built around the light of the plate. Replay (`/replay`) shows the light arriving start by start. It is cumulative only and never moves light. Here is [a recording of Replay](docs/media/replay.webm). The Welcome screen plays the demo brain lighting up once.
 
 ## Demo
 

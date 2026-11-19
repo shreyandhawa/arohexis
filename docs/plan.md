@@ -1672,3 +1672,5 @@ Plan approved by the owner on 2026-11-18. One branch, `v2-night-sky`, with a dra
   - M13 notes (2026-11-19): preview is a separate `preview` field in `RenderState`, so hovering a chip lights the part without turning the camera. `lastSeenStart` lives in kv (Settings). First visit lands only a start from the last hour. Initial JS 149.6 of 150 kB, brain chunk 11.2 of 30 kB.
 - [x] M14: Tap a line, and the living sky
   - M14 notes (2026-11-19): tap picks the nearest lit line within 16 px (`onLineTap`), else the part. `LineCard` is lazy; the text list has a button per lit line. Sky twinkle: ADR-040.
+- [x] v2.1 design gate: outlined actions, capsule primaries, selected states with a 2px edge. Skipped two critic items: a fuller line card, and the Started strip crop (pre-existing).
+- [x] v2.1 release: 2.1.0
