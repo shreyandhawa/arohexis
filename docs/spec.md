@@ -4,7 +4,7 @@ Status: **approved** by the owner on 2026-11-11, and amended with §16 Brain spa
 
 ## 1. Summary
 
-Arohexis is a local-first, installable web app for chronic procrastination. It trains **the moment of starting**, not task management. When you are stuck you tap one button and name the feeling. Arohexis shows a short response matched to that feeling, and you take a two-minute first step. Each start is rewarded right away. If-then plans tie a cue (a fixed time and place) to a first action. When a plan doesn't happen, you get a short forgive-and-replan script. The insights show which feelings, hours, parts, and responses lead to starts, plus a weekly check-in on how automatic starting feels. Brain space, the main visual, draws your starts as light in the shape of a brain. It's a picture, not a scan.
+Arohexis is a local-first, installable web app for chronic procrastination. It trains **the moment of starting**, not task management. When you are stuck you tap **Light a line** and name the feeling. Arohexis shows a short response matched to that feeling, and you take a two-minute first step. Each start is rewarded right away. If-then plans tie a cue (a fixed time and place) to a first action. When a plan doesn't happen, you get a short forgive-and-replan script. The insights show which feelings, hours, parts, and responses lead to starts, plus a weekly check-in on how automatic starting feels. Brain space, the main visual, draws your starts as light in the shape of a brain. It's a picture, not a scan.
 
 "Training" here means ordinary learning: the same cue, a new response, an immediate reward, repeated until it is automatic. Arohexis makes no claims about brain change and does not diagnose or treat any condition.
 
@@ -25,7 +25,7 @@ Accounts, cloud sync, AI chat, social features, native apps, site or app blockin
 
 | Criterion | How it is checked |
 |---|---|
-| From the Stuck button to a running timer takes at most 3 taps, no typing, and no scrolling at 375×667 | Playwright E2E on the WebKit iPhone preset |
+| From **Light a line** to a running timer takes at most 3 taps, no typing, and no scrolling at 375×667 | Playwright E2E on the WebKit iPhone preset |
 | The stuck flow takes under 30 s from tap to timer | Responses are capped at 40 words (unit test); one timed manual check on the owner's iPhone per release |
 | Works offline after the first load | Playwright offline scenario |
 | Installable on the iOS Home Screen; data survives restarts | Manual check on an iPhone; persistence E2E |
@@ -375,7 +375,7 @@ Merging imports is out of scope for v1.
 
 ## 8. Screens and flows
 
-Layout: a single column, at most 34rem wide, except Home at 64rem and wider, which is a stage and a rail (ADR-036). The primary action sits in the bottom thumb zone on phones. A persistent quiet Stuck button appears on every screen except the stuck flow itself.
+Layout: a single column, at most 34rem wide, except Home at 64rem and wider, which is a stage and a rail (ADR-036). The primary action sits in the bottom thumb zone on phones. A persistent quiet **Light a line** button appears on every screen except the stuck flow itself.
 
 **Routes:**
 
@@ -401,11 +401,11 @@ Layout: a single column, at most 34rem wide, except Home at 64rem and wider, whi
 
 The lapse repair is a sheet over Home.
 
-**Keyboard (desktop):** `S` opens the stuck flow from anywhere, except while typing in a field. On the Feeling screen, number keys `1`–`9` pick feelings in the order shown. `Enter` activates the primary action. `Esc` goes back or dismisses.
+**Keyboard (desktop):** `S` opens the stuck flow (**Light a line**) from anywhere, except while typing in a field. On the Feeling screen, number keys `1`–`9` pick feelings in the order shown. `Enter` activates the primary action. `Esc` goes back or dismisses.
 
 ### 8.1 Home (`/`)
 - **Layout:** the Brain space plate sits above everything else, then the card, then the button. The visible heading becomes visually hidden. Home never scrolls at 375×667. See §16.10.
-- **Primary:** a large **I'm stuck** button.
+- **Primary:** a large **Light a line** button.
 - **Above it, at most one card**, in this priority order:
   1. lapse to repair;
   2. plan open now;
@@ -459,7 +459,7 @@ The lapse repair is a sheet over Home.
 - **Appears:** while an occurrence is open.
 - **Content:** "9:00 · at my desk", then "Open the essay doc".
 - **Primary:** **Start now**. It emits `attempt.opened { source: 'plan', planId, occurrence }` and `start.made { planId, occurrence }`, then goes to Started. The plan *is* the first step.
-- **Quiet:** "I'm stuck on this" runs the stuck flow with the plan linked to the attempt.
+- **Quiet:** "Light this line" runs the stuck flow with the plan linked to the attempt.
 
 ### 8.7 Lapse repair (sheet on Home)
 Under 30 seconds. Every step can be skipped.
@@ -729,7 +729,7 @@ Brain space is the main visual: a picture of your starts, drawn as a brain made 
 |---|---|
 | **Part** | A part of life the user names, such as "Portfolio". It has a colour from a fixed set and a fixed region of the drawing. Part replaces Task type (ADR-023) |
 | **Region** | One of six fixed areas of the drawing. A seventh area, the **core**, holds light that has no part |
-| **On-cue start** | A counted start whose attempt is linked to a plan occurrence: it carries both `planId` and `occurrence`. That covers **Start now** and **I'm stuck on this** (§8.6) and **Yes, I started** (§8.7). Each occurrence counts once |
+| **On-cue start** | A counted start whose attempt is linked to a plan occurrence: it carries both `planId` and `occurrence`. That covers **Start now** and **Light this line** (§8.6) and **Yes, I started** (§8.7). Each occurrence counts once |
 | **Plan line** | One line per plan and part. Dashed while the plan has no on-cue start, then solid, growing in steps with on-cue starts |
 | **Start line** | A faint line left in its part by any other counted start. It never grows |
 | **Core spark** | A faint point near the core, left by a counted start that has no part |
@@ -917,14 +917,14 @@ Parts are named by the user, so no line gives advice about one kind of part. The
 
 ### 16.10 Placement and accessibility
 
-**Layout budget at 375×667.** These figures were measured on the M1 build (2026-11-12): about 372 px between Home's heading and **I'm stuck**, and 80 to 94 px free on Started between the chips and **Done for now**.
+**Layout budget at 375×667.** These figures were measured on the M1 build (2026-11-12): about 372 px between Home's heading and **Light a line**, and 80 to 94 px free on Started between the chips and **Done for now**.
 
-**Home (§8.1)**, top to bottom: the plate, the one card (if any), **I'm stuck** in the thumb zone, then the quiet links.
+**Home (§8.1)**, top to bottom: the plate, the one card (if any), **Light a line** in the thumb zone, then the quiet links.
 - **What goes on the plate:** the visible heading moves into a visually hidden `h1`. The summary line, the controls (**Still**, zoom, turn) and the parts row all sit on the plate, on its dark tokens, so they cost no height.
 - **Plate height:** it takes all the height left, and at least 200 px at 375×667 with the tallest card and the Demo ribbon showing.
 - **Card budgets:** plan card at most 180 px, check-in card 120, update card 96, Demo ribbon 40.
-- **The stuck flow is unchanged.** Home never scrolls at 375×667, **I'm stuck** stays where it is, and Stuck to timer stays at 3 taps.
-- **Loading:** the renderer loads after **I'm stuck** is on screen. Until then the plate shows the summary line.
+- **The stuck flow is unchanged.** Home never scrolls at 375×667, **Light a line** stays where it is, and Stuck to timer stays at 3 taps.
+- **Loading:** the renderer loads after **Light a line** is on screen. Until then the plate shows the summary line.
 - **Parts row:** an **All** chip and one chip per part with its swatch, 48 px tall, scrolling sideways. A chip does what tapping its part on the plate does.
 - **Tapping a part**, on the plate or its chip: the rest fades to `UNSELECTED_ALPHA`, the camera eases to it, and its card opens as a sheet. The sheet traps focus, Esc closes it, and focus returns, like the lapse sheet.
 - **Navigation:** drag turns. **Turn left** and **Turn right** turn by `TURN_STEP_RAD` (WCAG 2.5.7). Pinch, the wheel, or **Zoom in** and **Zoom out** zoom. Zooming past `EXPLODE_FROM_ZOOM` pulls the regions apart and labels them.

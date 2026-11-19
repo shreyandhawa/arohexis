@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { expectAccessible } from './helpers';
 
-const stuck = "I'm stuck";
+const stuck = 'Light a line';
 const startBtn = (page: Page) => page.getByRole('button', { name: 'Start', exact: true });
 
 /** Waits for every running CSS animation (the reward settle, fades) to finish. */

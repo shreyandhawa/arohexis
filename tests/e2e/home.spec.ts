@@ -3,7 +3,7 @@ import { expectAccessible } from './helpers';
 
 test('home shows one large stuck button', async ({ page }) => {
   await page.goto('/');
-  const button = page.getByRole('button', { name: "I'm stuck" });
+  const button = page.getByRole('button', { name: 'Light a line' });
   await expect(button).toHaveCount(1);
   const box = await button.boundingBox();
   expect(box?.width).toBeGreaterThanOrEqual(48);
@@ -84,14 +84,14 @@ for (const path of ['/settings', '/about']) {
   test(`stuck button is visible without scrolling on ${path}`, async ({ page }) => {
     await page.goto(path);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-    await expect(page.getByRole('button', { name: "I'm stuck" })).toBeInViewport({ ratio: 1 });
+    await expect(page.getByRole('button', { name: 'Light a line' })).toBeInViewport({ ratio: 1 });
   });
 }
 
 for (const path of ['/stuck']) {
   test(`stuck button is absent on ${path}`, async ({ page }) => {
     await page.goto(path);
-    await expect(page.getByRole('button', { name: "I'm stuck" })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Light a line' })).toHaveCount(0);
   });
 }
 
@@ -100,7 +100,7 @@ test('stuck button does not cover the end of the about page', async ({ page }) =
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   const last = page.locator('main li').last();
-  const button = page.getByRole('button', { name: "I'm stuck" });
+  const button = page.getByRole('button', { name: 'Light a line' });
   await expect(button).toBeInViewport({ ratio: 1 });
   await expect(last).toBeInViewport({ ratio: 1 });
   const lastBox = await last.boundingBox();
@@ -115,7 +115,7 @@ test('iPhone Safari tab sees the install note without losing the thumb zone', as
   await page.setViewportSize({ width: 375, height: 667 });
   await page.goto('/');
   await expect(page.getByText(/add Arohexis to your Home Screen/)).toBeVisible();
-  await expect(page.getByRole('button', { name: "I'm stuck" })).toBeInViewport({ ratio: 1 });
+  await expect(page.getByRole('button', { name: 'Light a line' })).toBeInViewport({ ratio: 1 });
   expect(
     await page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight),
   ).toBe(true);
@@ -125,13 +125,13 @@ test('the install note goes away once the database has data', async ({ page }, t
   test.skip(testInfo.project.name !== 'iphone', 'the note is for iOS Safari only');
   await page.goto('/');
   await expect(page.getByText(/add Arohexis to your Home Screen/)).toBeVisible();
-  await page.getByRole('button', { name: "I'm stuck" }).click();
+  await page.getByRole('button', { name: 'Light a line' }).click();
   await page.getByRole('button', { name: 'Anxious' }).click();
   await page.getByRole('button', { name: 'Not now' }).click();
   await expect(page.getByText(/That's fine/)).toBeVisible();
   await expect(page.getByText(/add Arohexis to your Home Screen/)).toHaveCount(0);
   await page.reload();
-  await expect(page.getByRole('button', { name: "I'm stuck" })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Light a line' })).toBeVisible();
   await expect(page.getByText(/add Arohexis to your Home Screen/)).toHaveCount(0);
 });
 
@@ -145,7 +145,7 @@ test('other browsers do not see the install note', async ({ page }, testInfo) =>
 test('desktop home is a stage and a rail with no scroll', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto('/');
-  await expect(page.getByRole('button', { name: "I'm stuck" })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Light a line' })).toBeVisible();
   await expect(page.locator('.plate')).toBeVisible();
   const fits = await page.evaluate(
     () => document.documentElement.scrollHeight <= window.innerHeight,

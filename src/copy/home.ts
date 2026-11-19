@@ -1,4 +1,4 @@
-export const stuckButton = "I'm stuck";
+export const stuckButton = 'Light a line';
 
 export function startsThisWeek(n: number): string {
   return n === 1 ? '1 start this week' : `${n} starts this week`;

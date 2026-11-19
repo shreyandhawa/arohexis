@@ -19,7 +19,7 @@ async function answerAll(page: Page, point: number): Promise<void> {
 test('a start tagged with a part appears under Parts in Insights', async ({ page }) => {
   await ready(page);
   await seedEvents(page, startEvents({ now: Date.now(), tagged: [], untagged: 2, undone: 0 }));
-  await page.getByRole('button', { name: "I'm stuck" }).click();
+  await page.getByRole('button', { name: 'Light a line' }).click();
   await page.getByRole('button', { name: 'Anxious' }).click();
   await page.getByRole('button', { name: 'Start', exact: true }).click();
   await page.getByRole('button', { name: 'Work', exact: true }).click();
@@ -73,7 +73,7 @@ test.describe('check-in', () => {
     await expect(page.getByRole('region', { name: 'Weekly check-in' })).toHaveCount(0);
     await page.reload();
     await expect(page.getByRole('heading', { level: 1 })).toBeAttached();
-    await expect(page.getByRole('button', { name: "I'm stuck" })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Light a line' })).toBeVisible();
     await expect(page.getByRole('region', { name: 'Weekly check-in' })).toHaveCount(0);
   });
 

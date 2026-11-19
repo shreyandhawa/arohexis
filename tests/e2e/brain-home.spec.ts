@@ -2,7 +2,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { full, knownEvents, startEvents } from './fixtures/brain';
 import { expectAccessible, seedEvents, seedParts, seedPlans } from './helpers';
 
-const stuck = "I'm stuck";
+const stuck = 'Light a line';
 const region = (page: Page) => page.getByRole('region', { name: 'Brain space' });
 const canvas = (page: Page) => page.locator('canvas');
 const still = (page: Page) => page.getByRole('button', { name: 'Still', exact: true });

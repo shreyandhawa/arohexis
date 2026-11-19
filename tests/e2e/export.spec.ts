@@ -15,7 +15,7 @@ async function openData(page: Page): Promise<void> {
 
 test('exports a valid backup', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: "I'm stuck" }).click();
+  await page.getByRole('button', { name: 'Light a line' }).click();
   await page.getByRole('button', { name: 'Anxious' }).click();
   await page.getByRole('button', { name: 'Start', exact: true }).click();
   await expect(page.getByText('Started.', { exact: true })).toBeVisible();

@@ -1667,6 +1667,6 @@ Plan approved by the owner on 2026-11-18. One branch, `v2-night-sky`, with a dra
 ## v2.1 (M12 to M14)
 
 - [x] M12 step 1: Dark only (ADR-038)
-- [ ] M12 step 2: Light a line (ADR-039)
+- [x] M12 step 2: Light a line (ADR-039)
 - [ ] M13: Light that answers you, and the light lands
 - [ ] M14: Tap a line, and the living sky

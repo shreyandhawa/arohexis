@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { knownEvents } from './fixtures/brain';
 import { expectAccessible, seedEvents, seedParts } from './helpers';
 
-const stuck = "I'm stuck";
+const stuck = 'Light a line';
 const canvas = (page: Page) => page.locator('canvas');
 const region = (page: Page) => page.getByRole('region', { name: 'Brain space' });
 const chip = (page: Page, name: string) => page.getByRole('button', { name, exact: true });

@@ -761,3 +761,14 @@ Statuses:
 - **Consequences:**
   - `tokens.test.ts` and axe check one theme;
   - ADR-036's Settings choice of Dark, Light and System no longer exists; its other points stand.
+
+## ADR-039: Light a line
+
+- Date: 2026-11-19 · Status: **Accepted** (owner decision, 2026-11-19) · Renames the primary action; ADR-001 to ADR-038 keep their wording as history
+- **Context:** the owner found "I'm stuck" weak. The button is the app's one door, and Brain space is made of lines of light.
+- **Decision:** the button reads **Light a line**, and a plan card's quiet action reads **Light this line**.
+  - **Look:** a dark capsule (`--color-surface` fill, a 1px edge in `--color-text-muted`, a pill radius, the text face at weight 600) with a glowing ring. The ring is the point at the brain's stem where every line begins.
+  - **States:** hover and focus brighten the ring. A press flares it once and runs a hairline across the capsule in 240 ms. Under reduced motion both use opacity only, at 120 ms.
+  - **Sizes:** Home's primary stays 72 px tall. The quiet footer variant stays 48 px and keeps the ring.
+  - **Unchanged:** the `/stuck` route, the `S` key, "What's in the way?", the 3-tap path, the copy rules and the CSP. The change is CSS and a small inline SVG, so the initial bundle barely moves.
+- **Consequences:** the e2e suites find the button as "Light a line"; spec §2, §8.1, §8.2 and §16.10 say so.

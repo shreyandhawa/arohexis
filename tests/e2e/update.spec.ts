@@ -44,7 +44,7 @@ test('update card waits outside the flow and Reload applies the new version', as
     await registration?.update();
   });
 
-  const stuck = page.getByRole('button', { name: "I'm stuck" });
+  const stuck = page.getByRole('button', { name: 'Light a line' });
   await expect(page.getByText(ready)).toBeVisible({ timeout: 15_000 });
   await expect(stuck).toBeInViewport({ ratio: 1 });
   expect(await noScroll(page)).toBe(true);
@@ -129,7 +129,7 @@ test.describe('worst case: update card and notice together, with the install not
     });
     await expect(page.getByText(ready)).toBeVisible({ timeout: 15_000 });
     // Brings a notice to Home too.
-    await page.getByRole('button', { name: "I'm stuck" }).click();
+    await page.getByRole('button', { name: 'Light a line' }).click();
     await page.getByRole('button', { name: 'Anxious' }).click();
     await page.getByRole('button', { name: 'Not now' }).click();
     await expect(page.getByText(/That's fine/)).toBeVisible();
@@ -158,7 +158,7 @@ test.describe('worst case: update card and notice together, with the install not
     await expect(
       page.getByRole('region', { name: 'Brain space' }).getByText(/That's fine/),
     ).toBeVisible();
-    await expect(page.getByRole('button', { name: "I'm stuck" })).toBeInViewport({ ratio: 1 });
+    await expect(page.getByRole('button', { name: 'Light a line' })).toBeInViewport({ ratio: 1 });
     expect(await noScroll(page)).toBe(true);
     // A compact single row: message and Reload share a line at 375px.
     const card = await page.getByText(ready).locator('..').boundingBox();

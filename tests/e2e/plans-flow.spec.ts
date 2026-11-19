@@ -181,7 +181,7 @@ test('scenario 7: several slipped occurrences give one prompt, and the rest expi
 test('I am stuck on this runs the stuck flow with the plan linked', async ({ page }) => {
   await homeWithPlans(page, [plan()]);
   await page.clock.fastForward('50:00');
-  await page.getByRole('button', { name: "I'm stuck on this" }).click();
+  await page.getByRole('button', { name: 'Light this line' }).click();
   await page.getByRole('button', { name: 'Anxious' }).click();
   await page.getByRole('button', { name: 'Start', exact: true }).click();
   await expect(page).toHaveURL(/\/started\//);
@@ -203,7 +203,7 @@ test('an on-cue start brightens its plan line, and an off-cue start leaves a sta
   await expect(work).toHaveText('Work: 0 starts. Plan lines: Waiting, 0 starts on cue.');
 
   // Off cue: a plain stuck start, tagged Work.
-  await page.getByRole('button', { name: "I'm stuck", exact: true }).click();
+  await page.getByRole('button', { name: 'Light a line', exact: true }).click();
   await page.getByRole('button', { name: 'Anxious' }).click();
   await page.getByRole('button', { name: 'Start', exact: true }).click();
   await page.getByRole('button', { name: 'Work', exact: true }).click();
@@ -248,10 +248,10 @@ test.describe('layout at 375x667', () => {
     expect(
       await page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight),
     ).toBe(true);
-    await expect(page.getByRole('button', { name: "I'm stuck", exact: true })).toBeInViewport({
+    await expect(page.getByRole('button', { name: 'Light a line', exact: true })).toBeInViewport({
       ratio: 1,
     });
-    for (const name of ['Start now', "I'm stuck on this"]) {
+    for (const name of ['Start now', 'Light this line']) {
       const b = await page.getByRole('button', { name }).boundingBox();
       expect(b?.height).toBeGreaterThanOrEqual(48);
     }
@@ -262,7 +262,7 @@ test.describe('layout at 375x667', () => {
   }) => {
     await homeWithPlans(page, [plan()]);
     await page.clock.fastForward('50:00');
-    await page.getByRole('button', { name: "I'm stuck", exact: true }).click();
+    await page.getByRole('button', { name: 'Light a line', exact: true }).click();
     await page.getByRole('button', { name: 'Anxious' }).click();
     await page.getByRole('button', { name: 'Start', exact: true }).click();
     await expect(page).toHaveURL(/\/started\//);

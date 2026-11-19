@@ -20,7 +20,7 @@ test('a renamed feeling appears in What is it?', async ({ page }) => {
   await page.getByRole('button', { name: 'Save' }).first().click();
   await expect(page.getByRole('group', { name: 'Tense', exact: true })).toBeVisible();
   await page.goto('/');
-  await page.getByRole('button', { name: "I'm stuck" }).click();
+  await page.getByRole('button', { name: 'Light a line' }).click();
   await expect(page.getByRole('button', { name: 'Tense', exact: true })).toBeVisible();
 });
 
@@ -88,7 +88,7 @@ test('changing the check-in day changes when the check-in card shows', async ({ 
   await expect(card).toBeVisible();
   await card.getByRole('link', { name: 'Check in' }).click();
   await page.getByRole('button', { name: 'Skip this week' }).click();
-  await expect(page.getByRole('button', { name: "I'm stuck" })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Light a line' })).toBeVisible();
   await expect(card).toHaveCount(0);
   await page.getByRole('link', { name: 'Settings' }).click();
   await page.getByLabel('Weekly check-in day').selectOption('3');
