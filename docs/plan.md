@@ -1668,5 +1668,6 @@ Plan approved by the owner on 2026-11-18. One branch, `v2-night-sky`, with a dra
 
 - [x] M12 step 1: Dark only (ADR-038)
 - [x] M12 step 2: Light a line (ADR-039)
-- [ ] M13: Light that answers you, and the light lands
+- [x] M13: Light that answers you, and the light lands
+  - M13 notes (2026-11-19): preview is a separate `preview` field in `RenderState`, so hovering a chip lights the part without turning the camera. `lastSeenStart` lives in kv (Settings). First visit lands only a start from the last hour. Initial JS 149.6 of 150 kB, brain chunk 11.2 of 30 kB.
 - [ ] M14: Tap a line, and the living sky
