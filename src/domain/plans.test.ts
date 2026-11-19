@@ -178,6 +178,17 @@ describe('planSentence', () => {
       planSentence(plan({ place: '', cueDetail: 'after coffee', days: [] }), 'full', words),
     ).toBe("If it's 9:00 after coffee, then I will open the essay doc.");
   });
+  it('adds no second preposition when the place has one', () => {
+    expect(planSentence(plan({ place: 'at my desk' }), 'full', words)).toBe(
+      "If it's 9:00 on weekdays at my desk, then I will open the essay doc.",
+    );
+    expect(
+      planSentence(plan({ place: 'By the door', cueDetail: 'after coffee' }), 'calendar', words),
+    ).toBe("If it's 9:00 By the door, after coffee, then open the essay doc");
+    expect(planSentence(plan({ place: 'attic' }), 'full', words)).toBe(
+      "If it's 9:00 on weekdays at attic, then I will open the essay doc.",
+    );
+  });
   it('names days', () => {
     expect(daysPhrase([0, 1, 2, 3, 4, 5, 6], words)).toBe('every day');
     expect(daysPhrase([3, 1], words)).toBe('Mon, Wed');

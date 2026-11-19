@@ -18,7 +18,7 @@ test('create a plan, see the sentence, save, list it, and download the .ics', as
   await page.getByRole('link', { name: 'New plan' }).click();
   await page.getByLabel('Place', { exact: true }).fill('my desk');
   await expect(page.getByTestId('plan-preview')).toHaveText(
-    "If it's 9:00 on weekdays at my desk, then I will your first step.",
+    "If it's 9:00 on weekdays at my desk, then I will take my first step.",
   );
   await page.getByLabel('First action').fill('open the essay doc');
   await expect(page.getByTestId('plan-preview')).toHaveText(SENTENCE);

@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { useRegisterSW } from 'virtual:pwa-register/react';
 import { demo } from '../../copy/demo';
 import { stepOf, welcome as copy } from '../../copy/welcome';
 import { enterDemo } from '../actions/demo';
 import { setPreference } from '../actions/preferences';
 import { WelcomeHero } from './WelcomeHero';
 import { Button } from '../components/Button';
+import { UpdateCard } from '../components/UpdateCard';
 import { markWelcomed } from '../data/dbChoice';
 import { useData } from '../data/DataProvider';
 import { currentPlatformEnv, isIosSafariNonStandalone } from '../platform';
@@ -21,6 +23,11 @@ export function Welcome() {
   const [step, setStep] = useState(1);
   const [failed, setFailed] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
+  // Welcome sits outside Shell, so it watches for a new version itself.
+  const {
+    needRefresh: [needRefresh],
+    updateServiceWorker,
+  } = useRegisterSW();
   // The steps replace each other, so focus follows to the new heading.
   useEffect(() => {
     if (step > 1) heading.current?.focus();
@@ -49,6 +56,7 @@ export function Welcome() {
   return (
     <div className={styles['page']}>
       <main className={styles['screen']}>
+        {needRefresh && <UpdateCard onReload={() => void updateServiceWorker(true)} />}
         <p className={styles['step']}>{stepOf(step, total)}</p>
         <h1 ref={heading} tabIndex={-1} className={shell['title']}>
           {kind === 'choose' ? copy.choose : copy.title}

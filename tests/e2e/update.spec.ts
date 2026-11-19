@@ -67,6 +67,38 @@ test('update card waits outside the flow and Reload applies the new version', as
   await expect(page.getByText(ready)).toHaveCount(0);
 });
 
+test('Welcome shows the update card too, and Reload applies it', async ({
+  page,
+  context,
+}, testInfo) => {
+  test.skip(testInfo.project.name === 'iphone', 'WebKit service worker support is checked by hand');
+  const route = async (r: Route) => {
+    const response = await r.fetch();
+    await r.fulfill({ response, body: `${await response.text()}\n// installed-first` });
+  };
+  await context.route('**/sw.js', route);
+  await page.goto('/welcome');
+  await controlled(page);
+  await page.reload();
+  await controlled(page);
+  await expect(page.getByText(ready)).toHaveCount(0);
+
+  await context.unroute('**/sw.js', route);
+  await page.evaluate(async () => {
+    const registration = await navigator.serviceWorker.getRegistration();
+    await registration?.update();
+  });
+  await expect(page.getByText(ready)).toBeVisible({ timeout: 15_000 });
+
+  await page.evaluate(() => {
+    (window as unknown as { __before: boolean }).__before = true;
+  });
+  await page.getByRole('button', { name: 'Reload' }).click();
+  await page.waitForFunction(() => !('__before' in window), undefined, { timeout: 15_000 });
+  await expect(page.getByRole('heading', { level: 1, name: 'Welcome' })).toBeVisible();
+  await expect(page.getByText(ready)).toHaveCount(0);
+});
+
 test.describe('worst case: update card and notice together, with the install note waiting', () => {
   test.use({
     userAgent:

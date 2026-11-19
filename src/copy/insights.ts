@@ -46,7 +46,7 @@ export const chartSummary = {
   bars(total: number, topLabel: string | undefined, topCount: number): string {
     return topLabel === undefined
       ? 'No starts yet.'
-      : `${plural(total, 'start', 'starts')} in all, most from ${topLabel} (${topCount}).`;
+      : `${plural(total, 'start', 'starts')} in all, with ${topLabel} the most common (${topCount}).`;
   },
   line(points: number, latest: number | undefined): string {
     return latest === undefined

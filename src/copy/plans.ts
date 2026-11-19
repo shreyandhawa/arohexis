@@ -18,7 +18,7 @@ export const plans = {
   cueDetailHint: 'Something that marks the moment, like "after coffee"',
   firstAction: 'First action',
   firstActionHint: 'Something your hands can do in under two minutes',
-  actionPlaceholder: 'your first step',
+  actionPlaceholder: 'take my first step',
   part: 'Part (optional)',
   noPart: 'No part',
   preview: 'Your plan',
