@@ -147,6 +147,10 @@ export function daysPhrase(days: readonly WeekDay[], words: PlanWords): string {
     .join(', ');
 }
 
+/** A place that already says where, like "by the door", takes no extra "at". */
+const PLACE_PREPOSITION =
+  /^(at|by|in|on|near|next to|beside|inside|outside|under|over|around|from)\s/i;
+
 function trimAction(text: string): string {
   return text.trim().replace(/[.]+$/, '');
 }
@@ -162,7 +166,7 @@ export function planSentence(plan: Plan, form: 'full' | 'calendar', words: PlanW
   const when = [
     `If it's ${formatPlanTime(plan.time)}`,
     form === 'full' && plan.days.length > 0 ? `on ${daysPhrase(plan.days, words)}` : '',
-    where ? (place ? `at ${where}` : where) : '',
+    place && !PLACE_PREPOSITION.test(place) ? `at ${where}` : where,
   ]
     .filter(Boolean)
     .join(' ');

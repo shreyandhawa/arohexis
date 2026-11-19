@@ -105,9 +105,10 @@
   top: 94.1%;
 }
 
+/* Four quarters of the day: each label starts at its own hour's cell (0, 6, 12, 18). */
 .scale {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   margin: 0;
   padding: 0;
   list-style: none;
