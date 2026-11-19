@@ -144,3 +144,14 @@ test('other browsers do not see the install note', async ({ page }, testInfo) =>
   await expect(page.getByRole('heading', { level: 1 })).toBeAttached();
   await expect(page.getByText(/add Arohexis to your Home Screen/)).toHaveCount(0);
 });
+
+test('desktop home is a stage and a rail with no scroll', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/');
+  await expect(page.getByRole('button', { name: "I'm stuck" })).toBeVisible();
+  await expect(page.locator('.plate')).toBeVisible();
+  const fits = await page.evaluate(
+    () => document.documentElement.scrollHeight <= window.innerHeight,
+  );
+  expect(fits).toBe(true);
+});

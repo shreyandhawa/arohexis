@@ -28,7 +28,7 @@
   padding: var(--space-2) var(--space-4);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-m);
-  background: transparent;
+  background: var(--color-surface);
   color: var(--color-text);
   font-family: var(--font-text);
   font-size: var(--step-1);
@@ -38,6 +38,10 @@
     background-color var(--motion-quick) var(--ease-standard),
     color var(--motion-quick) var(--ease-standard),
     transform var(--motion-quick) var(--ease-standard);
+}
+
+.feeling:hover:not(:disabled) {
+  background: var(--color-hover);
 }
 
 .feeling:active:not(:disabled) {

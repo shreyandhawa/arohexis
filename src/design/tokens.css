@@ -1,5 +1,7 @@
-/* Design tokens (ADR-018 "Contrast"). Components use only the semantic
-   custom properties below, never the --mono-* primitives. */
+/* Design tokens (ADR-018 "Contrast", ADR-036 "Night sky"). Components use only the
+   semantic custom properties below, never the --mono-* primitives. The dark theme
+   shares the plate's background, and --color-glow is the soft light around the
+   primary action and focus (none in light). */
 
 :root {
   color-scheme: light;
@@ -30,6 +32,7 @@
   --color-focus: #0a0a0a;
   --color-selected: #0a0a0a;
   --color-on-selected: #f5f5f2;
+  --color-glow: transparent;
 
   /* Plate and part colours (spec §16.7, ADR-026): the same in both themes. */
   --plate-bg: #05060a;
@@ -87,38 +90,40 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
-    --color-bg: #0a0a0a;
-    --color-surface: #141414;
-    --color-hover: #1f1f1f;
-    --color-text: #e6e6e2;
-    --color-text-muted: #a3a39f;
-    --color-border: #a3a39f;
-    --color-rule: #a3a39f;
-    --color-accent: #e6e6e2;
-    --color-accent-pressed: #d6d6d2;
-    --color-on-accent: #0a0a0a;
-    --color-focus: #e6e6e2;
-    --color-selected: #e6e6e2;
-    --color-on-selected: #0a0a0a;
+    --color-bg: #05060a;
+    --color-surface: #0d1017;
+    --color-hover: #171b25;
+    --color-text: #e6e9ef;
+    --color-text-muted: #9aa3b5;
+    --color-border: #7c8598;
+    --color-rule: #262c39;
+    --color-accent: #eef1f6;
+    --color-accent-pressed: #d0d6e1;
+    --color-on-accent: #05060a;
+    --color-focus: #eef1f6;
+    --color-selected: #eef1f6;
+    --color-on-selected: #05060a;
+    --color-glow: rgb(238 241 246 / 0.3);
   }
 }
 
 /* Dark theme chosen explicitly. Keep identical to the block above. */
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --color-bg: #0a0a0a;
-  --color-surface: #141414;
-  --color-hover: #1f1f1f;
-  --color-text: #e6e6e2;
-  --color-text-muted: #a3a39f;
-  --color-border: #a3a39f;
-  --color-rule: #a3a39f;
-  --color-accent: #e6e6e2;
-  --color-accent-pressed: #d6d6d2;
-  --color-on-accent: #0a0a0a;
-  --color-focus: #e6e6e2;
-  --color-selected: #e6e6e2;
-  --color-on-selected: #0a0a0a;
+  --color-bg: #05060a;
+  --color-surface: #0d1017;
+  --color-hover: #171b25;
+  --color-text: #e6e9ef;
+  --color-text-muted: #9aa3b5;
+  --color-border: #7c8598;
+  --color-rule: #262c39;
+  --color-accent: #eef1f6;
+  --color-accent-pressed: #d0d6e1;
+  --color-on-accent: #05060a;
+  --color-focus: #eef1f6;
+  --color-selected: #eef1f6;
+  --color-on-selected: #05060a;
+  --color-glow: rgb(238 241 246 / 0.3);
 }
 
 /* Controls on the plate keep the dark theme's tokens in either theme (ADR-026).
@@ -126,17 +131,18 @@
 .plate-scope {
   color: var(--color-text);
   color-scheme: dark;
-  --color-bg: #0a0a0a;
-  --color-surface: #141414;
-  --color-hover: #1f1f1f;
-  --color-text: #e6e6e2;
-  --color-text-muted: #a3a39f;
-  --color-border: #a3a39f;
-  --color-rule: #a3a39f;
-  --color-accent: #e6e6e2;
-  --color-accent-pressed: #d6d6d2;
-  --color-on-accent: #0a0a0a;
-  --color-focus: #e6e6e2;
-  --color-selected: #e6e6e2;
-  --color-on-selected: #0a0a0a;
+  --color-bg: #05060a;
+  --color-surface: #0d1017;
+  --color-hover: #171b25;
+  --color-text: #e6e9ef;
+  --color-text-muted: #9aa3b5;
+  --color-border: #7c8598;
+  --color-rule: #262c39;
+  --color-accent: #eef1f6;
+  --color-accent-pressed: #d0d6e1;
+  --color-on-accent: #05060a;
+  --color-focus: #eef1f6;
+  --color-selected: #eef1f6;
+  --color-on-selected: #05060a;
+  --color-glow: rgb(238 241 246 / 0.3);
 }

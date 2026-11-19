@@ -1,5 +1,9 @@
 # Arohexis
 
+<img src="docs/media/home-desktop.png" alt="The demo's Brain space on a laptop, beside the I'm stuck button" />
+
+Live demo: https://arohexis.arohexis.workers.dev/welcome (tap Explore the demo; it uses a separate database)
+
 Arohexis is a local-first, installable web app for chronic procrastination. It trains the moment of starting.
 
 When you are stuck, you tap one button and name the feeling. Arohexis shows a short response matched to that feeling, and you take a two-minute first step. Each start is rewarded right away.
@@ -27,6 +31,10 @@ All data stays on your device, in the browser's IndexedDB. There are no accounts
 ## Brain space
 
 Brain space draws your starts as lines of light in the shape of a brain. It's a picture of your starts, not a scan, and the shape is the same for everyone. Arohexis makes no claim that your brain changes. Still turns the motion off.
+
+## Night sky
+
+The app is dark first and built around the light of the plate, with a light theme kept in Settings. Replay (`/replay`) shows the light arriving start by start. It is cumulative only and never moves light. Here is [a recording of Replay](docs/media/replay.webm). The Welcome screen plays the demo brain lighting up once.
 
 ## Demo
 
@@ -103,6 +111,22 @@ Caveat: self-report.
 
 The full design is in [docs/spec.md](docs/spec.md).
 
+## Architecture
+
+```mermaid
+flowchart LR
+  domain[src/domain<br/>pure TypeScript] --> geometry[src/geometry<br/>seeded field and lines]
+  geometry --> brain[src/app/brain<br/>canvas 2D renderer]
+  brain --> app[src/app<br/>screens, routes, actions]
+  domain --> storage[src/storage<br/>Dexie repositories]
+  storage --> app
+  domain --> brain
+  domain --> app
+  copy[src/copy] --> app
+```
+
+Arrows point from the imported layer to the one that imports it. The domain holds events, attempts and projections such as `projectBrainSpace` and `projectAt`. Geometry and storage both import it, and neither imports the other. The Brain space renderer loads on demand.
+
 ## Develop and test
 
 Use the Node version in `.nvmrc` (26).
@@ -112,18 +136,19 @@ npm install
 npm run dev
 ```
 
-| Script                               | What it does                                   |
-| ------------------------------------ | ---------------------------------------------- |
-| `npm run dev`                        | Start the Vite dev server                      |
-| `npm run build`                      | Type-check and build for production            |
-| `npm run preview`                    | Serve the production build locally             |
-| `npm run lint`                       | Run ESLint                                     |
-| `npm run format:check`               | Check formatting with Prettier                 |
-| `npm run typecheck`                  | Type-check the app and the pure domain layer   |
-| `npm test`                           | Run the Vitest unit tests                      |
-| `npm run test:watch`                 | Run Vitest in watch mode                       |
-| `npm run e2e`                        | Run the Playwright end-to-end tests            |
-| `node scripts/check-bundle-size.mjs` | Check the built bundle against its size budget |
+| Script                               | What it does                                                                             |
+| ------------------------------------ | ---------------------------------------------------------------------------------------- |
+| `npm run dev`                        | Start the Vite dev server                                                                |
+| `npm run build`                      | Type-check and build for production                                                      |
+| `npm run preview`                    | Serve the production build locally                                                       |
+| `npm run lint`                       | Run ESLint                                                                               |
+| `npm run format:check`               | Check formatting with Prettier                                                           |
+| `npm run typecheck`                  | Type-check the app and the pure domain layer                                             |
+| `npm test`                           | Run the Vitest unit tests                                                                |
+| `npm run test:watch`                 | Run Vitest in watch mode                                                                 |
+| `npm run e2e`                        | Run the Playwright end-to-end tests                                                      |
+| `node scripts/check-bundle-size.mjs` | Check the built bundle against its size budget                                           |
+| `node scripts/capture-showcase.mjs`  | Capture the README stills, og.png and a Replay recording in demo mode; run after a build |
 
 Locally, run the end-to-end tests on Android and desktop:
 
@@ -148,3 +173,4 @@ No licence file is present, so all rights are reserved.
 - [docs/plan.md](docs/plan.md): the implementation plan and milestones.
 - [docs/case-study.md](docs/case-study.md): the decisions and what changed.
 - [docs/v1-success-criteria.md](docs/v1-success-criteria.md): the v1.0 success criteria and their evidence.
+- [docs/v2-success-criteria.md](docs/v2-success-criteria.md): the v2.0 "Night sky" success criteria and their evidence.

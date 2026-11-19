@@ -1,0 +1,36 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* The plate needs a definite height outside Home's layout; the controls stay above the footer. */
+.stage {
+  display: flex;
+  height: min(44dvh, 36rem);
+  min-height: 260px;
+}
+
+@media (min-width: 64rem) {
+  .stage {
+    height: min(56dvh, 40rem);
+  }
+}
+
+.controls {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.range {
+  flex: 1;
+  min-height: var(--target-min);
+  accent-color: var(--color-accent);
+}
+
+.position {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}

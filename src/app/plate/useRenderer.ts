@@ -10,7 +10,7 @@ export function useRenderer(
   canvas: RefObject<HTMLCanvasElement | null>,
   options: RendererOptions,
   state: RenderState | undefined,
-): { turn(step: -1 | 1): void; zoom(step: -1 | 1): void } {
+): { turn(step: -1 | 1): void; zoom(step: -1 | 1): void; ready: boolean } {
   const renderer = useRef<GuardedRenderer | null>(null);
   const latest = useRef(options);
   const [ready, setReady] = useState(false);
@@ -64,5 +64,6 @@ export function useRenderer(
   return {
     turn: (step) => renderer.current?.turn(step),
     zoom: (step) => renderer.current?.zoom(step),
+    ready,
   };
 }

@@ -27,6 +27,7 @@ const Welcome = lazy(() => import('./screens/Welcome').then((m) => ({ default: m
 
 const Insights = lazy(() => import('./screens/Insights').then((m) => ({ default: m.Insights })));
 const Checkin = lazy(() => import('./screens/Checkin').then((m) => ({ default: m.Checkin })));
+const Replay = lazy(() => import('./screens/Replay').then((m) => ({ default: m.Replay })));
 
 export function AppRoutes() {
   return (
@@ -73,6 +74,14 @@ export function AppRoutes() {
           element={
             <Suspense fallback={null}>
               <Insights />
+            </Suspense>
+          }
+        />
+        <Route
+          path="replay"
+          element={
+            <Suspense fallback={null}>
+              <Replay />
             </Suspense>
           }
         />

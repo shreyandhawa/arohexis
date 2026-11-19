@@ -206,3 +206,29 @@ export function projectBrainSpace(
     totalStarts,
   };
 }
+
+/**
+ * Replay: the light as it stood at `t`, from the starts made by then. No waiting lines.
+ * A start re-tagged after a later attempt opened can sit in another part mid-replay; that
+ * only follows a stale second tab (ADR-035), so it is accepted.
+ */
+export function projectAt(
+  attempts: readonly Attempt[],
+  parts: readonly Part[],
+  t: number,
+): BrainSpace {
+  return projectBrainSpace(
+    attempts.filter((a) => a.start !== undefined && a.start.at <= t),
+    [],
+    parts,
+    t,
+  );
+}
+
+/** The moments Replay steps through: each counted start's time, ascending. */
+export function replayMoments(attempts: readonly Attempt[]): number[] {
+  const moments: number[] = [];
+  for (const a of attempts)
+    if (a.start !== undefined && isCountedStart(a)) moments.push(a.start.at);
+  return moments.sort((x, y) => x - y);
+}

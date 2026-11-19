@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router';
 import { demo } from '../../copy/demo';
 import { stepOf, welcome as copy } from '../../copy/welcome';
 import { enterDemo } from '../actions/demo';
+import { setPreference } from '../actions/preferences';
+import { WelcomeHero } from './WelcomeHero';
 import { Button } from '../components/Button';
 import { markWelcomed } from '../data/dbChoice';
 import { useData } from '../data/DataProvider';
@@ -27,6 +29,8 @@ export function Welcome() {
   const kind = step === 1 ? 'intro' : step === 2 && ios ? 'ios' : 'choose';
 
   function startFresh() {
+    // Night sky is the default for a new record (ADR-036); Settings offers Light and System.
+    setPreference(deps, { theme: 'dark' }).catch((error: unknown) => console.error(error));
     markWelcomed();
     void navigate('/', { replace: true });
   }
@@ -51,12 +55,19 @@ export function Welcome() {
         </h1>
         {kind === 'intro' && (
           <>
+            <WelcomeHero />
             <p>{copy.intro}</p>
+            <div className={styles['choice']}>
+              <Button variant="quiet" onClick={() => void explore()}>
+                {copy.exploreDemo}
+              </Button>
+              <p className={shell['muted']}>{copy.exploreDemoHint}</p>
+            </div>
             <p className={shell['muted']}>{copy.notMedicalAdvice}</p>
           </>
         )}
         {kind === 'ios' && <p>{copy.ios}</p>}
-        {kind === 'choose' ? (
+        {kind === 'choose' && (
           <>
             <div className={styles['choice']}>
               <Button onClick={startFresh}>{copy.startFresh}</Button>
@@ -68,13 +79,10 @@ export function Welcome() {
               </Button>
               <p className={shell['muted']}>{copy.exploreDemoHint}</p>
             </div>
-            <div aria-live="polite">
-              {failed && <p className={styles['error']}>{demo.failed}</p>}
-            </div>
           </>
-        ) : (
-          <Button onClick={() => setStep((n) => n + 1)}>{copy.next}</Button>
         )}
+        {kind !== 'choose' && <Button onClick={() => setStep((n) => n + 1)}>{copy.next}</Button>}
+        <div aria-live="polite">{failed && <p className={styles['error']}>{demo.failed}</p>}</div>
       </main>
     </div>
   );

@@ -151,7 +151,11 @@ test('timer end offers two equal choices', async ({ page }) => {
   await expect(keep).toBeVisible();
   await expect(done).toBeVisible();
   await expect(page.getByText('Either is good.')).toBeVisible();
-  expect((await keep.boundingBox())?.height).toBe((await done.boundingBox())?.height);
+  // Equal to the pixel: the screen may still be settling in, which adds float noise.
+  expect((await keep.boundingBox())?.height).toBeCloseTo(
+    (await done.boundingBox())?.height ?? 0,
+    1,
+  );
   await keep.click();
   await expect(page).toHaveURL(/\/$/);
 });

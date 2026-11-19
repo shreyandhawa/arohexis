@@ -8,7 +8,9 @@ import {
   isOnCue,
   lightPartOf,
   partOfStart,
+  projectAt,
   projectBrainSpace,
+  replayMoments,
   strengthFor,
   summaryLines,
 } from './brainSpace';
@@ -589,5 +591,43 @@ describe('projectBrainSpace properties', () => {
         expect(s.parts.reduce((n, p) => n + p.starts, 0)).toBe(s.totalStarts);
       }),
     );
+  });
+});
+
+describe('replay', () => {
+  const history = [
+    onCue('a', 10, 'pl', 'o1', 'work'),
+    onCue('c', 20, 'pl', 'o2', 'work'),
+    started('b', 25, 'home'),
+    started('d', 30, 'home', { undone: true }),
+    att({ id: 'e', openedAt: T0 + 40 * MIN }),
+  ];
+
+  it('replayMoments is ascending and leaves out undone and unstarted', () => {
+    expect(replayMoments(history)).toEqual([10, 20, 25].map((m) => T0 + m * MIN + 1));
+    expect(replayMoments([])).toEqual([]);
+  });
+
+  it('projectAt at the last moment matches the whole picture', () => {
+    const moments = replayMoments(history);
+    const last = moments[moments.length - 1]!;
+    expect(projectAt(history, PARTS, last).lines).toEqual(
+      projectBrainSpace(
+        history.filter((a) => a.start !== undefined && a.start.at <= last),
+        [],
+        PARTS,
+        last,
+      ).lines,
+    );
+    expect(projectAt([], PARTS, last).lines).toEqual([]);
+  });
+
+  it('a plan line counts only the on-cue starts up to t', () => {
+    const t = T0 + 10 * MIN + 1;
+    const lines = planLines(projectAt(history, PARTS, t).lines);
+    expect(lines).toHaveLength(1);
+    expect(lines[0]!.onCueStarts).toBe(1);
+    const later = planLines(projectAt(history, PARTS, T0 + 20 * MIN + 1).lines);
+    expect(later[0]!.onCueStarts).toBe(2);
   });
 });

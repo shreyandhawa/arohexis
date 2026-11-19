@@ -1645,8 +1645,21 @@ export function setPartEnabled(d: AppDeps, id: string, enabled: boolean): Promis
 ## Ledger
 
 - [x] M1: The stuck button, on the iPhone
-- [ ] M2: Brain space
-- [ ] M3: If-then plans and reminders
-- [ ] M4: Insights and the weekly check-in
-- [ ] M5: Demo mode, restore and onboarding
-- [ ] M6: Your configuration, About, v1.0
+- [x] M2: Brain space
+- [x] M3: If-then plans and reminders
+- [x] M4: Insights and the weekly check-in
+- [x] M5: Demo mode, restore and onboarding
+- [x] M6: Your configuration, About, v1.0
+
+## v2 "Night sky" (M7 to M11)
+
+Plan approved by the owner on 2026-11-18. One branch, `v2-night-sky`, with a draft PR to `main`; one commit per step, pushed as it lands. Decisions: ADR-036 and ADR-037.
+
+- [x] M7: Night sky foundation: ADR-036, dark-first tokens, chrome, desktop stage and rail, route and sheet motion
+- [x] M8: A brighter brain: a glow pass on the lit layer, a borderless plate
+- [x] M9: Insights in light: charts in the plate's language, part bars in part colours
+  - M7 to M9 notes (2026-11-18): route transitions were left out (ADR-036, Motion). The plate went borderless through the tokens, with no plate CSS change. One code review found three issues, all fixed: a one-time dark paint for v1 "System" records, an unhandled theme write, and a 1.3:1 border on the Feeling rows. The design-critic gate moves to M11, so one Opus pass covers M7 to M11. Budgets after M9: initial JS 147.8 of 150 kB, brain chunk 11.0 of 30 kB. Replay and the Welcome hero must stay in lazy chunks.
+- [x] M10: Replay, "watch it grow": a cumulative scrubber over the final projection
+  - M10 notes (2026-11-18): Replay needed no renderer change. `Plate` takes an override `data`, and `/replay` feeds it `projectAt` frames. Tests: `tests/e2e/replay.spec.ts` plus the domain and geometry properties.
+- [x] M11: Live demo first: a Welcome hero from in-memory demo light, link previews, README and case study, v2.0.0
+  - M11 notes (2026-11-18): the hero is a plate-only canvas, not `Plate`, because the plate's part card reads the live database. **Explore the demo** sits on step 1 and stays on the choice step. `scripts/capture-showcase.mjs` makes `docs/media/` and `public/og.png`. The M7 to M11 gate ran once: the design-critic (Opus) and the code-reviewer (Opus). Fixed: a first visit lost theme.js's dark paint once the default "system" setting loaded; the hero could start over after a Still toggle; the blocked-chunk Replay test didn't block the service worker; Replay's date line sat under the sticky button at 1440x900; the Started strip got a hairline frame; Welcome's intro moved up under the hero; the link preview keeps the whole brain. Left as designed: a Replay frame's signals move (each frame is the picture just after a start), and the part card shows today's counts (ADR-037). Budgets at v2.0.0: initial JS 149.3 of 150 kB, brain chunk 11.0 of 30 kB. Success criteria: `docs/v2-success-criteria.md`.

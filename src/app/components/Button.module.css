@@ -26,6 +26,7 @@
 .primary {
   min-height: calc(var(--target-min) * 1.5);
   background: var(--color-accent);
+  box-shadow: 0 0 28px var(--color-glow);
   color: var(--color-on-accent);
   font-family: var(--font-display);
   font-size: var(--step-2);

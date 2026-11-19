@@ -375,7 +375,7 @@ Merging imports is out of scope for v1.
 
 ## 8. Screens and flows
 
-Layout: a single column, at most 34rem wide on desktop. The primary action sits in the bottom thumb zone on phones. A persistent quiet Stuck button appears on every screen except the stuck flow itself.
+Layout: a single column, at most 34rem wide, except Home at 64rem and wider, which is a stage and a rail (ADR-036). The primary action sits in the bottom thumb zone on phones. A persistent quiet Stuck button appears on every screen except the stuck flow itself.
 
 **Routes:**
 
@@ -389,6 +389,7 @@ Layout: a single column, at most 34rem wide on desktop. The primary action sits 
 | `/plans/new` | New plan |
 | `/plans/:id` | Edit plan |
 | `/insights` | Insights |
+| `/replay` | Replay (§16.14) |
 | `/checkin` | Weekly check-in |
 | `/settings` | Settings |
 | `/settings/feelings` | Feelings and responses |
@@ -483,7 +484,7 @@ The sections, in order:
 5. **What helps:** for each feeling, its responses with "shown N · led to a start M", plus "early days" when N < 5.
 6. **How automatic starting feels:** a line chart of weekly check-in means on the 1–7 axis.
 
-Every chart has a visually hidden data table and a one-sentence text summary. Colors are neutral, never red or green, and charts never use part colors (§16.7). With fewer than 3 starts, a calm empty state reads "Insights appear after a few starts."
+Every chart has a visually hidden data table and a one-sentence text summary. Colors are never red or green. The Parts chart uses each part's color as data, with its name on every bar (ADR-036, §16.7). With fewer than 3 starts, a calm empty state reads "Insights appear after a few starts."
 
 ### 8.10 Settings
 - **Feelings and responses:**
@@ -598,9 +599,10 @@ Timing didn't fit · Low energy · First step felt too big · Something came up 
 - **Calm, low-arousal, typography-led:**
   - one primary action per screen;
   - generous space;
-  - restrained color, with a single accent reserved for the primary action and the "Started." moment.
+  - restrained color, with a single accent reserved for the primary action and the "Started." moment;
+  - **night sky** (ADR-036): dark by default, the page shares the plate's background, and chrome may carry soft light (a glow on the primary action and focus, rules in the plate's dim tones).
 - **Avoid** the generic dashboard look (cards in grids, KPI tiles, gradient charts) and gamification (confetti, badges, streak flames, points).
-- **Visual direction gate.** The gate is complete (ADR-018). Brain space's look is gated by the owner's review of the built Home screen (ADR-021). Part colors are data, not accents (§16.7).
+- **Visual direction gate.** The gate is complete (ADR-018). Brain space's look is gated by the owner's review of the built Home screen (ADR-021). Part colors are data, not accents (§16.7), and since ADR-036 they may appear outside the plate as data.
 
 ### 11.2 Tokens (`src/design/tokens.css`)
 Two layers of CSS custom properties: primitives (`--ink-900`, `--paper-50`, `--size-5`, …) and semantic tokens (`--color-bg`, `--color-text`, `--color-accent`, `--color-focus`, `--space-stack-lg`, `--motion-calm`, …). Components use semantic tokens only.
@@ -860,7 +862,7 @@ Id 6 is blue `hsl(225 90% 76%)`. M2 Task 6 chose it from two candidates: blue at
 
 **What Brain space conveys, and where.** Everything Brain space conveys is also in DOM text: the text equivalent and the part card. So the canvas's lines and points are supplementary graphics, not the only carrier of information (WCAG 1.4.11). Start lines are drawn fainter than 3:1 by design. Controls on the plate meet 3:1, and their text meets 4.5:1.
 
-**Part colours are data, not accents.** Chrome keeps ADR-018's single mono accent. Part colours appear only on the plate and as a swatch beside a part's name on its chip and card. Text is never set in a part colour outside the plate; the card heading uses `--color-text`. Insights stays neutral (§8.9).
+**Part colours are data, not accents.** Chrome keeps ADR-018's single accent. Outside the plate, part colours appear as data: a swatch beside a part's name, the part bars in Insights (§8.9), and line glyphs (ADR-036). Text is never set in a part colour outside the plate; the card heading uses `--color-text`.
 
 **Labels** on the plate use Atkinson Hyperlegible Next at weight 600, at least type step −1, on an opaque `--plate-bg` backing.
 
@@ -984,6 +986,10 @@ The 10-week demo fills the brain (ADR-034) and keeps §7.4's bands:
 | §12 | The CSP stays exactly as written. "No network requests after load" means no requests to other origins. The app's own same-origin chunks are precached, and may be fetched from the origin on the very first visit before the service worker is ready |
 | §13 | Add the tests in §16.13. Scenario 3 tags a part. CI typechecks `src/geometry` and gates its coverage at lines ≥ 90% |
 | §14 | Add the risks: frame rate on the iPhone; resting read as a loss; the picture read as a brain claim; the plate's height at 375×667 |
+
+### 16.14 Replay (v2, ADR-037)
+
+`/replay` shows the plate as it stood after each counted start, from the first to now. A frame is `projectAt(attempts, parts, t)`, which projects the starts made by `t` with no waiting lines, so every line keeps today's fibre. A range input scrubs the starts ("Start 12 of 98, March 3"). **Play** runs the whole history once in about 8 s, and it's absent under **Still** or reduced motion. The wording is cumulative only.
 
 ### 16.13 Tests
 

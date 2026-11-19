@@ -110,7 +110,12 @@ export function Insights() {
           {copy.partsTitle}
         </h2>
         <Bars
-          items={view.parts.map((p) => ({ key: p.id ?? 'none', label: p.label, value: p.count }))}
+          items={view.parts.map((p) => ({
+            key: p.id ?? 'none',
+            label: p.label,
+            value: p.count,
+            colour: config.parts.find((part) => part.id === p.id)?.colour,
+          }))}
           summary={barsSummary(view.parts)}
           caption={copy.partsTitle}
           labelHead={copy.table.part}

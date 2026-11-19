@@ -1,9 +1,11 @@
+import type { ColourId } from '../../domain/config';
 import { HiddenTable } from './HiddenTable';
 import styles from './Charts.module.css';
 
-export type BarItem = { key: string; label: string; value: number };
+/** `colour` draws a part's bar in its part colour (ADR-036); its name and count stay beside it. */
+export type BarItem = { key: string; label: string; value: number; colour?: ColourId | undefined };
 
-/** Horizontal bars, one row per item, all in the same neutral fill. */
+/** Horizontal bars of light, one row per item, on a faint track. */
 export function Bars({
   items,
   summary,
@@ -26,12 +28,14 @@ export function Bars({
             <span>{d.label}</span>
             <span className={styles['count']}>{d.value}</span>
             <svg viewBox="0 0 100 10" preserveAspectRatio="none" className={styles['rowBar']}>
+              <rect x="0" y="0" width="100" height="10" className={styles['track']} />
               <rect
                 x="0"
                 y="0"
                 width={(d.value / max) * 100}
                 height="10"
                 className={styles['bar']}
+                data-colour={d.colour}
               />
             </svg>
           </li>
