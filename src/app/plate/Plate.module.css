@@ -74,6 +74,12 @@
   background: var(--plate-bg);
 }
 
+.still[aria-pressed='true'] {
+  background: var(--color-surface);
+  border: 2px solid var(--color-selected);
+  color: var(--color-text);
+}
+
 .pair {
   position: absolute;
   bottom: var(--space-1);

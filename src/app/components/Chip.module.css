@@ -22,9 +22,9 @@
 }
 
 .pressed {
-  border-color: var(--color-selected);
-  background: var(--color-selected);
-  color: var(--color-on-selected);
+  border: 2px solid var(--color-selected);
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 
 .chip[data-colour='1'] {
