@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { expectAccessible, setTheme } from './helpers';
+import { expectAccessible } from './helpers';
 
 test('home shows one large stuck button', async ({ page }) => {
   await page.goto('/');
@@ -49,20 +49,17 @@ test('settings links to data and about', async ({ page }) => {
   await expect(page).toHaveURL(/\/about$/);
 });
 
-for (const scheme of ['light', 'dark'] as const) {
-  test(`home, settings and about are accessible in ${scheme}`, async ({ page }) => {
-    await setTheme(page, scheme);
-    await page.goto('/');
-    await expect(page.getByRole('heading', { level: 1 })).toBeAttached();
-    await expectAccessible(page);
-    await page.goto('/settings');
-    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-    await expectAccessible(page);
-    await page.goto('/about');
-    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-    await expectAccessible(page);
-  });
-}
+test(`home, settings and about are accessible`, async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { level: 1 })).toBeAttached();
+  await expectAccessible(page);
+  await page.goto('/settings');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expectAccessible(page);
+  await page.goto('/about');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expectAccessible(page);
+});
 
 test('storage failure shows a calm message', async ({ page }) => {
   await page.addInitScript(() => {

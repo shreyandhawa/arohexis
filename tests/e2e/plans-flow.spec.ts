@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { expectAccessible, seedPlans, setTheme } from './helpers';
+import { expectAccessible, seedPlans } from './helpers';
 
 test.use({ timezoneId: 'UTC' });
 
@@ -269,28 +269,23 @@ test.describe('layout at 375x667', () => {
   });
 });
 
-for (const scheme of ['light', 'dark'] as const) {
-  test(`the due card, the repair sheet and the part card are accessible in ${scheme}`, async ({
-    page,
-  }) => {
-    await setTheme(page, scheme);
-    await homeWithPlans(page, [plan()]);
-    await page.clock.fastForward('50:00');
-    await expect(startNow(page).first()).toBeVisible();
-    await expectAccessible(page);
+test(`the due card, the repair sheet and the part card are accessible`, async ({ page }) => {
+  await homeWithPlans(page, [plan()]);
+  await page.clock.fastForward('50:00');
+  await expect(startNow(page).first()).toBeVisible();
+  await expectAccessible(page);
 
-    await page.getByRole('button', { name: 'Work', exact: true }).click();
-    await expect(sheet(page)).toContainText(SENTENCE);
-    await expectAccessible(page);
-    await sheet(page).getByRole('button', { name: 'Close', exact: true }).click();
+  await page.getByRole('button', { name: 'Work', exact: true }).click();
+  await expect(sheet(page)).toContainText(SENTENCE);
+  await expectAccessible(page);
+  await sheet(page).getByRole('button', { name: 'Close', exact: true }).click();
 
-    await page.clock.fastForward('03:00:00');
-    await expect(sheet(page)).toBeVisible();
-    await expectAccessible(page);
-    await sheet(page).getByRole('button', { name: 'Not this time' }).click();
-    await expectAccessible(page);
-    await sheet(page).getByRole('button', { name: 'Low energy' }).click();
-    await sheet(page).getByRole('button', { name: 'Move the time' }).click();
-    await expectAccessible(page);
-  });
-}
+  await page.clock.fastForward('03:00:00');
+  await expect(sheet(page)).toBeVisible();
+  await expectAccessible(page);
+  await sheet(page).getByRole('button', { name: 'Not this time' }).click();
+  await expectAccessible(page);
+  await sheet(page).getByRole('button', { name: 'Low energy' }).click();
+  await sheet(page).getByRole('button', { name: 'Move the time' }).click();
+  await expectAccessible(page);
+});

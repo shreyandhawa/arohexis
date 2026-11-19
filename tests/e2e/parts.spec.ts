@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { knownEvents } from './fixtures/brain';
-import { expectAccessible, seedEvents, setTheme } from './helpers';
+import { expectAccessible, seedEvents } from './helpers';
 
 const plate = (page: Page) => page.getByRole('region', { name: 'Brain space' });
 const partGroup = (page: Page, name: string) => page.getByRole('group', { name, exact: true });
@@ -157,15 +157,12 @@ test('About shows the Brain space paragraph', async ({ page }) => {
   ).toBeVisible();
 });
 
-for (const scheme of ['light', 'dark'] as const) {
-  test(`Settings and Parts are accessible in ${scheme}`, async ({ page }) => {
-    await setTheme(page, scheme);
-    await home(page);
-    await page.goto('/settings');
-    await expect(page.getByRole('heading', { name: 'Preferences' })).toBeVisible();
-    await expectAccessible(page);
-    await openParts(page);
-    await expect(partGroup(page, 'Work')).toBeVisible();
-    await expectAccessible(page);
-  });
-}
+test(`Settings and Parts are accessible`, async ({ page }) => {
+  await home(page);
+  await page.goto('/settings');
+  await expect(page.getByRole('heading', { name: 'Preferences' })).toBeVisible();
+  await expectAccessible(page);
+  await openParts(page);
+  await expect(partGroup(page, 'Work')).toBeVisible();
+  await expectAccessible(page);
+});

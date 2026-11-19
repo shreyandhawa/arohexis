@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
-import { expectAccessible, setTheme } from './helpers';
+import { expectAccessible } from './helpers';
 
 const SENTENCE = "If it's 9:00 on weekdays at my desk, then I will open the essay doc.";
 
@@ -52,16 +52,13 @@ test('an empty first action is not saved', async ({ page }) => {
   await expect(page.getByText('Add a first action.')).toBeVisible();
 });
 
-for (const scheme of ['light', 'dark'] as const) {
-  test(`plans screens are accessible in ${scheme}`, async ({ page }) => {
-    await setTheme(page, scheme);
-    await fill(page);
-    await expectAccessible(page);
-    await page.getByRole('button', { name: 'Save plan' }).click();
-    await expect(page.getByRole('link', { name: SENTENCE })).toBeVisible();
-    await expectAccessible(page);
-    await page.getByRole('link', { name: SENTENCE }).click();
-    await expect(page.getByRole('button', { name: 'Add to calendar' })).toBeVisible();
-    await expectAccessible(page);
-  });
-}
+test(`plans screens are accessible`, async ({ page }) => {
+  await fill(page);
+  await expectAccessible(page);
+  await page.getByRole('button', { name: 'Save plan' }).click();
+  await expect(page.getByRole('link', { name: SENTENCE })).toBeVisible();
+  await expectAccessible(page);
+  await page.getByRole('link', { name: SENTENCE }).click();
+  await expect(page.getByRole('button', { name: 'Add to calendar' })).toBeVisible();
+  await expectAccessible(page);
+});

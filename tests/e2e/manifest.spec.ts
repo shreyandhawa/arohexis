@@ -20,8 +20,8 @@ test('manifest declares an installable standalone app', async ({ page }, testInf
     start_url: '/',
     scope: '/',
     display: 'standalone',
-    background_color: '#F5F5F2',
-    theme_color: '#F5F5F2',
+    background_color: '#05060A',
+    theme_color: '#05060A',
   });
   const has = (sizes: string, purpose?: string) =>
     manifest.icons.some((i) => i.sizes === sizes && i.purpose === purpose);

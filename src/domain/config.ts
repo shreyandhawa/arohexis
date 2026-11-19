@@ -46,6 +46,7 @@ export type Plan = {
   partId?: string;
 };
 export type Settings = {
+  /** Unused since v2.1 (ADR-038, dark only); kept so older backups still import. */
   theme: 'system' | 'light' | 'dark';
   weekStartsOn: WeekDay;
   checkinDay: WeekDay;

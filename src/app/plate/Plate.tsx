@@ -79,7 +79,7 @@ export function Plate({ selected, onSelect, notice, data: frame }: Props) {
         role="region"
         aria-label={brain.regionLabel}
         ref={root}
-        className={`plate plate-scope ${styles['plate']}`}
+        className={`plate ${styles['plate']}`}
         data-motion={motion}
         onKeyDown={onKeyDown}
       >

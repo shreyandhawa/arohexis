@@ -68,7 +68,7 @@ export function WelcomeHero() {
   }, [ready, loaded, still, frame]);
 
   return (
-    <div role="img" aria-label={copy.heroLabel} className={`plate plate-scope ${styles.hero}`}>
+    <div role="img" aria-label={copy.heroLabel} className={`plate ${styles.hero}`}>
       <canvas ref={canvas} aria-hidden="true" className={styles.canvas} />
     </div>
   );

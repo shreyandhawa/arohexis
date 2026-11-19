@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { startEvents } from './fixtures/brain';
-import { expectAccessible, seedEvents, setTheme } from './helpers';
+import { expectAccessible, seedEvents } from './helpers';
 
 // A Sunday, the default check-in day.
 const SUNDAY = Date.parse('2026-11-15T10:00:00Z');
@@ -86,26 +86,23 @@ test.describe('check-in', () => {
   });
 });
 
-for (const scheme of ['light', 'dark'] as const) {
-  test(`Insights and Check-in are accessible in ${scheme}`, async ({ page }) => {
-    await setTheme(page, scheme);
-    await page.clock.install({ time: SUNDAY });
-    await ready(page);
-    await seedEvents(
-      page,
-      startEvents({ now: SUNDAY, tagged: [['work', 'Work', 2]], untagged: 2, undone: 0 }),
-    );
-    await expectAccessible(page);
-    await page.goto('/checkin');
-    await expect(page.getByRole('button', { name: 'Submit' })).toBeVisible();
-    await expectAccessible(page);
-    await answerAll(page, 4);
-    await expectAccessible(page);
-    await page.getByRole('button', { name: 'Submit' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Insights' })).toBeVisible();
-    await expectAccessible(page);
-    await page.goto('/insights');
-    await expect(page.getByRole('heading', { name: 'Starts per week' })).toBeVisible();
-    await expectAccessible(page);
-  });
-}
+test(`Insights and Check-in are accessible`, async ({ page }) => {
+  await page.clock.install({ time: SUNDAY });
+  await ready(page);
+  await seedEvents(
+    page,
+    startEvents({ now: SUNDAY, tagged: [['work', 'Work', 2]], untagged: 2, undone: 0 }),
+  );
+  await expectAccessible(page);
+  await page.goto('/checkin');
+  await expect(page.getByRole('button', { name: 'Submit' })).toBeVisible();
+  await expectAccessible(page);
+  await answerAll(page, 4);
+  await expectAccessible(page);
+  await page.getByRole('button', { name: 'Submit' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Insights' })).toBeVisible();
+  await expectAccessible(page);
+  await page.goto('/insights');
+  await expect(page.getByRole('heading', { name: 'Starts per week' })).toBeVisible();
+  await expectAccessible(page);
+});

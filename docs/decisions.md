@@ -717,7 +717,7 @@ Statuses:
 
 ## ADR-036: Night sky, the app is built around Brain space's light
 
-- Date: 2026-11-18 · Status: **Accepted** (owner decision, 2026-11-18) · Amends ADR-018, ADR-021 and ADR-026
+- Date: 2026-11-18 · Status: **Accepted** (owner decision, 2026-11-18) · Amends ADR-018, ADR-021 and ADR-026 · Amended by ADR-038: dark only
 - **Context:** v1 has two visual languages. The plate is additive light on black, and everything around it is monochrome hairlines, so the main visual reads as a widget inside a different app. A laptop shows a 34rem phone column. The owner wants v2 built around the lines of light.
 - **Options:**
   - keep mono chrome and upgrade only the plate;
@@ -749,3 +749,15 @@ Statuses:
 - **Consequences:**
   - only cumulative wording appears. A frame never compares one time with another;
   - the part card opened from Replay shows today's counts, not the frame's.
+
+## ADR-038: Dark only
+
+- Date: 2026-11-19 · Status: **Accepted** (owner decision, 2026-11-19) · Amends ADR-036: "light theme stays" no longer holds
+- **Context:** the owner found the light theme harsh. Its always-black brain plate sat on a near-white page.
+- **Decision:** one dark theme.
+  - The dark values are `:root`, with `color-scheme: dark`. The light block, the `prefers-color-scheme` block, `[data-theme]`, `.plate-scope`, `public/theme.js` and `ThemeSync` are gone.
+  - Settings has no Theme field. The manifest `background_color` and `theme_color`, and the `theme-color` meta, are `#05060A`.
+  - `theme` stays in the stored settings type and the import schema so older backups import. The value is ignored. There is no data migration.
+- **Consequences:**
+  - `tokens.test.ts` and axe check one theme;
+  - ADR-036's Settings choice of Dark, Light and System no longer exists; its other points stand.

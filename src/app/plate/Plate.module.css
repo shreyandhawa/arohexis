@@ -1,4 +1,3 @@
-/* The plate is dark in both themes; .plate-scope supplies the dark tokens (ADR-026). */
 .plate {
   position: relative;
   display: flex;

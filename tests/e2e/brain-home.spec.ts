@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { full, knownEvents, startEvents } from './fixtures/brain';
-import { expectAccessible, seedEvents, seedParts, seedPlans, setTheme } from './helpers';
+import { expectAccessible, seedEvents, seedParts, seedPlans } from './helpers';
 
 const stuck = "I'm stuck";
 const region = (page: Page) => page.getByRole('region', { name: 'Brain space' });
@@ -341,14 +341,11 @@ test.describe('with the renderer chunk blocked', () => {
   });
 });
 
-for (const scheme of ['light', 'dark'] as const) {
-  test(`Home is accessible with the plate in ${scheme}`, async ({ page }) => {
-    await setTheme(page, scheme);
-    await seeded(page, knownEvents(Date.now()));
-    await expectAccessible(page);
-    await region(page).getByRole('button', { name: 'Work' }).click();
-    // Let the chip's colour transition finish; axe would read the colours mid-way.
-    await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
-    await expectAccessible(page);
-  });
-}
+test(`Home is accessible with the plate`, async ({ page }) => {
+  await seeded(page, knownEvents(Date.now()));
+  await expectAccessible(page);
+  await region(page).getByRole('button', { name: 'Work' }).click();
+  // Let the chip's colour transition finish; axe would read the colours mid-way.
+  await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
+  await expectAccessible(page);
+});

@@ -4,7 +4,6 @@ import { useRegisterSW } from 'virtual:pwa-register/react';
 import { demo } from '../../copy/demo';
 import { stepOf, welcome as copy } from '../../copy/welcome';
 import { enterDemo } from '../actions/demo';
-import { setPreference } from '../actions/preferences';
 import { WelcomeHero } from './WelcomeHero';
 import { Button } from '../components/Button';
 import { UpdateCard } from '../components/UpdateCard';
@@ -36,8 +35,6 @@ export function Welcome() {
   const kind = step === 1 ? 'intro' : step === 2 && ios ? 'ios' : 'choose';
 
   function startFresh() {
-    // Night sky is the default for a new record (ADR-036); Settings offers Light and System.
-    setPreference(deps, { theme: 'dark' }).catch((error: unknown) => console.error(error));
     markWelcomed();
     void navigate('/', { replace: true });
   }

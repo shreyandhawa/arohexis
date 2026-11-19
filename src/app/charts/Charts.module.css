@@ -11,7 +11,7 @@
   width: 100%;
   height: auto;
   overflow: visible;
-  /* Charts are drawn in light (ADR-036): a soft halo, none in the light theme. */
+  /* Charts are drawn in light (ADR-036): a soft halo. */
   filter: drop-shadow(0 0 6px var(--color-glow));
 }
 

@@ -29,7 +29,7 @@ Accounts, cloud sync, AI chat, social features, native apps, site or app blockin
 | The stuck flow takes under 30 s from tap to timer | Responses are capped at 40 words (unit test); one timed manual check on the owner's iPhone per release |
 | Works offline after the first load | Playwright offline scenario |
 | Installable on the iOS Home Screen; data survives restarts | Manual check on an iPhone; persistence E2E |
-| WCAG 2.2 AA on every screen, light and dark | axe in E2E plus a manual keyboard and VoiceOver pass |
+| WCAG 2.2 AA on every screen | axe in E2E plus a manual keyboard and VoiceOver pass |
 | The domain is pure and covered | Domain `tsconfig` has no DOM lib; at least 95% line coverage on `src/domain` |
 | CI on every push; `main` deploys to a public URL | GitHub Actions to Cloudflare |
 | Demo mode shows 10 realistic weeks without touching real data | E2E demo-isolation test |
@@ -125,7 +125,7 @@ src/
   app/             React: routes, screens, components, hooks, actions
     brain/           The Brain space canvas renderer, a lazy chunk (§16.6)
   copy/            Every user-facing string, grouped by screen
-  design/          tokens.css, themes, global styles, fonts
+  design/          tokens.css, global styles, fonts
 tests/e2e/         Playwright specs
 ```
 
@@ -307,7 +307,7 @@ interface ConfigStore {
 | `plans` | `id, active` | `{ id, place, cueDetail?, firstAction, partId? (M3), time: 'HH:MM', days: number[], graceMin, active, createdAt, editCount, activeSince? }` |
 | `kv` | `key` | `{ key, value }` |
 
-`kv` keys: `schemaVersion`, `onboarded`, `theme: 'system' | 'light' | 'dark'`, `weekStartsOn`, `checkinDay`, `checkinDismissedWeek`, `lastExportAt`, `persistRequested`, `brainStill: 'still' | 'moving'` (§16.8).
+`kv` keys: `schemaVersion`, `onboarded`, `theme: 'system' | 'light' | 'dark'` (unused since ADR-038, kept so older backups import), `weekStartsOn`, `checkinDay`, `checkinDismissedWeek`, `lastExportAt`, `persistRequested`, `brainStill: 'still' | 'moving'` (§16.8).
 
 Version 1 (shipped in M1) had a `taskTypes` table in place of `parts`. The version 1 to 2 upgrade is in §16.3.
 
@@ -493,7 +493,7 @@ Every chart has a visually hidden data table and a one-sentence text summary. Co
   - picking a basis for a new response is optional and defaults to `shrink-the-step`.
 - **Parts** (`/settings/parts`): rename, recolor, enable or disable, and add up to six. Parts are never deleted. See §16.3.
 - **Obstacles:** the same list editor as feelings.
-- **Preferences:** theme, week start day, check-in day, and the **Still** toggle for Brain space (§16.8).
+- **Preferences:** week start day, check-in day, and the **Still** toggle for Brain space (§16.8).
 - **Data:**
   - export and import;
   - last backup;
@@ -600,7 +600,7 @@ Timing didn't fit · Low energy · First step felt too big · Something came up 
   - one primary action per screen;
   - generous space;
   - restrained color, with a single accent reserved for the primary action and the "Started." moment;
-  - **night sky** (ADR-036): dark by default, the page shares the plate's background, and chrome may carry soft light (a glow on the primary action and focus, rules in the plate's dim tones).
+  - **night sky** (ADR-036, ADR-038): dark only, the page shares the plate's background, and chrome may carry soft light (a glow on the primary action and focus, rules in the plate's dim tones).
 - **Avoid** the generic dashboard look (cards in grids, KPI tiles, gradient charts) and gamification (confetti, badges, streak flames, points).
 - **Visual direction gate.** The gate is complete (ADR-018). Brain space's look is gated by the owner's review of the built Home screen (ADR-021). Part colors are data, not accents (§16.7), and since ADR-036 they may appear outside the plate as data.
 
@@ -608,13 +608,12 @@ Timing didn't fit · Low energy · First step felt too big · Something came up 
 Two layers of CSS custom properties: primitives (`--ink-900`, `--paper-50`, `--size-5`, …) and semantic tokens (`--color-bg`, `--color-text`, `--color-accent`, `--color-focus`, `--space-stack-lg`, `--motion-calm`, …). Components use semantic tokens only.
 
 - **Color:**
-  - light and dark themes;
-  - `:root` follows `prefers-color-scheme` unless `data-theme` is set from Settings;
-  - text contrast is at least 4.5:1 (large text and UI at least 3:1), checked by a unit test that computes contrast for every semantic pair in both themes.
+  - one dark theme, declared on `:root` (ADR-038), with no theme switch;
+  - text contrast is at least 4.5:1 (large text and UI at least 3:1), checked by a unit test that computes contrast for every semantic pair.
 - **Type:** a fluid modular scale (`clamp()`), with at most two families (display and text), self-hosted. Body text is at least 17px on mobile. Tabular numbers are used for the timer and counts.
 - **Space:** a 4-px base scale.
 - **Radius:** a small set (`--radius-s`, `--radius-m`, `--radius-pill`).
-- **Plate:** Brain space adds plate tokens (`--plate-bg`, `--plate-dim-point`, `--plate-dim-trace`, `--plate-waiting`, `--plate-core`) and six part colors. They are the same in both themes. See §16.7.
+- **Plate:** Brain space adds plate tokens (`--plate-bg`, `--plate-dim-point`, `--plate-dim-trace`, `--plate-waiting`, `--plate-core`) and six part colors. See §16.7.
 - **Motion:**
   - `--motion-quick: 120ms`, `--motion-calm: 240ms`, `--motion-slow: 480ms`, with a single standard easing;
   - no motion is decorative or looping, with one exception: Brain space's state motion (signals along plan lines), which stops with **Still** or while resting (§16.8);
@@ -654,7 +653,7 @@ Brain space adds its own tests in §16.13.
 | Domain unit | Vitest (node) | Every module in `src/domain`; gate of at least 95% lines and at least 90% branches |
 | Property | fast-check | the invariants below |
 | Storage | Vitest + fake-indexeddb | Repositories, transactions (import rollback), seeding, migrations from fixture DBs |
-| Copy and tokens | Vitest | Banned words, 40-word cap, contrast of every semantic color pair in both themes |
+| Copy and tokens | Vitest | Banned words, 40-word cap, contrast of every semantic color pair |
 | E2E | Playwright | the projects and scenarios below |
 
 **Property tests:**
@@ -679,7 +678,7 @@ Brain space adds its own tests in §16.13.
 8. Check-in due on the configured day; submitting it shows in the trend.
 9. Export, delete everything, import, and the same Insights reappear.
 10. Demo: enter, see 10 weeks, exit, and the main database is unchanged.
-11. axe-core scan of every route in light and dark, with zero violations at AA.
+11. axe-core scan of every route, with zero violations at AA.
 12. Reduced-motion emulation: no transform animations.
 13. Keyboard-only stuck flow on desktop (`S`, a number key, `Enter`).
 
@@ -830,7 +829,7 @@ export function projectBrainSpace(attempts: readonly Attempt[], plans: readonly 
 
 ### 16.7 Look and colour
 
-**Plate tokens.** They are the same in both themes (ADR-026).
+**Plate tokens.** The app has one dark theme (ADR-026, ADR-038).
 
 | Token | Value | Use |
 |---|---|---|
@@ -940,7 +939,7 @@ Parts are named by the user, so no line gives advice about one kind of part. The
 **Accessibility (ADR-033):**
 - **The canvas is never needed.** It is `aria-hidden="true"` and never focusable. Every action is a DOM control: part chips, **Still**, zoom and turn buttons, and the part card.
 - **Text equivalent:** a list inside the plate's region (`role="region"`, `aria-label="Brain space"`), visually hidden except the summary line. For each part it reads, for example, "Portfolio: 30 starts. Plan lines: Steady, 18 starts on cue; New, 3 starts on cue. 9 start lines." Then "No part: 4 starts.", then the motion sentence. It follows the projection and is not announced live.
-- **Targets and focus:** touch targets are at least 48×48 px. Controls on the plate use the dark theme's tokens, including its focus ring (ADR-026).
+- **Targets and focus:** touch targets are at least 48×48 px. Controls on the plate use the same tokens as the page, including the focus ring (ADR-026, ADR-038).
 - **Keyboard:** Tab reaches the chips and every plate control. Enter or Space activates, and Esc closes the card. While a plate control has focus, ← and → turn, and + and − zoom. `S` still opens the stuck flow.
 - **WCAG:** 2.2.2 is met by **Still**. 2.3.1 is met by one burst under the flash threshold. 2.5.7 is met by the turn buttons. 1.4.1 is met because colour is never alone.
 

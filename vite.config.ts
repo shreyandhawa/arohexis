@@ -6,7 +6,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 import { parseHeaders } from './config/parseHeaders.ts';
 
 // ADR-018 light --color-bg.
-const BG = '#F5F5F2';
+const BG = '#05060A';
 
 /**
  * Makes `vite preview` send the `/*` block of public/_headers, which Cloudflare

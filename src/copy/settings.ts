@@ -10,8 +10,6 @@ export const settings = {
   still: 'Still',
   saveFailed: "That didn't save. Try again.",
   stillHint: 'Stops all motion in Brain space.',
-  theme: 'Theme',
-  themeOptions: { system: 'Match my device', light: 'Light', dark: 'Dark' },
   weekStartsOn: 'Week starts on',
   checkinDay: 'Weekly check-in day',
   days: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
