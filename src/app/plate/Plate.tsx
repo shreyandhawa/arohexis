@@ -1,4 +1,15 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentType,
+  type KeyboardEvent,
+} from 'react';
+import type { SheetsProps } from './Sheets';
 import { brain } from '../../copy/brain';
 import { summaryLines, type BrainSpace } from '../../domain/brainSpace';
 import type { Part } from '../../domain/config';
@@ -9,16 +20,24 @@ import { useConfig } from '../hooks/useConfig';
 import { useStill } from '../hooks/useStill';
 import { shownParts } from './describe';
 import { landFor } from './landing';
-import { PART_CARD_TITLE_ID, PartCard } from './PartCard';
 import { PartsRow } from './PartsRow';
-import { Sheet } from './Sheet';
 import { TurnControls, ZoomControls } from './PlateControls';
 import { TextEquivalent } from './TextEquivalent';
 import { useRenderer } from './useRenderer';
 import styles from './Plate.module.css';
 
-const LineCard = lazy(() => import('./LineCard'));
-const LINE_CARD_TITLE_ID = 'line-card-title';
+/** If the sheets' chunk cannot load (offline, or a stale cache after an update), say so and close. */
+function SheetsFailed({ cardFor, lineFor, onFailed }: SheetsProps) {
+  const open = cardFor !== null || lineFor !== null;
+  useEffect(() => {
+    if (open) onFailed();
+  }, [open, onFailed]);
+  return null;
+}
+
+const Sheets = lazy<ComponentType<SheetsProps>>(() =>
+  import('./Sheets').catch(() => ({ default: SheetsFailed })),
+);
 
 /** Under this many counted starts the summary also says what a start does. */
 const QUIET_BELOW = 5;
@@ -51,13 +70,13 @@ export function Plate({ selected, onSelect, notice, data: frame, lands }: Props)
   const [land, setLand] = useState<string | undefined>();
   const newest = live?.space.newest;
   const seen = config?.settings.lastSeenStart;
-  useEffect(() => {
-    if (!lands || !newest || !config) return;
-    const lineId = landFor(newest, seen, clock.now());
-    if (lineId === undefined) return;
-    setLand(lineId);
-    void store.applyConfigPatch({ settings: { lastSeenStart: newest.at } }).catch(console.error);
-  }, [lands, newest, seen, config, clock, store]);
+  const [armed, setArmed] = useState(false);
+  const [sheetsFailed, setSheetsFailed] = useState(false);
+  const onSheetsFailed = useCallback(() => {
+    setCardFor(null);
+    setLineFor(null);
+    setSheetsFailed(true);
+  }, []);
   const state = useMemo(
     () =>
       data && {
@@ -74,14 +93,22 @@ export function Plate({ selected, onSelect, notice, data: frame, lands }: Props)
   function select(partId: string | null) {
     setCardFor(partId);
     if (partId !== null) {
+      setSheetsFailed(false);
+      setArmed(true);
       const chips = root.current?.querySelectorAll<HTMLElement>('[data-part-id]');
       setOpener([...(chips ?? [])].find((c) => c.dataset['partId'] === partId) ?? null);
     }
     onSelect(partId);
   }
 
+  // A line opens from the text list's button; a tap on the canvas hands focus back to that line's button.
   function openLine(lineId: string, from: HTMLElement | null) {
-    setOpener(from);
+    const button = [...(root.current?.querySelectorAll<HTMLElement>('[data-line-id]') ?? [])].find(
+      (b) => b.dataset['lineId'] === lineId,
+    );
+    setOpener(from ?? button ?? canvas.current);
+    setSheetsFailed(false);
+    setArmed(true);
     setLineFor(lineId);
   }
 
@@ -95,6 +122,27 @@ export function Plate({ selected, onSelect, notice, data: frame, lands }: Props)
     },
     state,
   );
+  const { ready } = renderer;
+  useEffect(() => {
+    if (!lands || !newest || !config || !ready) return;
+    const lineId = landFor(newest, seen, clock.now());
+    if (lineId === undefined) return;
+    setLand(lineId);
+    // Remembered only once the renderer can show it, and the page is in view.
+    const remember = () =>
+      void store.applyConfigPatch({ settings: { lastSeenStart: newest.at } }).catch(console.error);
+    if (!document.hidden) {
+      remember();
+      return;
+    }
+    const onVisible = () => {
+      if (document.hidden) return;
+      document.removeEventListener('visibilitychange', onVisible);
+      remember();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [lands, newest, seen, config, clock, store, ready]);
 
   // While a plate control has focus: arrows turn and plus and minus zoom (spec §16.10).
   function onKeyDown(event: KeyboardEvent<HTMLElement>) {
@@ -142,9 +190,9 @@ export function Plate({ selected, onSelect, notice, data: frame, lands }: Props)
               </Chip>
               <TurnControls onTurn={renderer.turn} />
               <ZoomControls onZoom={renderer.zoom} />
-              {notice && (
+              {(notice || sheetsFailed) && (
                 <p role="status" className={styles['notice']}>
-                  {notice}
+                  {notice ?? (sheetsFailed ? brain.cardUnavailable : undefined)}
                 </p>
               )}
               <TextEquivalent space={data.space} parts={data.parts} onOpenLine={openLine} />
@@ -163,26 +211,18 @@ export function Plate({ selected, onSelect, notice, data: frame, lands }: Props)
           <div aria-hidden="true" className={styles['partsRow']} />
         )}
       </section>
-      <Sheet
-        open={cardFor !== null}
-        onClose={() => setCardFor(null)}
-        labelledBy={PART_CARD_TITLE_ID}
-        opener={opener}
-      >
-        {cardFor !== null && <PartCard partId={cardFor} onClose={() => setCardFor(null)} />}
-      </Sheet>
-      <Sheet
-        open={lineFor !== null}
-        onClose={() => setLineFor(null)}
-        labelledBy={LINE_CARD_TITLE_ID}
-        opener={opener}
-      >
-        {lineFor !== null && (
-          <Suspense fallback={<div />}>
-            <LineCard lineId={lineFor} />
-          </Suspense>
-        )}
-      </Sheet>
+      {armed && (
+        <Suspense fallback={null}>
+          <Sheets
+            cardFor={cardFor}
+            lineFor={lineFor}
+            opener={opener}
+            onCloseCard={() => setCardFor(null)}
+            onCloseLine={() => setLineFor(null)}
+            onFailed={onSheetsFailed}
+          />
+        </Suspense>
+      )}
     </>
   );
 }

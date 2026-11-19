@@ -1,0 +1,30 @@
+/* A keyboard user sees what has focus: the hidden list shows itself over the plate. */
+.lines:has(:focus-visible) {
+  position: absolute;
+  z-index: 2;
+  top: calc(var(--target-min) + var(--space-3));
+  right: var(--space-3);
+  left: var(--space-3);
+  width: auto;
+  height: auto;
+  max-height: 40%;
+  margin: 0;
+  padding: var(--space-2);
+  overflow: auto;
+  clip-path: none;
+  background: var(--plate-bg);
+  border: 1px solid var(--color-text);
+  border-radius: var(--radius-m);
+  white-space: normal;
+  list-style: none;
+}
+
+.lines:has(:focus-visible) button {
+  min-height: var(--target-min);
+  padding: 0 var(--space-2);
+  color: var(--color-text);
+  font: inherit;
+  background: transparent;
+  border: 0;
+  text-align: left;
+}

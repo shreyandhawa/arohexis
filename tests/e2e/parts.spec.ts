@@ -65,10 +65,10 @@ test('renaming changes the chip and card, and the light count stays', async ({ p
   await partGroup(page, 'Work').getByRole('button', { name: 'Save' }).click();
   await expect(partGroup(page, 'Job')).toBeVisible();
   await page.goto('/');
-  await expect(plate(page).getByRole('button', { name: 'Job' })).toBeVisible();
-  await expect(plate(page).getByRole('button', { name: 'Work' })).toHaveCount(0);
+  await expect(plate(page).getByRole('button', { name: 'Job', exact: true })).toBeVisible();
+  await expect(plate(page).getByRole('button', { name: 'Work', exact: true })).toHaveCount(0);
   await expect(plate(page).getByText(/starts · /)).toHaveText(summary ?? '');
-  await plate(page).getByRole('button', { name: 'Job' }).click();
+  await plate(page).getByRole('button', { name: 'Job', exact: true }).click();
   await expect(plate(page)).toContainText('Job: 3 starts.');
 });
 
@@ -85,7 +85,7 @@ test('a disabled part leaves What is it?, and its chip and light stay on Home', 
   await expect(page.getByRole('button', { name: 'Work', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Study', exact: true })).toBeVisible();
   await page.goto('/');
-  await expect(plate(page).getByRole('button', { name: 'Work' })).toBeVisible();
+  await expect(plate(page).getByRole('button', { name: 'Work', exact: true })).toBeVisible();
   await expect(plate(page)).toContainText('Work: 3 starts.');
 });
 
@@ -117,9 +117,9 @@ test.describe('at 320 px', () => {
     await expect(partGroup(page, long)).toBeVisible();
     expect(await fits()).toBe(true);
     await page.goto('/');
-    await expect(plate(page).getByRole('button', { name: long })).toBeVisible();
+    await expect(plate(page).getByRole('button', { name: long, exact: true })).toBeVisible();
     expect(await fits()).toBe(true);
-    await plate(page).getByRole('button', { name: long }).click();
+    await plate(page).getByRole('button', { name: long, exact: true }).click();
     expect(await fits()).toBe(true);
     await startFlow(page);
     await expect(page.getByRole('button', { name: long, exact: true })).toBeVisible();

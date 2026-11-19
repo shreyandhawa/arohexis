@@ -181,11 +181,35 @@ describe('the living sky', () => {
     h.flush(0);
     expect(h.canvas.dataset['loop']).toBe('running');
     const before = draws(h);
-    h.flush(10);
-    h.flush(20);
-    expect(draws(h)).toBe(before);
+    // The sky alone wakes on a timer, not on every animation frame.
+    expect(h.frames).toHaveLength(0);
+    vi.advanceTimersByTime(40);
+    expect(h.frames).toHaveLength(0);
+    vi.advanceTimersByTime(60);
+    expect(h.frames).toHaveLength(1);
     h.flush(100);
     expect(draws(h)).toBeGreaterThan(before);
+    expect(h.frames).toHaveLength(0);
+  });
+
+  it('cancels its timer when Still turns on', () => {
+    const h = setup();
+    h.renderer.update(h.live());
+    h.flush(0);
+    h.renderer.update(h.state({ still: true }));
+    h.flush(0);
+    vi.advanceTimersByTime(200);
+    expect(h.frames).toHaveLength(0);
+    expect(h.canvas.dataset['loop']).toBe('idle');
+  });
+
+  it('cancels its timer on destroy', () => {
+    const h = setup();
+    h.renderer.update(h.live());
+    h.flush(0);
+    h.renderer.destroy();
+    vi.advanceTimersByTime(200);
+    expect(h.frames).toHaveLength(0);
   });
 
   it('does not run under Still', () => {
@@ -200,6 +224,7 @@ describe('the living sky', () => {
     h.renderer.update(h.live());
     h.flush(0);
     h.inView(false);
+    vi.advanceTimersByTime(100);
     h.flush(100);
     expect(h.canvas.dataset['loop']).toBe('idle');
     h.inView(true);

@@ -34,7 +34,7 @@
   --color-on-selected: #05060a;
   --color-glow: rgb(238 241 246 / 0.3);
 
-  /* Plate and part colours (spec §16.7, ADR-026): the same in both themes. */
+  /* Plate and part colours (spec §16.7, ADR-026): dark, as the app is. */
   --plate-bg: #05060a;
   --plate-dim-point: #8e98ac;
   --plate-dim-trace: #7c8598;

@@ -156,6 +156,8 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   let insetBottom = 0;
   let dpr = 1;
   let raf = 0;
+  /** The pending twinkle-only frame, scheduled by timer so the page isn't woken at 60 Hz for the sky. */
+  let twinkleTimer: ReturnType<typeof setTimeout> | undefined;
   /** Whether the plate is in view; the sky rests when it is not. */
   let onScreen = true;
   let lastTwinkle = -Infinity;
@@ -328,6 +330,8 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   const signalsOn = (): boolean => scene.signals && state?.space.motion === 'moving' && !still();
   /** The living sky: on the plate only, at rest, never under Still, and only while in view (ADR-040). */
   const twinkleOn = (): boolean => !strip && !still() && onScreen && state !== undefined;
+  const skyOnly = (): boolean =>
+    twinkleOn() && !dragging && !easing() && !signalsOn() && !current.animating;
   const needsLoop = (): boolean =>
     !document.hidden && (dragging || easing() || signalsOn() || current.animating || twinkleOn());
 
@@ -552,8 +556,25 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     else console.error(e);
   }
 
+  function clearTwinkle(): void {
+    clearTimeout(twinkleTimer);
+    twinkleTimer = undefined;
+  }
+
+  /** Wakes for the sky's next frame after `delay` ms. */
+  function waitForTwinkle(delay: number): void {
+    twinkleTimer ??= setTimeout(
+      () => {
+        twinkleTimer = undefined;
+        request();
+      },
+      Math.max(0, delay),
+    );
+  }
+
   function stop(): void {
     raf = 0;
+    clearTwinkle();
     setLoop(false);
   }
 
@@ -563,16 +584,9 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     try {
       at = opts.now();
       current = motionAt(at);
-      // When only the sky is moving, most frames are skipped to hold about 12 fps.
-      if (
-        twinkleOn() &&
-        !dragging &&
-        !easing() &&
-        !signalsOn() &&
-        !current.animating &&
-        time - lastTwinkle < TWINKLE_MS
-      ) {
-        raf = requestAnimationFrame(frame);
+      // When only the sky is moving, a frame that comes early waits for a timer, to hold about 12 fps.
+      if (skyOnly() && time - lastTwinkle < TWINKLE_MS) {
+        waitForTwinkle(TWINKLE_MS - (time - lastTwinkle));
         return;
       }
       lastTwinkle = time;
@@ -599,7 +613,9 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
           const mean = samples.reduce((a, b) => a + b, 0) / samples.length;
           canvas.dataset['drawMean'] = mean.toFixed(2);
         }
-        raf = requestAnimationFrame(frame);
+        // Real motion keeps the frame loop; the sky alone wakes on a timer.
+        if (skyOnly()) waitForTwinkle(TWINKLE_MS);
+        else raf = requestAnimationFrame(frame);
       }
     } catch (e) {
       fail(e);
@@ -760,6 +776,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     if (document.hidden) {
       cancelAnimationFrame(raf);
       raf = 0;
+      clearTwinkle();
       setLoop(false);
     } else {
       request();
@@ -852,7 +869,10 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       if (!sameScene(scene, built)) sceneVersion += 1;
       scene = built;
       current = motionAt(at);
-      if (next.still) cam = { ...target };
+      if (next.still) {
+        cam = { ...target };
+        clearTwinkle();
+      }
       if (landing) faceLine(next.land!);
       else if (!strip && next.selected !== before) {
         if (next.selected !== null) faceRegion(next.selected, next.parts);
@@ -870,6 +890,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     destroy() {
       destroyed = true;
       cancelAnimationFrame(raf);
+      clearTwinkle();
       observer.disconnect();
       seen?.disconnect();
       dprWatch?.removeEventListener('change', onDpr);

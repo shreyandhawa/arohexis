@@ -272,22 +272,24 @@ test('while a plate control has focus, arrows turn and plus and minus zoom', asy
 test('a part chip selects its part, and All clears it', async ({ page }) => {
   await seeded(page, knownEvents(Date.now()));
   const plate = region(page);
-  const work = plate.getByRole('button', { name: 'Work' });
+  const work = plate.getByRole('button', { name: 'Work', exact: true });
   const all = plate.getByRole('button', { name: 'All', exact: true });
   await expect(all).toHaveAttribute('aria-pressed', 'true');
   await expect(work).toHaveAttribute('aria-pressed', 'false');
   await work.click();
   await expect(work).toHaveAttribute('aria-pressed', 'true');
   await expect(all).toHaveAttribute('aria-pressed', 'false');
-  // The chip also opened the part's card; closing it keeps the part selected.
+  // The chip also opened the part's card, which loads on first use; closing it keeps the part selected.
+  await expect(page.getByRole('dialog')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(work).toHaveAttribute('aria-pressed', 'true');
-  await plate.getByRole('button', { name: 'Study' }).click();
+  await plate.getByRole('button', { name: 'Study', exact: true }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(work).toHaveAttribute('aria-pressed', 'false');
   await all.click();
   await expect(all).toHaveAttribute('aria-pressed', 'true');
-  await expect(plate.getByRole('button', { name: 'Study' })).toHaveAttribute(
+  await expect(plate.getByRole('button', { name: 'Study', exact: true })).toHaveAttribute(
     'aria-pressed',
     'false',
   );
@@ -344,7 +346,7 @@ test.describe('with the renderer chunk blocked', () => {
 test(`Home is accessible with the plate`, async ({ page }) => {
   await seeded(page, knownEvents(Date.now()));
   await expectAccessible(page);
-  await region(page).getByRole('button', { name: 'Work' }).click();
+  await region(page).getByRole('button', { name: 'Work', exact: true }).click();
   // Let the chip's colour transition finish; axe would read the colours mid-way.
   await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
   await expectAccessible(page);
@@ -375,6 +377,24 @@ test.describe('light that answers, and lands', () => {
     await expect(region(page)).toContainText('Each start lights a line.');
     await seeded(page, knownEvents(Date.now()));
     await expect(region(page)).not.toContainText('Each start lights a line.');
+  });
+
+  test('a young record fits 375x667 without scrolling, and Light a line stays in view', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await seeded(
+      page,
+      startEvents({ now: Date.now(), tagged: [['work', 'Work', 2]], untagged: 0, undone: 0 }),
+    );
+    await expect(region(page)).toContainText('Each start lights a line.');
+    await expect(page.getByRole('button', { name: stuck, exact: true })).toBeInViewport({
+      ratio: 1,
+    });
+    const fits = await page.evaluate(
+      () => document.documentElement.scrollHeight <= window.innerHeight,
+    );
+    expect(fits).toBe(true);
   });
 
   test('a new start lands once, and Home remembers it', async ({ page }) => {

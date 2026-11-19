@@ -19,6 +19,8 @@ export const brain = {
     pause: 'Pause',
   },
   noPart: 'No part',
+  /** Shown on the plate when a card's code could not load. */
+  cardUnavailable: "That card didn't open. Try again.",
   moving: 'Signals are moving.',
   resting: 'Signals are resting. One start sets them moving again.',
   summary: (starts: number, lines: number): string =>
@@ -49,7 +51,8 @@ export const brain = {
   line: {
     since: (date: string): string => `Since ${date}`,
     /** The text equivalent's button that opens a line's card. */
-    open: (n: number, detail: string): string => `Open line ${n}, ${detail}`,
+    open: (part: string, detail: string, n: number, total: number): string =>
+      `Open ${part} line, ${detail}, ${n} of ${total}`,
     listLabel: 'Lines',
   },
   card: {
