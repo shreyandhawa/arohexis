@@ -476,3 +476,62 @@ describe('the arriving start', () => {
     expect(h.canvas.dataset['reveal']).toBeUndefined();
   });
 });
+
+describe('preview and landing', () => {
+  const partId = DEFAULT_PARTS[0]!.id;
+  const space: BrainSpace = {
+    lines: [
+      { kind: 'start', id: 'a1', partId, at: 1000, order: 1000, settled: true, undone: false },
+    ],
+    parts: [],
+    motion: 'moving',
+    totalStarts: 1,
+  };
+
+  it('previews a part without moving the camera', () => {
+    const h = setup();
+    h.renderer.update(h.state({ space }));
+    h.flush(0);
+    const yaw = h.canvas.dataset['yaw'];
+    h.renderer.update(h.state({ space, preview: 'work' }));
+    h.flush(16);
+    expect(h.canvas.dataset['yaw']).toBe(yaw);
+    expect(h.canvas.dataset['loop']).toBe('idle');
+  });
+
+  it('lands once: eases to the line, glows for BURST_MS, then idles', () => {
+    const h = setup();
+    h.clock.now = 5000;
+    h.renderer.update(h.state({ space }));
+    h.flush(0);
+    const yaw = h.canvas.dataset['yaw'];
+    h.renderer.update(h.state({ space, land: 'a1' }));
+    expect(h.canvas.dataset['yaw']).not.toBe(yaw);
+    h.flush(16);
+    expect(h.canvas.dataset['loop']).toBe('running');
+    // The same land again does not start over.
+    h.clock.now = 5000 + BURST_MS - 10;
+    h.renderer.update(h.state({ space, land: 'a1' }));
+    h.flush(2000);
+    h.flush(4000);
+    h.clock.now = 5000 + BURST_MS + 1;
+    h.flush(6000);
+    expect(h.canvas.dataset['loop']).toBe('idle');
+    h.renderer.update(h.state({ space, land: 'a1' }));
+    h.flush(8000);
+    expect(h.canvas.dataset['loop']).toBe('idle');
+  });
+
+  it('under Still the camera snaps and the glow is a fade of at most 120 ms', () => {
+    const h = setup();
+    h.clock.now = 5000;
+    h.renderer.update(h.state({ space, still: true }));
+    h.flush(0);
+    h.renderer.update(h.state({ space, still: true, land: 'a1' }));
+    h.flush(16);
+    expect(h.canvas.dataset['loop']).toBe('running');
+    h.clock.now = 5000 + STILL_FADE_MS + 1;
+    h.flush(32);
+    expect(h.canvas.dataset['loop']).toBe('idle');
+  });
+});

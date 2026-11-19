@@ -1,12 +1,14 @@
-import { useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { brain } from '../../copy/brain';
 import { summaryLines, type BrainSpace } from '../../domain/brainSpace';
 import type { Part } from '../../domain/config';
 import { Chip } from '../components/Chip';
 import { useData } from '../data/DataProvider';
 import { useBrainSpace } from '../hooks/useBrainSpace';
+import { useConfig } from '../hooks/useConfig';
 import { useStill } from '../hooks/useStill';
 import { shownParts } from './describe';
+import { landFor } from './landing';
 import { PART_CARD_TITLE_ID, PartCard } from './PartCard';
 import { PartsRow } from './PartsRow';
 import { Sheet } from './Sheet';
@@ -15,6 +17,9 @@ import { TextEquivalent } from './TextEquivalent';
 import { useRenderer } from './useRenderer';
 import styles from './Plate.module.css';
 
+/** Under this many counted starts the summary also says what a start does. */
+const QUIET_BELOW = 5;
+
 type Props = {
   selected: string | null;
   onSelect(partId: string | null): void;
@@ -22,10 +27,13 @@ type Props = {
   notice?: string | undefined;
   /** A picture to show in place of the live one, such as a Replay frame. */
   data?: { space: BrainSpace; parts: readonly Part[] } | undefined;
+  /** Home only: land the newest start's line once, and remember it (spec §16.8). */
+  lands?: boolean | undefined;
 };
 
-export function Plate({ selected, onSelect, notice, data: frame }: Props) {
-  const { clock } = useData();
+export function Plate({ selected, onSelect, notice, data: frame, lands }: Props) {
+  const { clock, config: store } = useData();
+  const config = useConfig();
   const live = useBrainSpace();
   const data = frame ?? live;
   const { still, toggle } = useStill();
@@ -34,9 +42,29 @@ export function Plate({ selected, onSelect, notice, data: frame }: Props) {
   const [opener, setOpener] = useState<HTMLElement | null>(null);
   // The card opens on a tap; closing it keeps the part selected until All clears it.
   const [cardFor, setCardFor] = useState<string | null>(null);
+  // Hovering or focusing a chip previews its part. It opens no card.
+  const [preview, setPreview] = useState<string | null>(null);
+  const [land, setLand] = useState<string | undefined>();
+  const newest = live?.space.newest;
+  const seen = config?.settings.lastSeenStart;
+  useEffect(() => {
+    if (!lands || !newest || !config) return;
+    const lineId = landFor(newest, seen, clock.now());
+    if (lineId === undefined) return;
+    setLand(lineId);
+    void store.applyConfigPatch({ settings: { lastSeenStart: newest.at } }).catch(console.error);
+  }, [lands, newest, seen, config, clock, store]);
   const state = useMemo(
-    () => data && { space: data.space, parts: data.parts, selected, still },
-    [data, selected, still],
+    () =>
+      data && {
+        space: data.space,
+        parts: data.parts,
+        selected,
+        still,
+        ...(preview !== null && { preview }),
+        ...(land !== undefined && { land }),
+      },
+    [data, selected, still, preview, land],
   );
   // Tapping a part, on the plate or its chip, opens its card. Focus returns to that part's chip.
   function select(partId: string | null) {
@@ -91,6 +119,9 @@ export function Plate({ selected, onSelect, notice, data: frame }: Props) {
                 {data.space.totalStarts === 0
                   ? brain.empty
                   : brain.summary(data.space.totalStarts, summaryLines(data.space))}
+                {data.space.totalStarts > 0 && data.space.totalStarts < QUIET_BELOW && (
+                  <> {brain.firstLines}</>
+                )}
               </p>
               <Chip pressed={still} className={styles['still']} onClick={toggle}>
                 {brain.controls.still}
@@ -111,6 +142,7 @@ export function Plate({ selected, onSelect, notice, data: frame }: Props) {
             parts={shownParts(data.space, data.parts)}
             selected={selected}
             onSelect={select}
+            onPreview={setPreview}
           />
         ) : (
           // Holds the row's height until data loads, so the plate doesn't jump.

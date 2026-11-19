@@ -226,6 +226,7 @@ const arbSettings = fc.record(
     checkinDay: arbWeekDay,
     checkinDismissedWeek: arbText,
     lastExportAt: fc.nat(),
+    lastSeenStart: fc.nat(),
     persistRequested: fc.boolean(),
     onboarded: fc.boolean(),
     brainStill: fc.constantFrom<'still' | 'moving'>('still', 'moving'),

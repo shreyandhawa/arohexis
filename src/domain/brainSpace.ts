@@ -37,6 +37,8 @@ export type BrainSpace = {
   parts: PartLight[];
   motion: 'moving' | 'resting';
   totalStarts: number;
+  /** The newest counted start, and the line it lit. Absent when there is none. */
+  newest?: { at: number; lineId: string };
 };
 
 export function isOnCue(a: Attempt): boolean {
@@ -117,6 +119,7 @@ export function projectBrainSpace(
   const counts = new Map<string | null, number>();
   let totalStarts = 0;
   let newestStart = -Infinity;
+  let newest: { at: number; lineId: string } | undefined;
 
   attempts.forEach((a, i) => {
     if (!a.start) return;
@@ -125,6 +128,10 @@ export function projectBrainSpace(
     if (counted) {
       totalStarts += 1;
       newestStart = Math.max(newestStart, a.start.at);
+      if (a.start.at >= (newest?.at ?? -Infinity)) {
+        const lit = holders.has(a.id) && a.planId !== undefined;
+        newest = { at: a.start.at, lineId: lit ? `${a.planId}:${part ?? 'core'}` : a.id };
+      }
       const own = normal(partOfStart(a));
       counts.set(own, (counts.get(own) ?? 0) + 1);
     }
@@ -204,6 +211,7 @@ export function projectBrainSpace(
     parts: partLights,
     motion: now - newestStart <= RESTING_AFTER_MS ? 'moving' : 'resting',
     totalStarts,
+    ...(newest && { newest }),
   };
 }
 

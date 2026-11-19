@@ -307,7 +307,7 @@ interface ConfigStore {
 | `plans` | `id, active` | `{ id, place, cueDetail?, firstAction, partId? (M3), time: 'HH:MM', days: number[], graceMin, active, createdAt, editCount, activeSince? }` |
 | `kv` | `key` | `{ key, value }` |
 
-`kv` keys: `schemaVersion`, `onboarded`, `theme: 'system' | 'light' | 'dark'` (unused since ADR-038, kept so older backups import), `weekStartsOn`, `checkinDay`, `checkinDismissedWeek`, `lastExportAt`, `persistRequested`, `brainStill: 'still' | 'moving'` (§16.8).
+`kv` keys: `schemaVersion`, `onboarded`, `theme: 'system' | 'light' | 'dark'` (unused since ADR-038, kept so older backups import), `weekStartsOn`, `checkinDay`, `checkinDismissedWeek`, `lastExportAt`, `persistRequested`, `brainStill: 'still' | 'moving'` (§16.8), `lastSeenStart` (§16.8, the `start.at` of the newest start Home has shown landing).
 
 Version 1 (shipped in M1) had a `taskTypes` table in place of `parts`. The version 1 to 2 upgrade is in §16.3.
 
@@ -875,7 +875,8 @@ Id 6 is blue `hsl(225 90% 76%)`. M2 Task 6 chose it from two candidates: blue at
   - **Reveal:** during the two-minute timer, the new light is drawn from the core out to its place. Progress comes from `timerState(start.at, now)`, so it stays right after the phone locks or the page reloads. If the start is re-tagged mid-reveal, the reveal carries on, at the same progress, to the new place. For an on-cue start, the reveal runs a bright pass along the plan's existing line, and a new strength step takes effect when the pass ends.
   - **Settle:** a small ring settles at the line's end when the reveal finishes.
   - **Backfilled starts** (**Yes, I started**) have no burst and no reveal, because they aren't made on Started. Their light simply appears, and they count for moving like any start.
-- **Interaction motion:** the camera eases to a tapped part or a zoom step over `--motion-slow`.
+  - **Landing (Home):** when the newest counted start is newer than `kv.lastSeenStart`, Home lights that start's line once, reusing the burst, and the camera eases to face it. Under Still there is no ease, only the fade of at most 120 ms. On a first visit (no `lastSeenStart`) only a start from the last hour lands, so old starts are not replayed. The demo never writes `lastSeenStart`.
+- **Interaction motion:** hovering or focusing a part's chip previews that part's lines (no card, no camera move); the camera eases to a tapped part or a zoom step over `--motion-slow`.
 - **Never:** auto-rotation, idle drift, looping decoration, or motion on chrome.
 - **The light exists from the tap** (ADR-004). The reveal only animates it. Leaving Started early or tapping **Done for now** never leaves a partial line: Home always shows it whole.
 - **Still:** a visible toggle on every plate, on Home and on Started, labelled **Still**, with `aria-pressed`, at least 48×48 px.
@@ -925,6 +926,7 @@ Parts are named by the user, so no line gives advice about one kind of part. The
 - **Card budgets:** plan card at most 180 px, check-in card 120, update card 96, Demo ribbon 40.
 - **The stuck flow is unchanged.** Home never scrolls at 375×667, **Light a line** stays where it is, and Stuck to timer stays at 3 taps.
 - **Loading:** the renderer loads after **Light a line** is on screen. Until then the plate shows the summary line.
+- **Quiet records:** with fewer than 5 counted starts the summary adds `brain.firstLines`.
 - **Parts row:** an **All** chip and one chip per part with its swatch, 48 px tall, scrolling sideways. A chip does what tapping its part on the plate does.
 - **Tapping a part**, on the plate or its chip: the rest fades to `UNSELECTED_ALPHA`, the camera eases to it, and its card opens as a sheet. The sheet traps focus, Esc closes it, and focus returns, like the lapse sheet.
 - **Navigation:** drag turns. **Turn left** and **Turn right** turn by `TURN_STEP_RAD` (WCAG 2.5.7). Pinch, the wheel, or **Zoom in** and **Zoom out** zoom. Zooming past `EXPLODE_FROM_ZOOM` pulls the regions apart and labels them.

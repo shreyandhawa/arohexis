@@ -58,6 +58,10 @@ export type RenderState = {
   reveal?: { lineId: string; startAt: number };
   /** The `start.at` of a start made on Started. The burst's phase is `(now - burstAt) / BURST_MS`. */
   burstAt?: number;
+  /** A chip is hovered or focused: its part's lines show, but the camera stays put. */
+  preview?: string;
+  /** Home: the line of a start not yet seen. It glows once and the camera eases to face it. */
+  land?: string;
 };
 
 export interface BrainRenderer {
@@ -189,6 +193,9 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   canvas.dataset['loop'] = 'idle';
 
   const still = (): boolean => state?.still ?? false;
+  const shown = (): string | null => state?.preview ?? state?.selected ?? null;
+  /** The landed line, and when its glow began. */
+  let landed: { id: string; at: number } | undefined;
 
   /** What the clock says about the arriving start at `now` (spec §16.8). Nothing here is stored. */
   function motionAt(now: number): Motion {
@@ -216,8 +223,14 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
         out.animating = true;
       }
     }
-    if (state.burstAt !== undefined) {
-      const phase = (now - state.burstAt) / (calm ? STILL_FADE_MS : BURST_MS);
+    // A landing reuses the burst, on the landed line's core.
+    const burstAt = state.burstAt ?? (landed && now >= landed.at ? landed.at : undefined);
+    if (state.burstAt === undefined && landed && !out.item) {
+      const item = scene.items.find((i) => i.id === landed?.id);
+      if (item) out.item = item;
+    }
+    if (burstAt !== undefined) {
+      const phase = (now - burstAt) / (calm ? STILL_FADE_MS : BURST_MS);
       if (phase >= 0 && phase < 1) {
         out.burst = phase;
         out.animating = true;
@@ -374,6 +387,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     if (strip) frameStrip();
     reportReveal();
     const view = viewNow();
+    const sel = shown();
     const resting = state.space.motion === 'resting';
     const lit = {
       ctx,
@@ -381,7 +395,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       rig: r,
       scene,
       view,
-      selected: state.selected,
+      selected: sel,
       resting,
       time,
       restingBrightness: RESTING_BRIGHTNESS,
@@ -400,7 +414,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       cam.look.join(','),
       detailed,
       sceneVersion,
-      state.selected,
+      sel,
       resting,
       current.revealing ? current.item?.id : '',
       fit,
@@ -419,7 +433,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
         cacheCtx.fillRect(0, 0, width, height);
         cacheCtx.save();
         clipToBand(cacheCtx, view);
-        drawDim(cacheCtx, f, r, view, detailed, state.selected !== null);
+        drawDim(cacheCtx, f, r, view, detailed, sel !== null);
         litCtx.setTransform(1, 0, 0, 1, 0, 0);
         litCtx.clearRect(0, 0, litLayer.width, litLayer.height);
         litCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -456,7 +470,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       ctx.fillRect(0, 0, width, height);
       ctx.save();
       clipToBand(ctx, view);
-      drawDim(ctx, f, r, view, detailed, state.selected !== null);
+      drawDim(ctx, f, r, view, detailed, sel !== null);
       drawLit({ ...lit, scene: settled });
       ctx.restore();
     }
@@ -477,7 +491,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     }
     if (signalsOn()) drawSignals(lit);
     drawWaiting(lit);
-    drawLabels(ctx, r, state.parts, view, { selected: state.selected, lit: { scene, field: f } });
+    drawLabels(ctx, r, state.parts, view, { selected: sel, lit: { scene, field: f } });
     ctx.restore();
   }
 
@@ -773,6 +787,20 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     else aim(target);
   }
 
+  /** Eases the camera so a line's side faces the viewer. */
+  function faceLine(lineId: string): void {
+    const item = scene.items.find((i) => i.id === lineId);
+    const fibre = item && field?.fibres[item.fibre];
+    const strand = fibre && fibre.strands[Math.max(0, item.strand)];
+    if (!strand || strand.length < 3 || state?.selected != null) return;
+    aim(
+      facing(
+        [strand[strand.length - 3]!, strand[strand.length - 2]!, strand[strand.length - 1]!],
+        target,
+      ),
+    );
+  }
+
   return {
     update(next) {
       const before = state?.selected ?? null;
@@ -780,12 +808,15 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       at = opts.now();
       const { field: f } = ensureField();
       const built = buildScene(next.space, next.parts, f);
+      const landing = !strip && next.land !== undefined && next.land !== landed?.id;
+      if (landing) landed = { id: next.land!, at };
       // Spec §16.6: the cached layer is redrawn only when the data changes, not on every re-emit.
       if (!sameScene(scene, built)) sceneVersion += 1;
       scene = built;
       current = motionAt(at);
       if (next.still) cam = { ...target };
-      if (!strip && next.selected !== before) {
+      if (landing) faceLine(next.land!);
+      else if (!strip && next.selected !== before) {
         if (next.selected !== null) faceRegion(next.selected, next.parts);
         else aim(target); // the look-at returns to the centre
       }

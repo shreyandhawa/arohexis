@@ -56,6 +56,8 @@ export type Settings = {
   onboarded: boolean;
   /** Unset follows the system's reduced-motion setting. */
   brainStill?: 'still' | 'moving';
+  /** The `start.at` of the newest start Home has shown landing. */
+  lastSeenStart?: number;
 };
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',

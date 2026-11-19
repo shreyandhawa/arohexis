@@ -349,3 +349,50 @@ test(`Home is accessible with the plate`, async ({ page }) => {
   await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
   await expectAccessible(page);
 });
+
+test.describe('light that answers, and lands', () => {
+  const lastSeen = (page: Page) =>
+    page.evaluate(
+      () =>
+        new Promise<unknown>((resolve, reject) => {
+          const open = indexedDB.open('arohexis');
+          open.onerror = () => reject(open.error);
+          open.onsuccess = () => {
+            const get = open.result.transaction('kv').objectStore('kv').get('lastSeenStart');
+            get.onsuccess = () => {
+              open.result.close();
+              resolve((get.result as { value: unknown } | undefined)?.value);
+            };
+          };
+        }),
+    );
+
+  test('a young record explains its lines, and a full one does not', async ({ page }) => {
+    await seeded(
+      page,
+      startEvents({ now: Date.now(), tagged: [['work', 'Work', 2]], untagged: 0, undone: 0 }),
+    );
+    await expect(region(page)).toContainText('Each start lights a line.');
+    await seeded(page, knownEvents(Date.now()));
+    await expect(region(page)).not.toContainText('Each start lights a line.');
+  });
+
+  test('a new start lands once, and Home remembers it', async ({ page }) => {
+    await seeded(page, knownEvents(Date.now()));
+    await expect.poll(() => lastSeen(page)).toEqual(expect.any(Number));
+    const seen = await lastSeen(page);
+    await page.reload();
+    await expect(region(page)).toBeVisible();
+    await drawn(page);
+    expect(await lastSeen(page)).toBe(seen);
+  });
+
+  test('previewing a chip lights its part and opens no card', async ({ page }) => {
+    await seeded(page, knownEvents(Date.now()));
+    await drawn(page);
+    const yaw = await canvas(page).getAttribute('data-yaw');
+    await page.locator('[data-part-id="work"]').hover();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    expect(await canvas(page).getAttribute('data-yaw')).toBe(yaw);
+  });
+});

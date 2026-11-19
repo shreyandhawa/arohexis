@@ -6,7 +6,12 @@ import type { ArohexisDB } from './db';
 
 const SETTINGS_KEYS = Object.keys(DEFAULT_SETTINGS) as (keyof Settings)[];
 // Optional settings have no default, so they are not in DEFAULT_SETTINGS.
-const OPTIONAL_KEYS: (keyof Settings)[] = ['checkinDismissedWeek', 'lastExportAt', 'brainStill'];
+const OPTIONAL_KEYS: (keyof Settings)[] = [
+  'checkinDismissedWeek',
+  'lastExportAt',
+  'brainStill',
+  'lastSeenStart',
+];
 const ALL_KEYS = new Set<string>([...SETTINGS_KEYS, ...OPTIONAL_KEYS]);
 
 export async function readConfig(db: ArohexisDB): Promise<Config> {
