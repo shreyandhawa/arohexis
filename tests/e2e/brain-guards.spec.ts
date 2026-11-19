@@ -54,6 +54,18 @@ test.describe('with the renderer chunk blocked', () => {
     await page.keyboard.press('Escape');
     await expect(dialog(page)).toBeHidden();
 
+    // A line opens its card from the text list, with no canvas.
+    const lineButton = region(page)
+      .getByRole('list', { name: 'Lines' })
+      .getByRole('button')
+      .first();
+    await lineButton.focus();
+    await page.keyboard.press('Enter');
+    await expect(dialog(page)).toContainText(/Since /);
+    await expect(dialog(page)).toContainText(/start/);
+    await page.keyboard.press('Escape');
+    await expect(dialog(page)).toBeHidden();
+
     // Settings, Parts edits.
     await page.goto('/settings/parts');
     const work = page.getByRole('group', { name: 'Work', exact: true });

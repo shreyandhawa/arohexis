@@ -155,6 +155,12 @@ describe('hitTest', () => {
     strand: -1,
   });
 
+  it('skips waiting lines when asked for lit ones only', () => {
+    const scene: Scene = { items: [item('work', 'waiting')], signals: false };
+    expect(hitTest(scene, field, rig, view, 150, 150, 400)).toBeDefined();
+    expect(hitTest(scene, field, rig, view, 150, 150, 400, true)).toBeUndefined();
+  });
+
   it('never matches a core spark, and gives nothing for an empty tap', () => {
     const scene: Scene = { items: [item(null, 'spark')], signals: false };
     for (let x = 0; x < 300; x += 50)
@@ -164,7 +170,10 @@ describe('hitTest', () => {
 
   it('matches a part line within the radius', () => {
     const scene: Scene = { items: [item('work', 'start')], signals: false };
-    expect(hitTest(scene, field, rig, view, 150, 150, 400)).toEqual({ partId: 'work' });
+    expect(hitTest(scene, field, rig, view, 150, 150, 400)).toEqual({
+      partId: 'work',
+      lineId: 'work',
+    });
     expect(hitTest(scene, field, rig, view, -500, -500, 24)).toBeUndefined();
   });
 
@@ -181,7 +190,10 @@ describe('hitTest', () => {
     const at = makeProject(panned)(s[0]!, s[1]!, s[2]!);
     const moved = makeProject({ ...panned, cam })(s[0]!, s[1]!, s[2]!);
     expect(Math.hypot(at.x - moved.x, at.y - moved.y)).toBeGreaterThan(10);
-    expect(hitTest(scene, field, rig, panned, at.x, at.y, 1)).toEqual({ partId: 'work' });
+    expect(hitTest(scene, field, rig, panned, at.x, at.y, 1)).toEqual({
+      partId: 'work',
+      lineId: 'work',
+    });
   });
 });
 

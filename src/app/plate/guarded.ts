@@ -4,6 +4,7 @@ export type RendererOptions = {
   variant: 'plate' | 'strip';
   now: () => number;
   onPartTap: (partId: string | null) => void;
+  onLineTap?: (lineId: string) => void;
 };
 
 /** A renderer that can't throw into React: after its first throw it is destroyed and ignored. */

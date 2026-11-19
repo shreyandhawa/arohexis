@@ -75,12 +75,15 @@ type Options = {
   variant: 'plate' | 'strip';
   now: () => number;
   onPartTap: (partId: string | null) => void;
+  /** A tap landed on a lit line (within LINE_RADIUS); the part tap does not fire. */
+  onLineTap?: (lineId: string) => void;
 };
 
 /** Side view with the front on the left. */
 const START_CAMERA: Camera = { yaw: -Math.PI / 2, pitch: 0, zoom: 1, look: BRAIN_CENTRE };
 const TAP_SLOP = 6;
 const TAP_RADIUS = 24;
+const LINE_RADIUS = 16;
 const DRAW_SAMPLES = 120;
 const REVEAL_MS = TIMER_SECONDS * 1000;
 
@@ -705,6 +708,11 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     if (wasTap && state && field && rig) {
       const p = local(e);
       const view = viewNow();
+      const line = opts.onLineTap && hitTest(scene, field, rig, view, p.x, p.y, LINE_RADIUS, true);
+      if (line && opts.onLineTap) {
+        opts.onLineTap(line.lineId);
+        return;
+      }
       const hit = hitTest(scene, field, rig, view, p.x, p.y, TAP_RADIUS);
       opts.onPartTap(hit ? hit.partId : null);
     }

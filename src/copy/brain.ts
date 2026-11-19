@@ -46,6 +46,12 @@ export const brain = {
     return text;
   },
   partsLabel: 'Parts',
+  line: {
+    since: (date: string): string => `Since ${date}`,
+    /** The text equivalent's button that opens a line's card. */
+    open: (n: number, detail: string): string => `Open line ${n}, ${detail}`,
+    listLabel: 'Lines',
+  },
   card: {
     close: 'Close',
     focusTitle: 'What to focus on',

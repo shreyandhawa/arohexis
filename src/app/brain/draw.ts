@@ -796,14 +796,15 @@ export function hitTest(
   x: number,
   y: number,
   radius: number,
-): { partId: string } | undefined {
+  litOnly = false,
+): { partId: string; lineId: string } | undefined {
   const project = makeProject(view);
   const amount = explodeAmount(view.cam.zoom);
   const d: Disp = { x: 0, y: 0, z: 0 };
   let best = radius;
-  let found: { partId: string } | undefined;
+  let found: { partId: string; lineId: string } | undefined;
   for (const it of scene.items) {
-    if (it.partId === null) continue;
+    if (it.partId === null || (litOnly && it.kind === 'waiting')) continue;
     const fibre = field.fibres[it.fibre];
     if (!fibre) continue;
     displace(rig, it.fibre, amount, d);
@@ -821,7 +822,7 @@ export function hitTest(
         const dist = Math.hypot(p.x - x, p.y - y);
         if (dist < best) {
           best = dist;
-          found = { partId: it.partId };
+          found = { partId: it.partId, lineId: it.id };
         }
       }
     }

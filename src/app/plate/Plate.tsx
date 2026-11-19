@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { brain } from '../../copy/brain';
 import { summaryLines, type BrainSpace } from '../../domain/brainSpace';
 import type { Part } from '../../domain/config';
@@ -16,6 +16,9 @@ import { TurnControls, ZoomControls } from './PlateControls';
 import { TextEquivalent } from './TextEquivalent';
 import { useRenderer } from './useRenderer';
 import styles from './Plate.module.css';
+
+const LineCard = lazy(() => import('./LineCard'));
+const LINE_CARD_TITLE_ID = 'line-card-title';
 
 /** Under this many counted starts the summary also says what a start does. */
 const QUIET_BELOW = 5;
@@ -43,6 +46,7 @@ export function Plate({ selected, onSelect, notice, data: frame, lands }: Props)
   // The card opens on a tap; closing it keeps the part selected until All clears it.
   const [cardFor, setCardFor] = useState<string | null>(null);
   // Hovering or focusing a chip previews its part. It opens no card.
+  const [lineFor, setLineFor] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [land, setLand] = useState<string | undefined>();
   const newest = live?.space.newest;
@@ -76,9 +80,19 @@ export function Plate({ selected, onSelect, notice, data: frame, lands }: Props)
     onSelect(partId);
   }
 
+  function openLine(lineId: string, from: HTMLElement | null) {
+    setOpener(from);
+    setLineFor(lineId);
+  }
+
   const renderer = useRenderer(
     canvas,
-    { variant: 'plate', now: () => clock.now(), onPartTap: select },
+    {
+      variant: 'plate',
+      now: () => clock.now(),
+      onPartTap: select,
+      onLineTap: (id) => openLine(id, null),
+    },
     state,
   );
 
@@ -133,7 +147,7 @@ export function Plate({ selected, onSelect, notice, data: frame, lands }: Props)
                   {notice}
                 </p>
               )}
-              <TextEquivalent space={data.space} parts={data.parts} />
+              <TextEquivalent space={data.space} parts={data.parts} onOpenLine={openLine} />
             </>
           )}
         </div>
@@ -156,6 +170,18 @@ export function Plate({ selected, onSelect, notice, data: frame, lands }: Props)
         opener={opener}
       >
         {cardFor !== null && <PartCard partId={cardFor} onClose={() => setCardFor(null)} />}
+      </Sheet>
+      <Sheet
+        open={lineFor !== null}
+        onClose={() => setLineFor(null)}
+        labelledBy={LINE_CARD_TITLE_ID}
+        opener={opener}
+      >
+        {lineFor !== null && (
+          <Suspense fallback={<div />}>
+            <LineCard lineId={lineFor} />
+          </Suspense>
+        )}
       </Sheet>
     </>
   );
