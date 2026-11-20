@@ -1674,3 +1674,15 @@ Plan approved by the owner on 2026-11-18. One branch, `v2-night-sky`, with a dra
   - M14 notes (2026-11-19): tap picks the nearest lit line within 16 px (`onLineTap`), else the part. `LineCard` is lazy; the text list has a button per lit line. Sky twinkle: ADR-040.
 - [x] v2.1 design gate: outlined actions, capsule primaries, selected states with a 2px edge. Skipped two critic items: a fuller line card, and the Started strip crop (pre-existing).
 - [x] v2.1 release: 2.1.0
+
+## v2.2 "At the moment"
+
+Plan approved by the owner on 2026-11-20, after rejecting a feature-led v3 (Stay with it, Your sky to keep, push reminders). Aimed at four gaps a real user hits. One branch, `v2.2-at-the-moment`. Decisions: ADR-041 and ADR-042.
+
+- [x] Headroom: About, Settings and Settings → Parts are lazy (initial JS 149.0 to 145.2 kB)
+- [x] A first plan from day one, and the Make a plan card (ADR-042)
+- [x] Advice that learns, and Smaller still (ADR-041)
+- [x] Insights opens on how automatic starting feels, and offers a plan for your most common hour
+- [x] Trial: `docs/trial.md`, two weeks of real use; its answers decide what comes next
+- [ ] Owner: run the two-week trial
+

@@ -58,6 +58,8 @@ export type Settings = {
   brainStill?: 'still' | 'moving';
   /** The `start.at` of the newest start Home has shown landing. */
   lastSeenStart?: number;
+  /** The owner chose Not now on Home's make-a-plan card. */
+  planNudgeDismissed?: boolean;
 };
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',

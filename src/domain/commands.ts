@@ -1,4 +1,4 @@
-import { findAttempt, isCountedStart } from './attempts';
+import { findAttempt, isCountedStart, type Attempt } from './attempts';
 import type { Feeling, FeelingResponse, Part, Plan, PlanPatch } from './config';
 import { applyRepair, type RepairChoice, type RepairInput } from './lapse';
 import { createEvent } from './events';
@@ -22,10 +22,11 @@ export function nameFeeling(
   feeling: Feeling,
   responses: readonly FeelingResponse[],
   shown: readonly ResponseShown[],
+  attempts: readonly Attempt[] = [],
 ): AppEvent[] {
   const a = findAttempt(attemptEvents, attemptId);
   if (!a || a.feeling) return [];
-  const response = pickResponse(feeling.id, responses, shown);
+  const response = pickResponse(feeling.id, responses, shown, attempts);
   const named = createEvent(deps, 'feeling.named', {
     attemptId,
     feelingId: feeling.id,

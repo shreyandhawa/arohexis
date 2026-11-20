@@ -36,7 +36,7 @@ export function Welcome() {
 
   function startFresh() {
     markWelcomed();
-    void navigate('/', { replace: true });
+    void navigate('/plans/new', { replace: true, state: { firstRun: true } });
   }
   async function explore() {
     setFailed(false);

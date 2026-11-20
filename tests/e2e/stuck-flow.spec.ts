@@ -222,6 +222,26 @@ test('not now returns Home with a calm line', async ({ page }) => {
   await expect(page.getByText("That's fine. The button's here when you need it.")).toBeVisible();
 });
 
+test('Smaller still (three taps) swaps the advice down to the floor, then Start works', async ({
+  page,
+}) => {
+  await toResponse(page);
+  const smaller = page.getByRole('button', { name: 'Smaller still', exact: true });
+  await smaller.click();
+  await expect(
+    page.getByText('Open it and read only the first line.', { exact: false }),
+  ).toBeVisible();
+  await smaller.click();
+  await expect(page.getByText('Just open it. You can close it again straight away.')).toBeVisible();
+  await smaller.click();
+  await expect(page.getByText('Put it where you can see it', { exact: false })).toBeVisible();
+  await expect(smaller).toHaveCount(0);
+  await expect(startBtn(page)).toBeFocused();
+  expect(await eventsOf(page, 'start.made')).toHaveLength(0);
+  await startBtn(page).click();
+  await expect(page.getByText('Started.', { exact: true })).toBeVisible();
+});
+
 test('back from the feeling screen returns Home', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: stuck }).click();

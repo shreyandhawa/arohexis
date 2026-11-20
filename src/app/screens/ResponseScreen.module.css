@@ -12,6 +12,18 @@
   line-height: 1.4;
 }
 
+.advice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.learned {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--step--1);
+}
+
 .firstStep {
   margin: 0;
   font-family: var(--font-display);

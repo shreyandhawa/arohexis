@@ -11,6 +11,7 @@ const OPTIONAL_KEYS: (keyof Settings)[] = [
   'lastExportAt',
   'brainStill',
   'lastSeenStart',
+  'planNudgeDismissed',
 ];
 const ALL_KEYS = new Set<string>([...SETTINGS_KEYS, ...OPTIONAL_KEYS]);
 

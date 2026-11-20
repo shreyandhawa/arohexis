@@ -785,3 +785,21 @@ Statuses:
   - ADR-027's "never drift" stays; the twinkle is the one idle motion and moves nothing;
   - WCAG 2.2.2 is met because Still is on every plate;
   - the loop now runs at rest, so the owner checks battery and smoothness on the iPhone.
+
+## ADR-041: Advice that learns, and Smaller still
+
+- Date: 2026-11-20 · Status: **Accepted** (owner approved the v2.2 plan, 2026-11-20) · Amends spec §6.4 and §8.3
+- **Context:** the matcher rotated responses and ignored `responseStats`, which already knew which ones led to a start. After a few weeks people read the same lines, including ones that never worked for them. The response screen's only choices were Start or Not now, the point where people give up.
+- **Decision:**
+  - once every candidate for a feeling has been shown 5 times, two picks in three take the best led-to-a-start rate; the third keeps the least-recently-shown rotation;
+  - the screen shows that response's own record once it has one ("led to a start 4 of 5 times");
+  - a quiet **Smaller still** steps the text down through two hand-written smaller steps per feeling, then a shared floor. Not recorded.
+- **Consequences:** no export or database change; picks stay deterministic and testable. Smaller steps are generic, because the app doesn't know the task. The two-week trial (`docs/trial.md`) checks whether either helps.
+
+## ADR-042: A first plan from day one
+
+- Date: 2026-11-20 · Status: **Accepted** (owner approved the v2.2 plan, 2026-11-20) · Amends spec §8.11
+- **Context:** someone avoiding a task doesn't think to open an app about avoiding. If-then plans with a calendar alarm were the app's only cue to come back, and a new user had to find them.
+- **Decision:** Start fresh opens the existing plan editor with one intro and the two-month expectation, then the plan's page, where Add to calendar is. Skipping is allowed. Records with no plans get one quiet Make a plan card on Home, shown only when no other card would, and dismissed for good by `planNudgeDismissed` (optional in settings and the export schema).
+- **Consequences:** no push server; the calendar alarm is the cue. If the trial shows people ignore it, push reminders (ADR-011's deferred path) come back for a decision.
+

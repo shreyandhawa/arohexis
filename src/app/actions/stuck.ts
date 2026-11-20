@@ -1,4 +1,4 @@
-import { findAttempt } from '../../domain/attempts';
+import { findAttempt, foldAttempts } from '../../domain/attempts';
 import {
   closeTimer,
   dismissAttempt,
@@ -36,10 +36,11 @@ export async function chooseFeeling(
   const deps = eventDeps(d);
   const config = await d.config.getConfig();
   const shown = await d.events.listByType('response.shown');
+  const attempts = foldAttempts(await d.events.list());
   const feeling = config.feelings.find((f) => f.id === feelingId);
   if (!feeling) throw new Error(`Unknown feeling: ${feelingId}`);
   await d.events.appendForAttempt(attemptId, (evts) =>
-    nameFeeling(deps, evts, attemptId, feeling, config.responses, shown),
+    nameFeeling(deps, evts, attemptId, feeling, config.responses, shown, attempts),
   );
 }
 

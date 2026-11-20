@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router';
-import { isCountedStart } from '../../domain/attempts';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { foldAttempts, isCountedStart } from '../../domain/attempts';
+import { EARLY_DAYS_BELOW, responseStats } from '../../domain/metrics';
+import { smallerLadder } from '../../copy/smaller';
 import { actionFailed, response as copy } from '../../copy/stuck';
 import { notNow, start } from '../actions/stuck';
 import { Button } from '../components/Button';
@@ -19,6 +22,16 @@ export function ResponseScreen() {
   const busy = useRef(false);
   const [disabled, setDisabled] = useState(false);
   const [failed, setFailed] = useState(false);
+  // How many "Smaller still" taps so far. Not recorded; it only swaps the text.
+  const [smaller, setSmaller] = useState(0);
+  const stat = useLiveQuery(
+    async () =>
+      responseStats(foldAttempts(await deps.events.list())).find(
+        (s) => s.responseId === attempt?.response?.id,
+      ) ?? null,
+    [deps.events, attempt?.response?.id],
+  );
+  const ladder = smallerLadder(attempt?.feeling?.id);
 
   const begin = attempt && !isCountedStart(attempt) && !attempt.dismissed;
 
@@ -57,6 +70,13 @@ export function ResponseScreen() {
   }
 
   useEffect(() => {
+    // The last step is on screen and its button is gone: hand focus to Start.
+    if (smaller > 0 && smaller >= ladder.length) {
+      document.querySelector<HTMLElement>('[data-action="start"]')?.focus();
+    }
+  }, [smaller, ladder.length]);
+
+  useEffect(() => {
     if (!begin) return;
     function onKeyDown(event: KeyboardEvent) {
       if (event.defaultPrevented || event.repeat || isTyping(event.target)) return;
@@ -84,15 +104,30 @@ export function ResponseScreen() {
 
   return (
     <section className={styles['screen']}>
-      {body && <p className={styles['body']}>{body}</p>}
+      <div aria-live="polite" className={styles['advice']}>
+        <p className={styles['body']}>{smaller > 0 ? ladder[smaller - 1] : body}</p>
+        {smaller === 0 && stat && stat.shown >= EARLY_DAYS_BELOW && stat.ledToStart > 0 && (
+          <p className={styles['learned']}>{copy.ledToStart(stat.ledToStart, stat.shown)}</p>
+        )}
+      </div>
       <h1 className={styles['firstStep']}>{copy.firstStep}</h1>
       <div className={styles['actions']}>
         <p aria-live="polite" className={styles['error']}>
           {failed ? actionFailed : ''}
         </p>
-        <Button variant="primary" disabled={disabled} onClick={() => void onStart()}>
+        <Button
+          variant="primary"
+          data-action="start"
+          disabled={disabled}
+          onClick={() => void onStart()}
+        >
           {copy.start}
         </Button>
+        {smaller < ladder.length && (
+          <Button variant="quiet" disabled={disabled} onClick={() => setSmaller(smaller + 1)}>
+            {copy.smallerStill}
+          </Button>
+        )}
         <Button variant="quiet" disabled={disabled} onClick={() => void onNotNow()}>
           {copy.notNow}
         </Button>

@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
-import { plans as copy, planWords } from '../../copy/plans';
+import { useEffect, useState, type MouseEvent } from 'react';
+import { Link, useLocation, useNavigate, useParams } from 'react-router';
+import { firstPlan, plans as copy, planWords } from '../../copy/plans';
 import type { Config, Plan, WeekDay } from '../../domain/config';
 import { planSentence } from '../../domain/plans';
 import {
@@ -16,6 +16,7 @@ import {
 import { Button } from '../components/Button';
 import { Chip } from '../components/Chip';
 import { useData } from '../data/DataProvider';
+import { readPlanEditorState } from '../plans/firstPlan';
 import { useConfig } from '../hooks/useConfig';
 import shell from '../layout/Shell.module.css';
 import styles from './Plans.module.css';
@@ -34,9 +35,19 @@ function sameDays(a: readonly WeekDay[], b: readonly WeekDay[]): boolean {
 function Form({ plan, config }: { plan: Plan | undefined; config: Config }) {
   const deps = useData();
   const navigate = useNavigate();
-  const [draft, setDraft] = useState<PlanDraft>(() => (plan ? draftOf(plan) : emptyDraft()));
+  const { firstRun, time } = readPlanEditorState(useLocation().state);
+  const intro = !plan && firstRun;
+  const [draft, setDraft] = useState<PlanDraft>(() =>
+    plan ? draftOf(plan) : { ...emptyDraft(), ...(time && { time }) },
+  );
   const [problems, setProblems] = useState<PlanProblem[]>([]);
   const [failed, setFailed] = useState(false);
+  // A first plan opens on its own page, where Add to calendar waits, once the live config has it.
+  const [openId, setOpenId] = useState<string>();
+  const loaded = openId !== undefined && config.plans.some((p) => p.id === openId);
+  useEffect(() => {
+    if (loaded) void navigate(`/plans/${openId}`, { replace: true });
+  }, [loaded, openId, navigate]);
   const set = (change: Partial<PlanDraft>) => setDraft((d) => ({ ...d, ...change }));
 
   // The preview reads the draft through the same builder as saving.
@@ -57,15 +68,29 @@ function Form({ plan, config }: { plan: Plan | undefined; config: Config }) {
   const parts = config.parts.filter((p) => p.enabled || p.id === draft.partId);
 
   async function save() {
+    // A first plan is saved; a second tap before it opens would add a duplicate.
+    if (openId) return;
     setFailed(false);
     try {
       const result = await savePlan(deps, draft, plan);
       if ('problems' in result) setProblems(result.problems);
+      else if (intro) setOpenId(result.id);
       else void navigate('/plans');
     } catch (error) {
       console.error(error);
       setFailed(true);
     }
+  }
+
+  // Skipping the first plan is an answer, so Home does not offer it again.
+  async function skip(event: MouseEvent) {
+    event.preventDefault();
+    try {
+      await deps.config.applyConfigPatch({ settings: { planNudgeDismissed: true } });
+    } catch (error) {
+      console.error(error);
+    }
+    void navigate('/', { replace: true });
   }
 
   async function toggleActive(current: Plan) {
@@ -83,6 +108,12 @@ function Form({ plan, config }: { plan: Plan | undefined; config: Config }) {
   return (
     <div className={styles['screen']}>
       <h1 className={shell['title']}>{plan ? copy.edit : copy.new}</h1>
+      {intro && (
+        <>
+          <p>{firstPlan.intro}</p>
+          <p className={shell['muted']}>{firstPlan.expectation}</p>
+        </>
+      )}
       <section aria-labelledby="preview-title">
         <h2 id="preview-title" className="visually-hidden">
           {copy.preview}
@@ -218,9 +249,15 @@ function Form({ plan, config }: { plan: Plan | undefined; config: Config }) {
           </section>
         </>
       )}
-      <Link to="/plans" className={shell['link']}>
-        {copy.back}
-      </Link>
+      {intro ? (
+        <Link to="/" replace className={shell['link']} onClick={(e) => void skip(e)}>
+          {firstPlan.skip}
+        </Link>
+      ) : (
+        <Link to="/plans" className={shell['link']}>
+          {copy.back}
+        </Link>
+      )}
     </div>
   );
 }

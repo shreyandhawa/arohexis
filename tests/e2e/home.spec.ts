@@ -152,3 +152,57 @@ test('desktop home is a stage and a rail with no scroll', async ({ page }) => {
   );
   expect(fits).toBe(true);
 });
+
+test.describe('make-a-plan card', () => {
+  test('shows with no plans, fits at 375x667, and keeps the thumb zone', async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name === 'iphone', 'the install note takes the slot there');
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto('/');
+    const card = page.getByRole('region', { name: 'Make a plan' });
+    await expect(card).toBeVisible();
+    await expect(
+      card.getByText("Pick one thing you keep putting off, and when you'll start it."),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Light a line' })).toBeInViewport({ ratio: 1 });
+    expect(
+      await page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight),
+    ).toBe(true);
+    const box = await card.boundingBox();
+    expect(box?.height).toBeLessThanOrEqual(180);
+    await expectAccessible(page);
+  });
+
+  test('opens the plan editor with the intro', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'iphone', 'the install note takes the slot there');
+    await page.goto('/');
+    await page.getByRole('link', { name: 'Make a plan' }).click();
+    await expect(page).toHaveURL(/\/plans\/new$/);
+    await expect(
+      page.getByText("Pick one thing you keep putting off, and when you'll start it."),
+    ).toBeVisible();
+  });
+
+  test('Not now hides it for good', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'iphone', 'the install note takes the slot there');
+    await page.goto('/');
+    const card = page.getByRole('region', { name: 'Make a plan' });
+    await card.getByRole('button', { name: 'Not now' }).click();
+    await expect(card).toHaveCount(0);
+    await page.reload();
+    await expect(page.getByRole('button', { name: 'Light a line' })).toBeVisible();
+    await expect(card).toHaveCount(0);
+  });
+
+  test('is not shown once a plan exists', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'iphone', 'the install note takes the slot there');
+    await page.goto('/plans/new');
+    await page.getByLabel('First action').fill('open the essay doc');
+    await page.getByRole('button', { name: 'Save plan' }).click();
+    await expect(page).toHaveURL(/\/plans$/);
+    await page.goto('/');
+    await expect(page.getByRole('button', { name: 'Light a line' })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Make a plan' })).toHaveCount(0);
+  });
+});

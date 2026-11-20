@@ -1,5 +1,6 @@
 import * as fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
+import type { Attempt } from './attempts';
 import type { FeelingResponse } from './config';
 import { DEFAULT_RESPONSES, GENERIC_RESPONSE_ID } from './defaults';
 import type { ResponseShown } from './events';
@@ -102,5 +103,94 @@ describe('pickResponse', () => {
         },
       ),
     );
+  });
+
+  describe('learning from starts', () => {
+    const ids = ['anxious.name', 'anxious.shrink', 'anxious.kind'];
+    const attempt = (responseId: string, started: boolean, n: number): Attempt => ({
+      id: `${responseId}-${n}`,
+      openedAt: n,
+      tz: 'UTC',
+      source: 'stuck',
+      feeling: { id: 'anxious', label: 'Anxious' },
+      response: { id: responseId, basis: 'name-the-feeling' },
+      ...(started && { start: { at: n, tz: 'UTC', backfilled: false } }),
+      undone: false,
+      tags: [],
+      dismissed: !started,
+    });
+    /** `count` shows of each response, in rotation; led[id] of them led to a start. */
+    function history(count: number, led: Record<string, number>) {
+      const shown: ResponseShown[] = [];
+      const attempts: Attempt[] = [];
+      let t = 0;
+      for (let i = 0; i < count; i++) {
+        for (const id of ids) {
+          t++;
+          shown.push(shownEvent(id, t));
+          attempts.push(attempt(id, i < (led[id] ?? 0), t));
+        }
+      }
+      return { shown, attempts };
+    }
+
+    it('below the threshold, keeps the least recently shown rotation', () => {
+      const { shown, attempts } = history(4, { 'anxious.kind': 4 });
+      // 12 shown: 12 % 3 === 0 would be a best-rate pick if the threshold were met.
+      expect(pickResponse('anxious', DEFAULT_RESPONSES, shown, attempts).id).toBe('anxious.name');
+    });
+
+    it('one response under the threshold keeps the rotation', () => {
+      const { shown, attempts } = history(5, { 'anxious.kind': 5 });
+      const fewer = attempts.filter((a) => !(a.response?.id === 'anxious.name' && a.openedAt < 4));
+      expect(pickResponse('anxious', DEFAULT_RESPONSES, shown, fewer).id).toBe('anxious.name');
+    });
+
+    it('at the threshold, two picks in three take the best rate', () => {
+      const { shown, attempts } = history(5, { 'anxious.shrink': 4, 'anxious.name': 1 });
+      const picks = [0, 1, 2, 3, 4, 5].map((k) => {
+        const extra = Array.from({ length: k }, (_, i) => shownEvent('anxious.kind', 100 + i));
+        return pickResponse('anxious', DEFAULT_RESPONSES, [...shown, ...extra], attempts).id;
+      });
+      // 15 and 16 shown pick the best; at 17 (17 % 3 === 2) the oldest, name, comes round.
+      expect(picks.slice(0, 3)).toEqual(['anxious.shrink', 'anxious.shrink', 'anxious.name']);
+    });
+
+    it('ties on rate go to the least recently shown, then lowest order', () => {
+      const { shown, attempts } = history(5, {});
+      expect(pickResponse('anxious', DEFAULT_RESPONSES, shown, attempts).id).toBe('anxious.name');
+      const tied = history(5, { 'anxious.name': 2, 'anxious.shrink': 2, 'anxious.kind': 2 });
+      const older = tied.shown.map((e) =>
+        e.responseId === 'anxious.kind' ? { ...e, at: e.at - 100 } : e,
+      );
+      expect(pickResponse('anxious', DEFAULT_RESPONSES, older, tied.attempts).id).toBe(
+        'anxious.kind',
+      );
+    });
+
+    it('always returns an enabled response for the feeling when one exists', () => {
+      fc.assert(
+        fc.property(
+          fc.subarray(ids, { minLength: 1 }),
+          fc.array(
+            fc.record({
+              id: fc.constantFrom(...ids),
+              started: fc.boolean(),
+              at: fc.integer({ min: 0, max: 50 }),
+            }),
+            { maxLength: 60 },
+          ),
+          (enabled, rows) => {
+            const responses = DEFAULT_RESPONSES.map((r) =>
+              r.feelingId === 'anxious' && !enabled.includes(r.id) ? { ...r, enabled: false } : r,
+            );
+            const shown = rows.map((x) => shownEvent(x.id, x.at));
+            const attempts = rows.map((x, i) => attempt(x.id, x.started, i));
+            const pick = pickResponse('anxious', responses, shown, attempts);
+            expect(enabled).toContain(pick.id);
+          },
+        ),
+      );
+    });
   });
 });
