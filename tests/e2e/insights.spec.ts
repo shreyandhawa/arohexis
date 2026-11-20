@@ -106,3 +106,37 @@ test(`Insights and Check-in are accessible`, async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Starts per week' })).toBeVisible();
   await expectAccessible(page);
 });
+
+test.describe('Insights leads somewhere', () => {
+  test.use({ timezoneId: 'UTC' });
+  const EVENING = Date.parse('2026-11-17T21:30:00Z');
+
+  test.beforeEach(async ({ page }) => {
+    await page.clock.install({ time: EVENING });
+    await ready(page);
+  });
+
+  test('puts how automatic starting feels first', async ({ page }) => {
+    await seedEvents(page, startEvents({ now: EVENING, tagged: [], untagged: 5, undone: 0 }));
+    await page.goto('/insights');
+    await expect(page.getByRole('heading', { level: 2 }).first()).toHaveText(
+      'How automatic starting feels',
+    );
+  });
+
+  test('offers a plan for the most common hour, with the time prefilled', async ({ page }) => {
+    await seedEvents(page, startEvents({ now: EVENING, tagged: [], untagged: 5, undone: 0 }));
+    await page.goto('/insights');
+    await expectAccessible(page);
+    await page.getByRole('link', { name: 'Make a plan for around 9 PM' }).click();
+    await expect(page).toHaveURL(/\/plans\/new$/);
+    await expect(page.getByLabel('Time')).toHaveValue('21:00');
+  });
+
+  test('waits for enough starts before offering it', async ({ page }) => {
+    await seedEvents(page, startEvents({ now: EVENING, tagged: [], untagged: 4, undone: 0 }));
+    await page.goto('/insights');
+    await expect(page.getByRole('heading', { name: 'When you start' })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Make a plan for around/ })).toHaveCount(0);
+  });
+});

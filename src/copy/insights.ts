@@ -25,6 +25,10 @@ function plural(n: number, one: string, many: string): string {
   return `${n} ${n === 1 ? one : many}`;
 }
 
+export function planAround(hour: number): string {
+  return `Make a plan for around ${hourLabel(hour)}`;
+}
+
 export function hourLabel(hour: number): string {
   const h = hour % 12 === 0 ? 12 : hour % 12;
   return `${h} ${hour < 12 ? 'AM' : 'PM'}`;

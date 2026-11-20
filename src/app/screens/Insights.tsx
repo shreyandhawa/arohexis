@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useMemo } from 'react';
-import { insights as copy, responseCounts } from '../../copy/insights';
+import { Link } from 'react-router';
+import { insights as copy, planAround, responseCounts } from '../../copy/insights';
 import { foldAttempts } from '../../domain/attempts';
 import { checkinTrend } from '../../domain/checkin';
 import { DEFAULT_SETTINGS } from '../../domain/config';
@@ -16,6 +17,7 @@ import { Columns } from '../charts/Columns';
 import { HourStrip } from '../charts/HourStrip';
 import { Line } from '../charts/Line';
 import { barsSummary, hoursSummary, lineSummary, weeksSummary } from '../charts/summaries';
+import { hourAsTime, peakHour } from '../plans/firstPlan';
 import { useData } from '../data/DataProvider';
 import { useConfig } from '../hooks/useConfig';
 import { useNow } from '../hooks/useNow';
@@ -58,6 +60,7 @@ export function Insights() {
     );
   }
 
+  const peak = peakHour(view.hours);
   const helps = [...config.feelings]
     .sort((a, b) => a.order - b.order)
     .map((feeling) => ({
@@ -75,6 +78,20 @@ export function Insights() {
     <div className={styles['screen']}>
       <h1 className={shell['title']}>{copy.title}</h1>
 
+      <section className={styles['section']} aria-labelledby="ins-auto">
+        <h2 id="ins-auto" className={shell['subtitle']}>
+          {copy.automaticTitle}
+        </h2>
+        {view.trend.length === 0 ? (
+          <p className={shell['muted']}>{copy.automaticEmpty}</p>
+        ) : (
+          <Line
+            points={view.trend.map((t) => ({ key: t.weekOf, value: t.score }))}
+            summary={lineSummary(view.trend)}
+          />
+        )}
+      </section>
+
       <section className={styles['section']} aria-labelledby="ins-weeks">
         <h2 id="ins-weeks" className={shell['subtitle']}>
           {copy.weeksTitle}
@@ -90,6 +107,11 @@ export function Insights() {
           {copy.hoursTitle}
         </h2>
         <HourStrip hours={view.hours} summary={hoursSummary(view.hours)} />
+        {peak !== undefined && (
+          <Link to="/plans/new" state={{ time: hourAsTime(peak) }} className={shell['link']}>
+            {planAround(peak)}
+          </Link>
+        )}
       </section>
 
       <section className={styles['section']} aria-labelledby="ins-feelings">
@@ -144,20 +166,6 @@ export function Insights() {
             </ul>
           </div>
         ))}
-      </section>
-
-      <section className={styles['section']} aria-labelledby="ins-auto">
-        <h2 id="ins-auto" className={shell['subtitle']}>
-          {copy.automaticTitle}
-        </h2>
-        {view.trend.length === 0 ? (
-          <p className={shell['muted']}>{copy.automaticEmpty}</p>
-        ) : (
-          <Line
-            points={view.trend.map((t) => ({ key: t.weekOf, value: t.score }))}
-            summary={lineSummary(view.trend)}
-          />
-        )}
       </section>
     </div>
   );
