@@ -16,7 +16,7 @@ type Props = {
 /** Visually hidden until a button in the lines list has keyboard focus. Not announced live (spec §16.10). */
 export function TextEquivalent({ space, parts, onOpenLine }: Props) {
   const lit = space.lines.filter((l) =>
-    l.kind === 'plan' ? !l.hidden && l.strength !== 'waiting' : l.partId !== null && !l.undone,
+    l.kind === 'plan' ? !l.hidden && l.strength !== 'waiting' : !l.undone,
   );
   const starts = lit.filter((l) => l.kind === 'start').slice(-LISTED_STARTS);
   const shown = [...lit.filter((l) => l.kind === 'plan'), ...starts];

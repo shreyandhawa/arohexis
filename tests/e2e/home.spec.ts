@@ -1,5 +1,6 @@
-import { expect, test } from '@playwright/test';
-import { expectAccessible } from './helpers';
+import { expect, test, type Page } from '@playwright/test';
+import { startEvents } from './fixtures/brain';
+import { expectAccessible, seedEvents } from './helpers';
 
 test('home shows one large stuck button', async ({ page }) => {
   await page.goto('/');
@@ -154,55 +155,76 @@ test('desktop home is a stage and a rail with no scroll', async ({ page }) => {
 });
 
 test.describe('make-a-plan card', () => {
-  test('shows with no plans, fits at 375x667, and keeps the thumb zone', async ({
-    page,
-  }, testInfo) => {
-    test.skip(testInfo.project.name === 'iphone', 'the install note takes the slot there');
-    await page.setViewportSize({ width: 375, height: 667 });
+  const card = (page: Page) => page.getByRole('region', { name: 'Make a plan' });
+
+  test('is absent on an empty record', async ({ page }) => {
     await page.goto('/');
-    const card = page.getByRole('region', { name: 'Make a plan' });
-    await expect(card).toBeVisible();
-    await expect(
-      card.getByText("Pick one thing you keep putting off, and when you'll start it."),
-    ).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Light a line' })).toBeInViewport({ ratio: 1 });
-    expect(
-      await page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight),
-    ).toBe(true);
-    const box = await card.boundingBox();
-    expect(box?.height).toBeLessThanOrEqual(180);
-    await expectAccessible(page);
+    await expect(page.getByText(/light up here/)).toBeVisible();
+    await expect(card(page)).toHaveCount(0);
   });
 
-  test('opens the plan editor with the intro', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name === 'iphone', 'the install note takes the slot there');
+  test('shows in place of the check-in card', async ({ page }) => {
+    // A Sunday, the default check-in day.
+    const sunday = Date.parse('2026-11-15T10:00:00Z');
+    await page.clock.install({ time: sunday });
     await page.goto('/');
-    await page.getByRole('link', { name: 'Make a plan' }).click();
-    await expect(page).toHaveURL(/\/plans\/new$/);
-    await expect(
-      page.getByText("Pick one thing you keep putting off, and when you'll start it."),
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 })).toBeAttached();
+    await seedEvents(page, startEvents({ now: sunday, tagged: [], untagged: 3, undone: 0 }));
+    const checkin = page.getByRole('region', { name: 'Weekly check-in' });
+    await expect(card(page)).toBeVisible();
+    await expect(checkin).toHaveCount(0);
+    await card(page).getByRole('button', { name: 'Not now' }).click();
+    await expect(checkin).toBeVisible();
   });
 
-  test('Not now hides it for good', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name === 'iphone', 'the install note takes the slot there');
-    await page.goto('/');
-    const card = page.getByRole('region', { name: 'Make a plan' });
-    await card.getByRole('button', { name: 'Not now' }).click();
-    await expect(card).toHaveCount(0);
-    await page.reload();
-    await expect(page.getByRole('button', { name: 'Light a line' })).toBeVisible();
-    await expect(card).toHaveCount(0);
-  });
+  test.describe('after a start', () => {
+    test.beforeEach(async ({ page }) => {
+      await page.goto('/');
+      await expect(page.getByRole('heading', { level: 1 })).toBeAttached();
+      await seedEvents(page, startEvents({ now: Date.now(), tagged: [], untagged: 1, undone: 0 }));
+    });
 
-  test('is not shown once a plan exists', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name === 'iphone', 'the install note takes the slot there');
-    await page.goto('/plans/new');
-    await page.getByLabel('First action').fill('open the essay doc');
-    await page.getByRole('button', { name: 'Save plan' }).click();
-    await expect(page).toHaveURL(/\/plans$/);
-    await page.goto('/');
-    await expect(page.getByRole('button', { name: 'Light a line' })).toBeVisible();
-    await expect(page.getByRole('region', { name: 'Make a plan' })).toHaveCount(0);
+    test('shows, fits at 375x667, and keeps the thumb zone', async ({ page }) => {
+      await page.setViewportSize({ width: 375, height: 667 });
+      await expect(card(page)).toBeVisible();
+      await expect(
+        card(page).getByText("Pick one thing you keep putting off, and when you'll start it."),
+      ).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Light a line' })).toBeInViewport({
+        ratio: 1,
+      });
+      expect(
+        await page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight),
+      ).toBe(true);
+      const box = await card(page).boundingBox();
+      expect(box?.height).toBeLessThanOrEqual(180);
+      await expectAccessible(page);
+    });
+
+    test('opens the plan editor with the intro', async ({ page }) => {
+      await page.getByRole('link', { name: 'Make a plan' }).click();
+      await expect(page).toHaveURL(/\/plans\/new$/);
+      await expect(
+        page.getByText("Pick one thing you keep putting off, and when you'll start it."),
+      ).toBeVisible();
+    });
+
+    test('Not now hides it for good', async ({ page }) => {
+      await card(page).getByRole('button', { name: 'Not now' }).click();
+      await expect(card(page)).toHaveCount(0);
+      await page.reload();
+      await expect(page.getByRole('button', { name: 'Light a line' })).toBeVisible();
+      await expect(card(page)).toHaveCount(0);
+    });
+
+    test('is not shown once a plan exists', async ({ page }) => {
+      await page.goto('/plans/new');
+      await page.getByLabel('First action').fill('open the essay doc');
+      await page.getByRole('button', { name: 'Save plan' }).click();
+      await expect(page).toHaveURL(/\/plans$/);
+      await page.goto('/');
+      await expect(page.getByRole('button', { name: 'Light a line' })).toBeVisible();
+      await expect(card(page)).toHaveCount(0);
+    });
   });
 });

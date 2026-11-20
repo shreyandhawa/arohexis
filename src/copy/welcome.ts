@@ -10,6 +10,8 @@ export const welcome = {
   startFresh: 'Start fresh',
   startFreshHint: 'Begin with an empty record.',
   heroLabel: 'Brain space, lit by ten weeks of sample starts',
+  heroCaption:
+    "Ten weeks of sample starts. Every start lights a line, and a plan's line grows thicker each time you start it at its time.",
   exploreDemo: 'Explore the demo',
   exploreDemoHint: 'Ten weeks of sample data. Nothing touches your own.',
 } as const;

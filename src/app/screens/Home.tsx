@@ -63,18 +63,18 @@ export function Home() {
         />
       </PlateBoundary>
       {deps.mode === 'main' ? <LapseSheet repair={planState?.repair} /> : null}
-      {/* At most one card, by priority (spec §8.1): plan due, the update card, then the install note, then the make-a-plan offer. */}
+      {/* At most one card, by priority (spec §8.1): plan due, the update card, the make-a-plan offer after a first start, the check-in, then the install note. */}
       <div data-slot="card" className={homeStyles['card']}>
         {planState?.due ? (
           <PlanDueCard plan={planState.due.plan} occurrence={planState.due.occurrence} />
         ) : updateReady ? (
           <UpdateCard onReload={reload} />
+        ) : hasEvents && config && planNudgeShown(deps.mode, config) ? (
+          <PlanNudgeCard />
         ) : checkin?.due && hasEvents ? (
           <CheckinCard nudgeBackup={checkin.nudgeBackup} />
         ) : showInstallNote ? (
           <p className={styles['installNote']}>{installNote}</p>
-        ) : config && planNudgeShown(deps.mode, config) ? (
-          <PlanNudgeCard />
         ) : null}
       </div>
       <div className={homeStyles['thumbZone']}>

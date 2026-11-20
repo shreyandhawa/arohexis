@@ -163,7 +163,7 @@ screen ◀─ useLiveQuery ◀─ domain projection (pure) ◀──┘
 | **Response** | A short, rule-based intervention tied to one feeling, tagged with a **basis** (the technique it uses) |
 | **Basis** | One of `name-the-feeling`, `shrink-the-step`, `self-kindness`, `reframe`, `pair-a-reward`. Each maps to a source in §3 |
 | **Part** | An optional tag added after a start, naming a part of life (work, study, …). Part replaces Task type (ADR-023) |
-| **Brain space terms** | Region, on-cue start, plan line, start line, core spark, strength, settled, and moving or resting are defined in §16.2 |
+| **Brain space terms** | Region, on-cue start, plan line, start line, strength, settled, and moving or resting are defined in §16.2 |
 | **Plan** | An if-then plan: "If it's [time] on [days] at [place], then I will [first action]" |
 | **Occurrence** | One scheduled instance of a plan on a local date |
 | **Lapse** | An occurrence that closed without a linked start ("slipped") |
@@ -422,7 +422,7 @@ The lapse repair is a sheet over Home.
 - **Leaving without choosing:** "Back" emits `attempt.dismissed`. Closing the app emits nothing; the attempt simply stays open with no start.
 
 ### 8.3 Response (`/stuck/:attemptId`)
-- **Content:** the response body (40 words or fewer), then the line "First step: say it out loud."
+- **Content:** the response body (40 words or fewer), then the line "Say your first step out loud."
 - **Primary:** **Start**. It emits `start.made` and goes straight to Started.
 - **Its record (ADR-041):** once the response has been shown 5 times and led to a start at least once, a muted line says how often, for example "This one has led to a start 4 of 5 times."
 - **Smaller still (ADR-041):** a quiet button steps the text down through two smaller steps for the feeling (`src/copy/smaller.ts`), then a shared floor, "Just open it. You don't have to do anything yet." At the floor the button goes and focus moves to Start. Not recorded.
@@ -438,7 +438,7 @@ The lapse repair is a sheet over Home.
   - A 2:00 countdown, computed from `start.at`, so it stays correct after the phone locks or the app is backgrounded.
   - Screen readers hear `aria-live="polite"` announcements at 1:00 and 0:00 only.
 - **Undo:** a visible **Undo** for the first 10 s. After that it becomes a quiet "Remove this start" link that stays while the Started screen is open (so there's no hard time limit; see §11.3). Either one emits `start.undone`, returns Home, and shows "Start removed."
-- **Brain space strip:** a strip plate at most 80 px tall shows the burst and the reveal during the timer. See §16.10 and §16.8.
+- **Brain space strip:** a strip plate at least 200 px tall, with the reward and timer on it, shows the burst and the reveal during the timer. See §16.10 and §16.8.
 - **Part tag:** an optional chip row titled "What is it?" with the enabled parts, in one row that scrolls sideways. One tap emits `start.tagged`, and the choice can be changed while on screen (the latest tag wins in the projection).
 - **At 0:00:** "Two minutes done." with **Keep going** and **Done for now** as equal-weight buttons, plus the line "Either is good." Both emit `timer.closed`.
 - **Ending early:** "Done for now" is available at any time and records `elapsedSec`.
@@ -508,9 +508,9 @@ Every chart has a visually hidden data table and a one-sentence text summary. Co
 ### 8.11 Onboarding (`/welcome`, first run only, at most 3 steps)
 1. "Arohexis helps you practice one thing: starting. When you're stuck, tap the button, name the feeling, and take a two-minute first step." Followed by the not-medical-advice note.
 2. **Only in iOS Safari outside standalone mode:** "Add Arohexis to your Home Screen: tap Share, then Add to Home Screen. Your data stays on this device. Safari and the Home Screen app keep separate copies, so use the Home Screen app."
-3. **Start fresh** (seeds defaults, then opens the plan editor with "Pick one thing you keep putting off, and when you'll start it." and the two-month expectation line; a saved plan opens on its page, where Add to calendar is; **Skip for now** goes Home) or **Explore the demo** (switches to the demo database). ADR-042.
+3. **Start fresh** (seeds defaults, then goes Home; after the first start, the Make a plan card opens the plan editor with "Pick one thing you keep putting off, and when you'll start it." and the two-month expectation line; a saved plan opens on its page, where Add to calendar is; **Skip for now** goes Home) or **Explore the demo** (switches to the demo database). ADR-042, ADR-043.
 
-**Make a plan card (ADR-042):** a real record with no plans shows one quiet card on Home, only when no other card (plan due, update, check-in, install note) would. **Not now**, or skipping the first plan, sets `planNudgeDismissed` and it never returns.
+**Make a plan card (ADR-042, ADR-043):** a real record with no plans shows one quiet card on Home after its first start, unless a plan is due or an update is ready; it ranks above the check-in. **Not now**, or skipping the first plan, sets `planNudgeDismissed` and it never returns.
 
 **Standalone check:** if Arohexis is opened in iOS Safari outside standalone mode and the main database is empty, Home shows a one-line note pointing to the Home Screen app.
 
@@ -737,7 +737,6 @@ Brain space is the main visual: a picture of your starts, drawn as a brain made 
 | **On-cue start** | A counted start whose attempt is linked to a plan occurrence: it carries both `planId` and `occurrence`. That covers **Start now** and **Light this line** (§8.6) and **Yes, I started** (§8.7). Each occurrence counts once |
 | **Plan line** | One line per plan and part. Dashed while the plan has no on-cue start, then solid, growing in steps with on-cue starts |
 | **Start line** | A faint line left in its part by any other counted start. It never grows |
-| **Core spark** | A faint point near the core, left by a counted start that has no part |
 | **Strength** | The step a plan line has reached, from its count of on-cue starts |
 | **Settled** | A start's light settles when a later attempt opens. Until then it is the newest light, and only it can move (§16.4) |
 | **Moving / resting** | Moving while the newest counted start is at most 48 hours old; resting otherwise |
@@ -748,8 +747,8 @@ Brain space is the main visual: a picture of your starts, drawn as a brain made 
 - **Regions are fixed.** A part gets the lowest free region when it is created and keeps it for life. Renaming, recolouring or reordering never moves light.
 - **Nothing is deleted.** Parts can be renamed, recoloured and disabled, never deleted. A disabled part leaves the "What is it?" row and the plan editor, and its light stays.
 - **Defaults for a new user:** Work, Study, Health, Home, Money. Region 6 stays free for the user.
-- **Existing data (Dexie version 1 to 2):** each enabled task type except `other-task` becomes a part with the same id and label, taking regions and colour ids in `order`. `other-task` maps to no part, so starts tagged "Other" become core sparks. If more than six would qualify (only possible from a hand-edited import), the first six by `order` become parts and the rest map to no part. Past `start.tagged` events keep their label snapshots.
-- **Tagging:** "What is it?" on Started (§8.4) lists the enabled parts in one row that scrolls sideways. One optional tap tags the start, and the latest tag wins, as today (ADR-005). An untagged start still counts and leaves a core spark.
+- **Existing data (Dexie version 1 to 2):** each enabled task type except `other-task` becomes a part with the same id and label, taking regions and colour ids in `order`. `other-task` maps to no part, so starts tagged "Other" become start lines with no part. If more than six would qualify (only possible from a hand-edited import), the first six by `order` become parts and the rest map to no part. Past `start.tagged` events keep their label snapshots.
+- **Tagging:** "What is it?" on Started (§8.4) lists the enabled parts in one row that scrolls sideways. One optional tap tags the start, and the latest tag wins, as today (ADR-005). An untagged start still counts and leaves a start line on a core fibre.
 - **Plans (M3):** a plan has an optional part. A start made from a plan is tagged with the plan's part automatically, with a `start.tagged` in the same transaction as `start.made`. The user can still change the tag on Started.
 
 ### 16.4 Lines, strength and state
@@ -759,7 +758,7 @@ A pure projection in `src/domain/brainSpace.ts` decides which lines exist, and e
 **Rules:**
 1. Every counted start (`isCountedStart`) leaves light. An undone start's light is removed. Undo is the one way an event removes light, because it corrects the record (ADR-004).
 2. An on-cue start re-fires the line for its plan in its part: there is one plan line per plan and part. `onCueStarts` counts distinct occurrences.
-3. Any other counted start leaves one start line in its part, or a core spark if it has no part.
+3. Any other counted start leaves one start line in its part, or on a core fibre if it has no part.
 4. **A start's part** is `partOfStart(attempt)`: its latest tag. Insights' `startsByPart` uses the same function, so counts agree everywhere. Light places a start by its part when it settles (when a later attempt opens). A tag made after that, which only a stale second tab could send, changes counts but not light.
 5. Plan line strength comes from `onCueStarts`:
 
@@ -771,7 +770,7 @@ A pure projection in `src/domain/brainSpace.ts` decides which lines exist, and e
 | 15 to 39 | 3 | Steady | thicker, with a faint halo |
 | 40 or more | 4 | Well-worn | thickest, with a halo and a white core |
 
-   Start lines and core sparks are drawn fainter than strength 1 and never change.
+   Start lines are drawn fainter than strength 1 and never change.
 6. **Nothing is removed by time or by new events.**
    - Apart from undo, appending an event never removes settled light, lowers a strength, or moves settled light or its fibre.
    - The newest, unsettled light moves only when its own start is re-tagged.
@@ -779,7 +778,7 @@ A pure projection in `src/domain/brainSpace.ts` decides which lines exist, and e
    - A paused plan keeps its line. A paused plan with no on-cue start shows nothing.
    - Changing a plan's part starts a new line for it in the new part from its next on-cue start. The old line stays where it is.
    - Deleting everything or importing a backup replaces all data (§7.3). That is the only other way light leaves.
-7. **Moving and resting.** Brain space is moving when the newest counted start, backfilled ones included, is at most 48 hours before `now`. Otherwise it is resting: signals stop and lit light dims by one fixed step, to 85% brightness. It never dims further, however long the rest lasts. One counted start makes it moving again. No copy describes resting as a loss.
+7. **Moving and resting.** Brain space is moving when the newest counted start, backfilled ones included, is at most 48 hours before `now`. Otherwise it is resting: signals stop, and the light never dims (ADR-043). One counted start makes it moving again. No copy describes resting as a loss.
 8. **Waiting:** a plan line is waiting while the plan is active and has no on-cue start.
 
 ```ts
@@ -789,7 +788,7 @@ export const STRENGTH_STEPS = [1, 5, 15, 40] as const;   // on-cue starts needed
 export type Strength = 'waiting' | 1 | 2 | 3 | 4;
 export type BrainLine =
   | { kind: 'plan'; id: string /* `${planId}:${partId ?? 'core'}` */; planId: string; partId: string | null; onCueStarts: number; strength: Strength; order: number }
-  | { kind: 'start'; id: string /* attemptId */; partId: string | null /* null = core spark */; at: number; order: number; settled: boolean; undone: boolean };
+  | { kind: 'start'; id: string /* attemptId */; partId: string | null /* null = no part */; at: number; order: number; settled: boolean; undone: boolean };
 export type PartLight = { partId: string | null; starts: number; planLines: number; startLines: number };
 export type BrainSpace = { lines: BrainLine[]; parts: PartLight[]; motion: 'moving' | 'resting'; totalStarts: number };
 export function isOnCue(a: Attempt): boolean;              // counted start with planId and occurrence
@@ -842,7 +841,7 @@ export function projectBrainSpace(attempts: readonly Attempt[], plans: readonly 
 | `--plate-dim-point` | `#8E98AC` | unlit points, alpha 0.05 to 0.5 by depth |
 | `--plate-dim-trace` | `#7C8598` | unlit traces, alpha 0.04 to 0.2 by depth |
 | `--plate-waiting` | `#EEF1F6` | waiting lines and their rings |
-| `--plate-core` | `#9AA3B5` | core sparks |
+| `--plate-core` | `#9AA3B5` | start lines with no part |
 
 **Part colours.** Six saturated hues, with no red and no pastel. Ids 1 to 5 start from the reference:
 - 1 cyan `hsl(190 92% 62%)`
@@ -897,7 +896,7 @@ Id 6 is blue `hsl(225 90% 76%)`. M2 Task 6 chose it from two candidates: blue at
 
 All new copy lives in `src/copy/brain.ts` and passes `copy.test.ts`.
 
-- **Summary line**, on the plate: `` `${starts} ${starts === 1 ? 'start' : 'starts'} · ${lines} ${lines === 1 ? 'line' : 'lines'}` ``. "Lines" counts plan lines that aren't waiting, plus start lines; core sparks are not lines. With no starts: `"Your starts will light up here."`
+- **Summary line**, on the plate: `` `${starts} ${starts === 1 ? 'start' : 'starts'} · ${lines} ${lines === 1 ? 'line' : 'lines'}` ``. "Lines" counts plan lines that aren't waiting, plus start lines that aren't undone. With no starts: `"Your starts light up here, one line each. It is a picture of your starts, not of your brain."`
 - **Strength labels:** Waiting, New, Repeated, Steady, Well-worn. Each is shown with its count, as in `"Steady · 18 starts on cue"`. The reference's "Automatic" is not used, because the weekly check-in is the measure of how automatic starting feels.
 - **Motion sentence** in the text equivalent: `"Signals are moving."` or `"Signals are resting. One start sets them moving again."`
 - **Controls:** `"Still"`, `"Zoom in"`, `"Zoom out"`, `"Turn left"`, `"Turn right"`, `"All"`.
@@ -938,11 +937,11 @@ Parts are named by the user, so no line gives advice about one kind of part. The
 - **Navigation:** drag turns. **Turn left** and **Turn right** turn by `TURN_STEP_RAD` (WCAG 2.5.7). Pinch, the wheel, or **Zoom in** and **Zoom out** zoom. Zooming past `EXPLODE_FROM_ZOOM` pulls the regions apart and labels them.
 
 **Started (§8.4):**
-- **A strip plate:** a plate at most 80 px tall sits between "What is it?" and the timer's actions. The camera frames the new light from the core to its place, for the burst and the reveal. **Still** sits in its corner.
+- **A strip plate:** the plate is the stage at the top of Started, at least 200 px tall, with the reward and timer on it below its summary line and clear of **Still**. The camera frames the new light from the core to its place, for the burst and the reveal. **Still** sits in its corner.
 - **"What is it?"** is one row of chips that scrolls sideways, so six parts take one row.
 - **The reward is unchanged:** it keeps its single 240 ms settle, and the burst stays on the strip.
 - **No scrolling:** the screen still doesn't scroll at 375×667, which the existing E2E test checks.
-- **If the strip doesn't fit:** M2 Task 8 decides it from measurement. The strip may shrink to 64 px. Anything smaller goes back to the owner; it never falls back to playing the reveal on Home.
+- **If the strip doesn't fit:** M2 Task 8 decides it from measurement. The stage may shrink to 200 px. Anything smaller goes back to the owner; it never falls back to playing the reveal on Home.
 
 **Accessibility (ADR-033):**
 - **The canvas is never needed.** It is `aria-hidden="true"` and never focusable. Every action is a DOM control: part chips, **Still**, zoom and turn buttons, and the part card.
@@ -1001,7 +1000,7 @@ The 10-week demo fills the brain (ADR-034) and keeps §7.4's bands:
 ### 16.13 Tests
 
 - **Domain properties.** These are over realistic flows, where tags and undos come only from an attempt's own Started screen:
-  - light adds up: on-cue starts plus start lines plus core sparks equal counted starts;
+  - light adds up: on-cue starts plus start lines equal counted starts;
   - undone starts draw nothing and keep their fibre;
   - no event moves or removes another attempt's light, or any settled light, except by undo;
   - only on-cue starts change a plan line's strength, and each occurrence counts once;

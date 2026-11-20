@@ -163,7 +163,7 @@ describe('projectBrainSpace', () => {
     expect(cue.newest?.lineId).toBe('p1:work');
   });
 
-  it('an M1 history becomes start lines and sparks', () => {
+  it('an M1 history becomes start lines, with or without a part', () => {
     const attempts = [
       started('a1', 1, 'work'),
       started('a2', 10, 'work'),
@@ -186,7 +186,7 @@ describe('projectBrainSpace', () => {
       { partId: null, starts: 2, planLines: 0, startLines: 2 },
     ]);
     expect(s.totalStarts).toBe(5);
-    expect(summaryLines(s)).toBe(3);
+    expect(summaryLines(s)).toBe(5);
   });
 
   it('marks start lines settled once a later attempt opens', () => {

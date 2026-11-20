@@ -84,6 +84,11 @@ test('changing the check-in day changes when the check-in card shows', async ({ 
   await page.clock.install({ time: Date.parse('2026-11-15T10:00:00Z') });
   await home(page);
   await seedEvents(page, startEvents({ now: Date.now(), tagged: [], untagged: 3, undone: 0 }));
+  // The make-a-plan offer outranks the check-in, so it is set aside first.
+  await page
+    .getByRole('region', { name: 'Make a plan' })
+    .getByRole('button', { name: 'Not now' })
+    .click();
   const card = page.getByRole('region', { name: 'Weekly check-in' });
   await expect(card).toBeVisible();
   await card.getByRole('link', { name: 'Check in' }).click();

@@ -2,7 +2,6 @@ import { type Attempt, isCountedStart } from './attempts';
 import type { Part, Plan } from './config';
 
 export const RESTING_AFTER_MS = 48 * 60 * 60 * 1000;
-export const RESTING_BRIGHTNESS = 0.85;
 export const STRENGTH_STEPS = [1, 5, 15, 40] as const;
 export type Strength = 'waiting' | 1 | 2 | 3 | 4;
 export type BrainLine =
@@ -67,11 +66,10 @@ export function lightPartOf(a: Attempt, settledAt: number | undefined): string |
   return id;
 }
 
-/** Plan lines that aren't waiting, plus start lines with a part that aren't undone. */
+/** Plan lines that aren't waiting, plus start lines that aren't undone. */
 export function summaryLines(space: BrainSpace): number {
-  return space.lines.filter((l) =>
-    l.kind === 'plan' ? l.strength !== 'waiting' : l.partId !== null && !l.undone,
-  ).length;
+  return space.lines.filter((l) => (l.kind === 'plan' ? l.strength !== 'waiting' : !l.undone))
+    .length;
 }
 
 type PlanLine = Extract<BrainLine, { kind: 'plan' }>;

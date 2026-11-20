@@ -36,7 +36,7 @@ export function Welcome() {
 
   function startFresh() {
     markWelcomed();
-    void navigate('/plans/new', { replace: true, state: { firstRun: true } });
+    void navigate('/', { replace: true });
   }
   async function explore() {
     setFailed(false);
@@ -61,6 +61,7 @@ export function Welcome() {
         {kind === 'intro' && (
           <>
             <WelcomeHero />
+            <p className={shell['muted']}>{copy.heroCaption}</p>
             <p>{copy.intro}</p>
             <div className={styles['choice']}>
               <Button variant="quiet" onClick={() => void explore()}>

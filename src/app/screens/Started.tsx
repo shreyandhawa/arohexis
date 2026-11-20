@@ -81,20 +81,26 @@ export function Started() {
 
   return (
     <section className={styles['screen']}>
-      <div className={styles['reward']} data-testid="reward">
-        <h1 className={styles['title']}>{copy.title}</h1>
-        <p className={styles['line']}>{copy.encouragement}</p>
-        {weekCount > 0 && <p className={styles['muted']}>{startsThisWeek(weekCount)}</p>}
-      </div>
-
-      <div className={styles['timerBlock']}>
-        <p className={`numeric ${styles['timer']}`} data-testid="timer">
-          {formatClock(remainingSec)}
-        </p>
-        <div aria-live="polite" className={styles['status']}>
-          {status && <p className={done ? styles['done'] : styles['srOnly']}>{status}</p>}
-          {failed && <p className={styles['error']}>{actionFailed}</p>}
+      <div className={styles['stage']}>
+        <div className={styles['reward']} data-testid="reward">
+          <h1 className={styles['title']}>{copy.title}</h1>
+          <p className={styles['line']}>{copy.encouragement}</p>
+          {weekCount > 0 && <p className={styles['muted']}>{startsThisWeek(weekCount)}</p>}
         </div>
+
+        <div className={styles['timerBlock']}>
+          <p className={`numeric ${styles['timer']}`} data-testid="timer">
+            {formatClock(remainingSec)}
+          </p>
+          <div aria-live="polite" className={styles['status']}>
+            {status && <p className={done ? styles['done'] : styles['srOnly']}>{status}</p>}
+            {failed && <p className={styles['error']}>{actionFailed}</p>}
+          </div>
+        </div>
+
+        <PlateBoundary>
+          <Strip attempt={attempt} />
+        </PlateBoundary>
       </div>
 
       <div className={styles['tags']}>
@@ -107,10 +113,6 @@ export function Started() {
           ))}
         </div>
       </div>
-
-      <PlateBoundary>
-        <Strip attempt={attempt} />
-      </PlateBoundary>
 
       <div className={styles['actions']}>
         {done && (

@@ -161,8 +161,8 @@ describe('hitTest', () => {
     expect(hitTest(scene, field, rig, view, 150, 150, 400, true)).toBeUndefined();
   });
 
-  it('never matches a core spark, and gives nothing for an empty tap', () => {
-    const scene: Scene = { items: [item(null, 'spark')], signals: false };
+  it('never matches a start line with no part, and gives nothing for an empty tap', () => {
+    const scene: Scene = { items: [item(null, 'start')], signals: false };
     for (let x = 0; x < 300; x += 50)
       for (let y = 0; y < 300; y += 50)
         expect(hitTest(scene, field, rig, view, x, y, 400)).toBeUndefined();

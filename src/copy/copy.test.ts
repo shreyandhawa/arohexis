@@ -12,6 +12,7 @@ import readme from '../../README.md?raw';
 import { brain } from './brain';
 import { smallerLadder, smallerSteps, smallestStep } from './smaller';
 import { response as responseCopy } from './stuck';
+import { welcome } from './welcome';
 import { BANNED_WORDS, checkCopy, wordCount } from './rules';
 
 function collectStrings(value: unknown, out: string[] = []): string[] {
@@ -78,6 +79,13 @@ describe('copy rules', () => {
     expect(checkCopy(responseCopy.ledToStart(1, 5))).toEqual([]);
   });
 
+  it('says what a line is on Welcome and names the first step', () => {
+    expect(welcome.heroCaption).toBe(
+      "Ten weeks of sample starts. Every start lights a line, and a plan's line grows thicker each time you start it at its time.",
+    );
+    expect(responseCopy.firstStep).toBe('Say your first step out loud.');
+  });
+
   it('export messages pass copy rules', () => {
     for (const m of Object.values(EXPORT_MESSAGES)) expect(checkCopy(m)).toEqual([]);
   });
@@ -92,7 +100,12 @@ describe('copy rules', () => {
 
   it('Brain space copy reads as the spec says and passes copy rules', () => {
     expect(brain.regionLabel).toBe('Brain space');
-    expect(brain.empty).toBe('Your starts will light up here.');
+    expect(brain.empty).toBe(
+      'Your starts light up here, one line each. It is a picture of your starts, not of your brain.',
+    );
+    expect(brain.firstLines).toBe(
+      "Every start lights a line. A plan's line grows thicker each time you start it at its time.",
+    );
     expect(brain.summary(6, 5)).toBe('6 starts · 5 lines');
     expect(brain.summary(1, 1)).toBe('1 start · 1 line');
     expect(brain.starts(1)).toBe('1 start');

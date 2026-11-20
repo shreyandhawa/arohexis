@@ -1,6 +1,6 @@
 // The lazy Brain space entry: the canvas 2D renderer (spec §16.6 to §16.8, ADR-029).
 import type { BrainSpace } from '../../domain/brainSpace';
-import { RESTING_BRIGHTNESS, strengthFor } from '../../domain/brainSpace';
+import { strengthFor } from '../../domain/brainSpace';
 import { TIMER_SECONDS } from '../../domain/timer';
 import type { Part } from '../../domain/config';
 import { PLATE } from '../../design/partColours';
@@ -403,7 +403,6 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     reportReveal();
     const view = viewNow();
     const sel = shown();
-    const resting = state.space.motion === 'resting';
     const lit = {
       ctx,
       field: f,
@@ -411,9 +410,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       scene,
       view,
       selected: sel,
-      resting,
       time,
-      restingBrightness: RESTING_BRIGHTNESS,
     };
 
     // The static layer (plate, dim field, light) is redrawn only when its inputs change.
@@ -430,7 +427,6 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       detailed,
       sceneVersion,
       sel,
-      resting,
       current.revealing ? current.item?.id : '',
       fit,
     ].join(':');

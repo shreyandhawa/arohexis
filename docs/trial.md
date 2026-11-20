@@ -30,6 +30,10 @@ The app sends nothing anywhere, so these answers are the only data. Ask people t
 | Smaller still was skipped | Remove it |
 | Nothing moved and nobody came back | Stop adding features; rethink the entry point |
 
+## Pass or fail
+
+**Pass:** at least three of five open it unprompted between day 3 and day 7. **Fail:** fewer than three. Then stop building and rethink the way back in.
+
 ## Answers
 
 <!-- One section per person, dated. -->
