@@ -52,7 +52,8 @@ test.describe('at 375x667', () => {
       });
     };
     await fits();
-    await page.clock.runFor(120_000);
+    // Jump the clock: replaying every frame of a tall strip outlasts the test timeout on CI.
+    await page.clock.fastForward(120_000);
     await expect(page.getByRole('button', { name: 'Keep going' })).toBeVisible();
     await fits();
   });
@@ -63,10 +64,10 @@ test('the strip reveals the new light over two minutes', async ({ page }) => {
   await home(page);
   await begin(page);
   await chip(page, 'Work').click();
-  await page.clock.runFor(60_000);
+  await page.clock.fastForward(60_000);
   await expect.poll(() => reveal(page)).toBeGreaterThan(0.48);
   expect(await reveal(page)).toBeLessThan(0.52);
-  await page.clock.runFor(60_000);
+  await page.clock.fastForward(60_000);
   await expect.poll(() => reveal(page)).toBe(1);
 });
 

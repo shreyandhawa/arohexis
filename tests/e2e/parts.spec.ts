@@ -44,7 +44,7 @@ test('a new part appears in What is it? and on Home', async ({ page }) => {
   await startFlow(page);
   await expect(page.getByRole('button', { name: 'Art', exact: true })).toBeVisible();
   await page.goto('/');
-  await expect(plate(page).getByRole('button', { name: 'Art' })).toBeVisible();
+  await expect(plate(page).getByRole('button', { name: 'Art', exact: true })).toBeVisible();
 });
 
 test('the sixth part is the last, and the limit is stated', async ({ page }) => {
