@@ -116,16 +116,39 @@ test('the demo shows ten weeks, and exiting leaves the main database unchanged',
 test.describe('onboarding', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test('a first run goes to Welcome, and Start fresh goes Home', async ({ page }) => {
+  test('a first run goes to Welcome, and Start fresh offers a first plan', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveURL(/\/welcome$/);
     await expect(page.getByText(/helps you practice one thing: starting/)).toBeVisible();
     await expect(page.getByText(/Add Arohexis to your Home Screen/)).toHaveCount(0);
     await page.getByRole('button', { name: 'Next' }).click();
     await page.getByRole('button', { name: 'Start fresh' }).click();
+    await expect(page).toHaveURL(/\/plans\/new$/);
+    await expect(page.getByRole('heading', { level: 1, name: 'New plan' })).toBeVisible();
+    await expect(
+      page.getByText("Pick one thing you keep putting off, and when you'll start it."),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Habits took about two months in one review. A day off isn't a reset."),
+    ).toBeVisible();
+    await expectAccessible(page);
+    await page.getByRole('link', { name: 'Skip for now' }).click();
     await expect(page).toHaveURL(/\/$/);
     await page.reload();
     await expect(page).toHaveURL(/\/$/);
+    // Skipping is an answer: Home does not offer the plan again.
+    await expect(page.getByRole('region', { name: 'Make a plan' })).toHaveCount(0);
+  });
+
+  test('a first plan saves and opens on its own page with Add to calendar', async ({ page }) => {
+    await page.goto('/welcome');
+    await page.getByRole('button', { name: 'Next' }).click();
+    await page.getByRole('button', { name: 'Start fresh' }).click();
+    await page.getByLabel('Place').fill('my desk');
+    await page.getByLabel('First action').fill('open the essay doc');
+    await page.getByRole('button', { name: 'Save plan' }).click();
+    await expect(page).toHaveURL(/\/plans\/[^/]+$/);
+    await expect(page.getByRole('button', { name: 'Add to calendar' })).toBeVisible();
   });
 
   test('Explore the demo opens the demo', async ({ page }) => {

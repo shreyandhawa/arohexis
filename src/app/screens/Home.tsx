@@ -8,6 +8,7 @@ import { readNotice } from '../notice';
 import { UpdateCard } from '../components/UpdateCard';
 import { useHasEvents } from '../hooks/useHasEvents';
 import { useStartsThisWeek } from '../hooks/useStartsThisWeek';
+import { useConfig } from '../hooks/useConfig';
 import { useCheckinDue } from '../hooks/useCheckinDue';
 import { usePlanState } from '../hooks/usePlanState';
 import { StuckButton } from '../layout/StuckButton';
@@ -17,7 +18,9 @@ import { hasWelcomed } from '../data/dbChoice';
 import { useData } from '../data/DataProvider';
 import { LapseSheet } from '../plans/LapseSheet';
 import { CheckinCard } from '../plans/CheckinCard';
+import { planNudgeShown } from '../plans/firstPlan';
 import { PlanDueCard } from '../plans/PlanDueCard';
+import { PlanNudgeCard } from '../plans/PlanNudgeCard';
 import { Plate } from '../plate/Plate';
 import { PlateBoundary } from '../plate/PlateBoundary';
 import styles from '../layout/Shell.module.css';
@@ -33,6 +36,7 @@ export function Home() {
   const deps = useData();
   const planState = usePlanState();
   const checkin = useCheckinDue();
+  const config = useConfig();
   const expired = useRef(new Set<string>());
   // Older lapses are expired quietly, so there is never a list of them (spec §6.4).
   useEffect(() => {
@@ -59,7 +63,7 @@ export function Home() {
         />
       </PlateBoundary>
       {deps.mode === 'main' ? <LapseSheet repair={planState?.repair} /> : null}
-      {/* At most one card, by priority (spec §8.1): plan due, the update card, then the install note. */}
+      {/* At most one card, by priority (spec §8.1): plan due, the update card, then the install note, then the make-a-plan offer. */}
       <div data-slot="card" className={homeStyles['card']}>
         {planState?.due ? (
           <PlanDueCard plan={planState.due.plan} occurrence={planState.due.occurrence} />
@@ -67,9 +71,11 @@ export function Home() {
           <UpdateCard onReload={reload} />
         ) : checkin?.due && hasEvents ? (
           <CheckinCard nudgeBackup={checkin.nudgeBackup} />
-        ) : (
-          showInstallNote && <p className={styles['installNote']}>{installNote}</p>
-        )}
+        ) : showInstallNote ? (
+          <p className={styles['installNote']}>{installNote}</p>
+        ) : config && planNudgeShown(deps.mode, config) ? (
+          <PlanNudgeCard />
+        ) : null}
       </div>
       <div className={homeStyles['thumbZone']}>
         <StuckButton variant="primary" />

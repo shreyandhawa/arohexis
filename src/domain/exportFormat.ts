@@ -174,6 +174,7 @@ const settingsEntries = {
   checkinDismissedWeek: v.exactOptional(v.string()),
   lastExportAt: v.exactOptional(v.number()),
   lastSeenStart: v.exactOptional(v.number()),
+  planNudgeDismissed: v.exactOptional(v.boolean()),
   persistRequested: v.boolean(),
   onboarded: v.boolean(),
 };

@@ -42,6 +42,16 @@ export const plans = {
   fileFallback: 'plan',
 } as const;
 
+/** The first plan, offered after Welcome, on Home and in Insights. */
+export const firstPlan = {
+  intro: "Pick one thing you keep putting off, and when you'll start it.",
+  expectation: "Habits took about two months in one review. A day off isn't a reset.",
+  skip: 'Skip for now',
+  region: 'Make a plan',
+  action: 'Make a plan',
+  notNow: 'Not now',
+} as const;
+
 /** The words the domain builds plan sentences from. */
 export const planWords = {
   dayNames: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
