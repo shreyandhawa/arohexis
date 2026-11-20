@@ -35,18 +35,26 @@ test.describe('at 375x667', () => {
   test.use({ viewport: { width: 375, height: 667 } });
 
   test("Started doesn't scroll with six parts and the strip", async ({ page }) => {
+    await page.clock.install({ time: Date.now() });
     await home(page);
     await seedParts(page, [SIX]);
     await begin(page);
     await expect(canvas(page)).toBeVisible();
-    await settled(page);
-    expect(
-      await page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight),
-    ).toBe(true);
-    const strip = await canvas(page).boundingBox();
-    expect(strip?.height).toBeGreaterThanOrEqual(64);
-    expect(strip?.height).toBeLessThanOrEqual(80);
-    await expect(page.getByRole('button', { name: 'Done for now' })).toBeInViewport({ ratio: 1 });
+    // The brain is the stage: at least 200 px, with no scroll, while the timer runs and once it ends.
+    const fits = async (): Promise<void> => {
+      await settled(page);
+      expect(
+        await page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight),
+      ).toBe(true);
+      expect((await canvas(page).boundingBox())?.height).toBeGreaterThanOrEqual(200);
+      await expect(page.getByRole('button', { name: 'Done for now' })).toBeInViewport({
+        ratio: 1,
+      });
+    };
+    await fits();
+    await page.clock.runFor(120_000);
+    await expect(page.getByRole('button', { name: 'Keep going' })).toBeVisible();
+    await fits();
   });
 });
 

@@ -1,12 +1,8 @@
-/*
- * 64 to 80 px tall, taking the free height (spec §16.10). At 375x667 with six parts 118 px are
- * free, so it is 80; with the Demo ribbon showing it shrinks to 78.
- */
+/* Takes the free height (spec §16.10); on Started it fills the stage. */
 .strip {
   position: relative;
   flex: 1 1 0;
   min-height: 64px;
-  max-height: 80px;
   overflow: hidden;
   border: 1px solid var(--color-rule);
   border-radius: var(--radius-m);
