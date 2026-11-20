@@ -68,6 +68,8 @@ function Form({ plan, config }: { plan: Plan | undefined; config: Config }) {
   const parts = config.parts.filter((p) => p.enabled || p.id === draft.partId);
 
   async function save() {
+    // A first plan is saved; a second tap before it opens would add a duplicate.
+    if (openId) return;
     setFailed(false);
     try {
       const result = await savePlan(deps, draft, plan);

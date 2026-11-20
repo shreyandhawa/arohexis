@@ -228,11 +228,13 @@ test('Smaller still (three taps) swaps the advice down to the floor, then Start 
   await toResponse(page);
   const smaller = page.getByRole('button', { name: 'Smaller still', exact: true });
   await smaller.click();
-  await expect(page.getByText('Put one hand on the thing you need')).toBeVisible();
+  await expect(
+    page.getByText('Open it and read only the first line.', { exact: false }),
+  ).toBeVisible();
   await smaller.click();
-  await expect(page.getByText('Look at it. Just look, for ten seconds.')).toBeVisible();
+  await expect(page.getByText('Just open it. You can close it again straight away.')).toBeVisible();
   await smaller.click();
-  await expect(page.getByText("Just open it. You don't have to do anything yet.")).toBeVisible();
+  await expect(page.getByText('Put it where you can see it', { exact: false })).toBeVisible();
   await expect(smaller).toHaveCount(0);
   await expect(startBtn(page)).toBeFocused();
   expect(await eventsOf(page, 'start.made')).toHaveLength(0);

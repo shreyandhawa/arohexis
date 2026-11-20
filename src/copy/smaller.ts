@@ -4,33 +4,34 @@
  */
 export const smallerSteps: Readonly<Record<string, readonly [string, string]>> = {
   anxious: [
-    'Sit where you would do this. Put one hand on the thing you need, and rest it there for three breaths.',
-    'Look at it. Just look, for ten seconds. You can feel anxious and look.',
+    'Open it and read only the first line. You can feel anxious and read one line.',
+    'Just open it. You can close it again straight away.',
   ],
   bored: [
-    'Put on one song you like and set the thing in front of you. You are only setting up.',
-    'Touch it. Pick it up or tap it awake, then put it down again if you like.',
+    'Put on one song you like and work on it only until the song ends.',
+    'Put the song on and open it. Nothing else while it plays.',
   ],
   overwhelmed: [
-    'Pick one corner of it, the smallest one you can see. Put a finger on it. Ignore the rest for now.',
-    'Write one word for that corner on a scrap of paper. One word is plenty.',
+    'Do only the smallest piece, for one minute. Leave the rest where it is.',
+    "Open it and find the smallest piece. Don't do it yet. Just find it.",
   ],
   unsure: [
-    'Say out loud, "I don\'t know yet, and I\'m going to open it anyway." Then reach for it.',
-    'Put your hand on it and leave it there while you take one slow breath.',
+    "Write the one question you're stuck on, in a single line.",
+    "Just open it and look. You don't have to know where to begin.",
   ],
   perfectionistic: [
-    'Make one ugly mark on purpose: a scribble, a typo, a wrong first line. It is only a draft.',
-    'Type or write a single letter, any letter. It does not have to be the right one.',
+    "Write one rough line on purpose. It's a draft, so it can be rough.",
+    "Open it and type one word, any word. It doesn't have to be the right one.",
   ],
   other: [
-    'Stand up, roll your shoulders once, and sit back down facing the thing.',
-    'Rest your hand next to it. Hand there, nothing else.',
+    'Open it and give it one minute. You can leave it after that.',
+    'Just open it. Nothing else yet.',
   ],
 };
 
-/** The last step, the same for every feeling. */
-export const smallestStep = "Just open it. You don't have to do anything yet.";
+/** The last step, the same for every feeling: smaller than opening it. */
+export const smallestStep =
+  'Put it where you can see it: the book on the desk, the tab on your screen. That counts.';
 
 /** The steps for a feeling, smaller each time, ending at the floor. */
 export function smallerLadder(feelingId: string | undefined): readonly string[] {
