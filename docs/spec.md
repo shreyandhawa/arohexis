@@ -218,6 +218,7 @@ An attempt with no start and no dismissal is treated as abandoned (for example, 
 **Matcher**: `pickResponse(feelingId, responses, events) → Response`
 1. Candidates are the feeling's responses with `enabled: true`.
 2. Pick the candidate whose most recent `response.shown` is oldest. A candidate never shown counts as oldest. Ties go to the lowest `order`.
+   - **Learning (ADR-041):** once every candidate has been shown at least 5 times (`EARLY_DAYS_BELOW`), two picks in three take the candidate with the best led-to-a-start rate from `responseStats`, ties falling back to rule 2. The third pick (this feeling's shown count mod 3 = 2) keeps rule 2, so no response goes unseen. Deterministic from the event log.
 3. With no candidates, return the generic response (`generic.any`). That response always exists, is editable, and can't be deleted.
 
 Property: with k enabled responses, any k consecutive picks for that feeling show each response exactly once.
@@ -423,6 +424,8 @@ The lapse repair is a sheet over Home.
 ### 8.3 Response (`/stuck/:attemptId`)
 - **Content:** the response body (40 words or fewer), then the line "First step: say it out loud."
 - **Primary:** **Start**. It emits `start.made` and goes straight to Started.
+- **Its record (ADR-041):** once the response has been shown 5 times and led to a start at least once, a muted line says how often, for example "This one has led to a start 4 of 5 times."
+- **Smaller still (ADR-041):** a quiet button steps the text down through two smaller steps for the feeling (`src/copy/smaller.ts`), then a shared floor, "Just open it. You don't have to do anything yet." At the floor the button goes and focus moves to Start. Not recorded.
 - **Quiet:** "Not now" emits `attempt.dismissed` and returns Home with the line "That's fine. The button's here when you need it."
 
 ### 8.4 Started and timer (`/started/:attemptId`)
@@ -505,7 +508,9 @@ Every chart has a visually hidden data table and a one-sentence text summary. Co
 ### 8.11 Onboarding (`/welcome`, first run only, at most 3 steps)
 1. "Arohexis helps you practice one thing: starting. When you're stuck, tap the button, name the feeling, and take a two-minute first step." Followed by the not-medical-advice note.
 2. **Only in iOS Safari outside standalone mode:** "Add Arohexis to your Home Screen: tap Share, then Add to Home Screen. Your data stays on this device. Safari and the Home Screen app keep separate copies, so use the Home Screen app."
-3. **Start fresh** (seeds defaults and goes Home) or **Explore the demo** (switches to the demo database).
+3. **Start fresh** (seeds defaults, then opens the plan editor with "Pick one thing you keep putting off, and when you'll start it." and the two-month expectation line; a saved plan opens on its page, where Add to calendar is; **Skip for now** goes Home) or **Explore the demo** (switches to the demo database). ADR-042.
+
+**Make a plan card (ADR-042):** a real record with no plans shows one quiet card on Home, only when no other card (plan due, update, check-in, install note) would. **Not now**, or skipping the first plan, sets `planNudgeDismissed` and it never returns.
 
 **Standalone check:** if Arohexis is opened in iOS Safari outside standalone mode and the main database is empty, Home shows a one-line note pointing to the Home Screen app.
 
