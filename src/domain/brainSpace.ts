@@ -2,7 +2,6 @@ import { type Attempt, isCountedStart } from './attempts';
 import type { Part, Plan } from './config';
 
 export const RESTING_AFTER_MS = 48 * 60 * 60 * 1000;
-export const RESTING_BRIGHTNESS = 0.85;
 export const STRENGTH_STEPS = [1, 5, 15, 40] as const;
 export type Strength = 'waiting' | 1 | 2 | 3 | 4;
 export type BrainLine =

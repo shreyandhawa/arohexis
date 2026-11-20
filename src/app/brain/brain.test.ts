@@ -429,6 +429,18 @@ describe('the static layer', () => {
     h.flush(32);
     expect(rebuilds()).toBeGreaterThan(before);
   });
+
+  it('is not redrawn when the brain comes to rest, so resting never dims the light', () => {
+    const h = setup();
+    const space = projectBrainSpace([], [plan], DEFAULT_PARTS, 0);
+    h.renderer.update(h.state({ space: { ...space, motion: 'moving' } }));
+    h.flush(0);
+    const rebuilds = (): number => h.calls['fillRect'] ?? 0;
+    const before = rebuilds();
+    h.renderer.update(h.state({ space: { ...space, motion: 'resting' } }));
+    h.flush(16);
+    expect(rebuilds()).toBe(before);
+  });
 });
 
 describe('the glow', () => {

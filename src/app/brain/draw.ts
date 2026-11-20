@@ -354,10 +354,8 @@ export type LitFrame = {
   scene: Scene;
   view: View;
   selected: string | null;
-  resting: boolean;
   /** Milliseconds, for signal phase. */
   time: number;
-  restingBrightness: number;
 };
 
 const WIDTH = [0, 0.6, 1.0, 1.6, 2.4] as const;
@@ -370,8 +368,7 @@ function hash01(s: string): number {
 }
 
 const fadeOf = (f: LitFrame, it: Item): number =>
-  (f.selected !== null && it.partId !== f.selected ? UNSELECTED_ALPHA : 1) *
-  (f.resting ? f.restingBrightness : 1);
+  f.selected !== null && it.partId !== f.selected ? UNSELECTED_ALPHA : 1;
 
 /** One lit line, or one lit strand end. `prior` draws a plan line at an earlier strength. */
 function lightItem(
