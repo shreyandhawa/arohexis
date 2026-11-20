@@ -67,11 +67,10 @@ export function lightPartOf(a: Attempt, settledAt: number | undefined): string |
   return id;
 }
 
-/** Plan lines that aren't waiting, plus start lines with a part that aren't undone. */
+/** Plan lines that aren't waiting, plus start lines that aren't undone. */
 export function summaryLines(space: BrainSpace): number {
-  return space.lines.filter((l) =>
-    l.kind === 'plan' ? l.strength !== 'waiting' : l.partId !== null && !l.undone,
-  ).length;
+  return space.lines.filter((l) => (l.kind === 'plan' ? l.strength !== 'waiting' : !l.undone))
+    .length;
 }
 
 type PlanLine = Extract<BrainLine, { kind: 'plan' }>;

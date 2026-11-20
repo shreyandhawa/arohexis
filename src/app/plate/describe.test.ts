@@ -76,12 +76,12 @@ describe('describeParts', () => {
     expect(entry?.text).toBe('Work: 2 starts. 2 start lines.');
   });
 
-  it('puts the core last as No part, without a start-lines clause', () => {
-    const s = space([light('work', 1, 0, 1), light(null, 1, 0, 0)]);
+  it('puts the core last as No part, with its start lines', () => {
+    const s = space([light('work', 1, 0, 1), light(null, 1, 0, 1)]);
     const entries = describeParts(s, [part('work', 'Work', 1)]);
     expect(entries.map((e) => e.text)).toEqual([
       'Work: 1 start. 1 start line.',
-      'No part: 1 start.',
+      'No part: 1 start. 1 start line.',
     ]);
     expect(entries[1]?.partId).toBeNull();
   });

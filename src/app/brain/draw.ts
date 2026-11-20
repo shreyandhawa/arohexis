@@ -69,8 +69,8 @@ export function buildRig(field: Field): Rig {
 export type Item = {
   id: string;
   partId: string | null;
-  /** plan: a lit plan line; waiting: dashed with a ring; start: a hairline; spark: a point. */
-  kind: 'plan' | 'waiting' | 'start' | 'spark';
+  /** plan: a lit plan line; waiting: dashed with a ring; start: a hairline. */
+  kind: 'plan' | 'waiting' | 'start';
   /** 1 to 4 for plan lines, 0 otherwise. */
   strength: number;
   css: string;
@@ -117,7 +117,7 @@ export function buildScene(
         if (line.strength >= 2) signals = true;
       }
     } else {
-      items.push({ ...base, kind: line.partId === null ? 'spark' : 'start', strength: 0 });
+      items.push({ ...base, kind: 'start', strength: 0 });
     }
   }
   return { items, signals };
@@ -391,20 +391,14 @@ function lightItem(
   ctx.strokeStyle = it.css;
   ctx.fillStyle = it.css;
 
-  if (it.strand >= 0 || it.kind === 'spark') {
+  if (it.strand >= 0) {
     // One lit point at a strand end.
-    const strand = fibre.strands[it.strand >= 0 ? it.strand : 0];
+    const strand = fibre.strands[it.strand];
     if (!strand) return;
     const p = endOf(strand, d, project);
-    if (it.kind === 'spark') {
-      ctx.globalAlpha = 0.12 * mul;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.globalAlpha = (it.kind === 'spark' ? 0.7 : 0.45) * mul;
+    ctx.globalAlpha = 0.45 * mul;
     ctx.beginPath();
-    ctx.arc(p.x, p.y, it.kind === 'spark' ? 2.2 : 1.2, 0, Math.PI * 2);
+    ctx.arc(p.x, p.y, 1.2, 0, Math.PI * 2);
     ctx.fill();
     return;
   }
@@ -534,8 +528,8 @@ export function drawReveal(f: LitFrame, rv: RevealDraw): void {
   const head = new Path2D();
   const trail = new Path2D();
 
-  if (item.strand >= 0 || item.kind === 'spark') {
-    const s = fibre.strands[item.strand >= 0 ? item.strand : 0];
+  if (item.strand >= 0) {
+    const s = fibre.strands[item.strand];
     if (!s) return;
     traceRange(trail, s, d, project, 0, progress);
     const p = pointAt(s, d, project, progress);
@@ -818,7 +812,7 @@ export function drawLabels(
 
 /**
  * The part of the lit line nearest to (x, y) within `radius` CSS px, or `undefined` if none. Lines
- * with no part (core sparks) never match, so a tap near one counts as a tap on nothing.
+ * with no part never match, so a tap near one counts as a tap on nothing.
  */
 export function hitTest(
   scene: Scene,

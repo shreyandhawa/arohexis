@@ -18,7 +18,7 @@ async function replay(page: Page): Promise<void> {
 test('Replay opens on the whole picture', async ({ page }) => {
   await replay(page);
   await expect(slider(page)).toHaveAttribute('aria-valuetext', /^Start 6 of 6, /);
-  await expect(region(page).getByText('6 starts · 5 lines')).toBeVisible();
+  await expect(region(page).getByText('6 starts · 6 lines')).toBeVisible();
 });
 
 test('the keyboard scrubs back to the first start and forward again', async ({ page }) => {

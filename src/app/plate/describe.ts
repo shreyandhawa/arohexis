@@ -43,8 +43,7 @@ function describe(space: BrainSpace, partId: string | null, label: string): Part
   const items = planLinesOf(space, partId).map(
     (l) => `${brain.strength[l.strength]}, ${brain.onCue(l.onCueStarts)}`,
   );
-  // Core sparks are not lines (spec §16.2), so "No part" has no start-lines clause.
-  const startLines = partId !== null && light.startLines > 0 ? light.startLines : null;
+  const startLines = light.startLines > 0 ? light.startLines : null;
   return { partId, label, text: brain.partLine(label, light.starts, items, startLines) };
 }
 

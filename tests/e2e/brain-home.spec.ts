@@ -118,12 +118,11 @@ test.describe('layout at 375x667', () => {
 test('the text equivalent matches known events', async ({ page }) => {
   await seeded(page, knownEvents(Date.now()));
   const plate = region(page);
-  await expect(plate.getByText('6 starts · 5 lines')).toBeVisible();
+  await expect(plate.getByText('6 starts · 6 lines')).toBeVisible();
   await expect(plate).toContainText('Work: 3 starts. 3 start lines.');
   await expect(plate).toContainText('Study: 2 starts. 2 start lines.');
-  await expect(plate).toContainText('No part: 1 start.');
+  await expect(plate).toContainText('No part: 1 start. 1 start line.');
   await expect(plate).toContainText('Signals are moving.');
-  await expect(plate).not.toContainText('No part: 1 start. 1 start line');
 });
 
 test('a new user sees the empty line', async ({ page }) => {
@@ -337,7 +336,7 @@ test.describe('with the renderer chunk blocked', () => {
     page.on('pageerror', (e) => errors.push(e.message));
     await page.route('**/assets/brain-*.js', (r) => r.abort());
     await seeded(page, knownEvents(Date.now()));
-    await expect(region(page).getByText('6 starts · 5 lines')).toBeVisible();
+    await expect(region(page).getByText('6 starts · 6 lines')).toBeVisible();
     await expect(region(page)).toContainText('Work: 3 starts. 3 start lines.');
     await still(page).click();
     await expect(still(page)).toHaveAttribute('aria-pressed', 'true');
