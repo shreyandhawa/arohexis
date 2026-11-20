@@ -10,6 +10,10 @@ export const response = {
   firstStep: 'First step: say it out loud.',
   start: 'Start',
   notNow: 'Not now',
+  smallerStill: 'Smaller still',
+  /** One quiet line, shown once a response has been tried a few times and has led to a start. */
+  ledToStart: (starts: number, shown: number) =>
+    `This one has led to a start ${starts} of ${shown} times.`,
 } as const;
 
 export const started = {

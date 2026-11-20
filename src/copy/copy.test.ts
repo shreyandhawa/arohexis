@@ -10,6 +10,8 @@ import {
 import { EXPORT_MESSAGES } from '../domain/exportFormat';
 import readme from '../../README.md?raw';
 import { brain } from './brain';
+import { smallerLadder, smallerSteps, smallestStep } from './smaller';
+import { response as responseCopy } from './stuck';
 import { BANNED_WORDS, checkCopy, wordCount } from './rules';
 
 function collectStrings(value: unknown, out: string[] = []): string[] {
@@ -56,6 +58,24 @@ describe('copy rules', () => {
   it('bans the neuroscience words', () => {
     expect(checkCopy('Rewired by firing')).toHaveLength(2);
     expect(BANNED_WORDS).toHaveLength(28);
+  });
+
+  it('smaller steps pass copy rules, stay short and cover every built-in feeling', () => {
+    for (const f of DEFAULT_FEELINGS) expect(smallerSteps[f.id], f.id).toHaveLength(2);
+    for (const f of [...DEFAULT_FEELINGS.map((x) => x.id), 'user-added', undefined]) {
+      const ladder = smallerLadder(f);
+      expect(ladder.at(-1)).toBe(smallestStep);
+      for (const step of ladder) {
+        expect(checkCopy(step), step).toEqual([]);
+        expect(wordCount(step), step).toBeLessThanOrEqual(40);
+      }
+    }
+    expect(smallerLadder('user-added')).toEqual([smallestStep]);
+  });
+
+  it('the led-to-a-start line passes copy rules', () => {
+    expect(responseCopy.ledToStart(4, 5)).toBe('This one has led to a start 4 of 5 times.');
+    expect(checkCopy(responseCopy.ledToStart(1, 5))).toEqual([]);
   });
 
   it('export messages pass copy rules', () => {
