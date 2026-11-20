@@ -127,7 +127,11 @@ test('the text equivalent matches known events', async ({ page }) => {
 
 test('a new user sees the empty line', async ({ page }) => {
   await home(page);
-  await expect(region(page).getByText('Your starts will light up here.')).toBeVisible();
+  await expect(
+    region(page).getByText(
+      'Your starts light up here, one line each. It is a picture of your starts, not of your brain.',
+    ),
+  ).toBeVisible();
   await expect(region(page)).not.toContainText(' · ');
 });
 
@@ -377,9 +381,9 @@ test.describe('light that answers, and lands', () => {
       page,
       startEvents({ now: Date.now(), tagged: [['work', 'Work', 2]], untagged: 0, undone: 0 }),
     );
-    await expect(region(page)).toContainText('Each start lights a line.');
+    await expect(region(page)).toContainText('Every start lights a line.');
     await seeded(page, knownEvents(Date.now()));
-    await expect(region(page)).not.toContainText('Each start lights a line.');
+    await expect(region(page)).not.toContainText('Every start lights a line.');
   });
 
   test('a young record fits 375x667 without scrolling, and Light a line stays in view', async ({
@@ -390,7 +394,7 @@ test.describe('light that answers, and lands', () => {
       page,
       startEvents({ now: Date.now(), tagged: [['work', 'Work', 2]], untagged: 0, undone: 0 }),
     );
-    await expect(region(page)).toContainText('Each start lights a line.');
+    await expect(region(page)).toContainText('Every start lights a line.');
     await expect(page.getByRole('button', { name: stuck, exact: true })).toBeInViewport({
       ratio: 1,
     });

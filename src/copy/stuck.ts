@@ -7,7 +7,7 @@ export const feeling = {
 } as const;
 
 export const response = {
-  firstStep: 'First step: say it out loud.',
+  firstStep: 'Say your first step out loud.',
   start: 'Start',
   notNow: 'Not now',
   smallerStill: 'Smaller still',

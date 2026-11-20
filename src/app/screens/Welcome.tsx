@@ -61,6 +61,7 @@ export function Welcome() {
         {kind === 'intro' && (
           <>
             <WelcomeHero />
+            <p className={shell['muted']}>{copy.heroCaption}</p>
             <p>{copy.intro}</p>
             <div className={styles['choice']}>
               <Button variant="quiet" onClick={() => void explore()}>
