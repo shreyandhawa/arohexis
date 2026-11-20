@@ -1686,3 +1686,6 @@ Plan approved by the owner on 2026-11-20, after rejecting a feature-led v3 (Stay
 - [x] Trial: `docs/trial.md`, two weeks of real use; its answers decide what comes next
 - [ ] Owner: run the two-week trial
 
+## v2.3 "Every start lights a line"
+
+Approved by the owner on 2026-11-20, before the trial. Every start lights a line, nothing dims, the brain is the stage on Started, and the first start comes before the plan offer. One branch, `v2.3-every-start-lights-a-line`. Decision: ADR-043.

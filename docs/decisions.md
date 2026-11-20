@@ -415,6 +415,7 @@ Statuses:
 ## ADR-024: Lines grow only from on-cue starts, and nothing is removed
 
 - Date: 2026-11-12 · Status: **Accepted** (the owner chose "on-cue only" and approved the details on 2026-11-12)
+- **Superseded in part by ADR-043**
 - **Context:** The brief proposed that only plan lines grow past the first step, because a fixed cue is what the evidence supports (Gollwitzer & Sheeran 2006; Singh et al. 2024, where a stable cue "is thought to help but was not tested"). The brief also asked that nothing ever be removed, and that the signals stop and the lines dim slightly after 48 hours without a start. The review found that tagging after the start, and Undo, would move or remove light.
 - **Options for growth:**
   - any start in the part;
@@ -575,6 +576,7 @@ Statuses:
 ## ADR-030: Brain space sits on Home above the card, with a strip on Started
 
 - Date: 2026-11-12 · Status: **Accepted** (owner approval, 2026-11-12)
+- **Superseded in part by ADR-043**
 - **Context:**
   - The stuck flow must stay at most 3 taps, with no typing and no scrolling at 375×667 (spec §2).
   - Home shows at most one card above **I'm stuck** (spec §8.1).
@@ -799,7 +801,23 @@ Statuses:
 ## ADR-042: A first plan from day one
 
 - Date: 2026-11-20 · Status: **Accepted** (owner approved the v2.2 plan, 2026-11-20) · Amends spec §8.11
+- **Superseded in part by ADR-043**
 - **Context:** someone avoiding a task doesn't think to open an app about avoiding. If-then plans with a calendar alarm were the app's only cue to come back, and a new user had to find them.
 - **Decision:** Start fresh opens the existing plan editor with one intro and the two-month expectation, then the plan's page, where Add to calendar is. Skipping is allowed. Records with no plans get one quiet Make a plan card on Home, shown only when no other card would, and dismissed for good by `planNudgeDismissed` (optional in settings and the export schema).
 - **Consequences:** no push server; the calendar alarm is the cue. If the trial shows people ignore it, push reminders (ADR-011's deferred path) come back for a decision.
 
+## ADR-043: Every start lights a line
+
+- Date: 2026-11-20 · Status: **Accepted** (owner approval, 2026-11-20) · Supersedes in part ADR-024, ADR-030 and ADR-042
+- **Context:** the rule users must be able to see is "Every start lights a line. A plan's line grows thicker each time you start it at its time." Four things hid it:
+  - a start with no part was a core spark, not a line, so the main button usually showed "1 start · 0 lines";
+  - the reveal on Started had an 80 px stage;
+  - Start fresh put a six-field form before the first start;
+  - dimming after 48 hours at rest read as a streak to keep.
+- **Decision:**
+  1. every start that is not undone is a line, with or without a part; a start with no part draws as a hairline on its core fibre;
+  2. resting stops the signals and nothing else; the light never dims;
+  3. on Started the reward and timer sit on the strip, which takes the free height (at least 200 px);
+  4. Start fresh goes to Home; the Make a plan card shows only after a first start, and ranks above the check-in;
+  5. the copy says what a line is (`brain.empty`, `brain.firstLines`, `welcome.heroCaption`).
+- **Consequences:** line placement is unchanged and no data or export changes. While the plan offer shows, the weekly check-in waits. The two-week trial (`docs/trial.md`) has a pass or fail line.
