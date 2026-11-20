@@ -41,7 +41,7 @@
     "fake-indexeddb": "6.2.8",
     "fast-check": "4.10.2",
     "ical.js": "^2.2.1",
-    "prettier": "3.10.0",
+    "prettier": "3.10.1",
     "typescript": "6.0.3",
     "typescript-eslint": "8.72.2",
     "vite": "8.3.8",
