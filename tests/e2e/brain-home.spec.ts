@@ -38,6 +38,8 @@ test.describe('layout at 375x667', () => {
     page,
   }) => {
     await seeded(page, knownEvents(Date.now()));
+    // Wait for Home's own card (check-in or Make a plan) so it can't render beside the stand-in.
+    await expect(page.locator('[data-slot="card"] > *').first()).toBeVisible();
     await expect(page.getByText(/starts this week/)).toBeVisible();
     await page.evaluate(() => {
       const fill = (selector: string, height: number) => {
@@ -63,6 +65,8 @@ test.describe('layout at 375x667', () => {
 
   test('the stuck flow is still three taps', async ({ page }) => {
     await seeded(page, knownEvents(Date.now()));
+    // Wait for Home's own card (check-in or Make a plan) so it can't render beside the stand-in.
+    await expect(page.locator('[data-slot="card"] > *').first()).toBeVisible();
     await page.evaluate(() => {
       for (const [selector, height] of [
         ['[data-slot="card"]', 180],
