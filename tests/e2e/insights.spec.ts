@@ -46,6 +46,11 @@ test.describe('check-in', () => {
     await page.clock.install({ time: SUNDAY });
     await ready(page);
     await seedEvents(page, startEvents({ now: SUNDAY, tagged: [], untagged: 3, undone: 0 }));
+    // The make-a-plan offer outranks the check-in, so it is set aside first.
+    await page
+      .getByRole('region', { name: 'Make a plan' })
+      .getByRole('button', { name: 'Not now' })
+      .click();
   });
 
   test('is due on Home, and the submitted week shows in the trend', async ({ page }) => {

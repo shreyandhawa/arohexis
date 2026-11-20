@@ -116,13 +116,23 @@ test('the demo shows ten weeks, and exiting leaves the main database unchanged',
 test.describe('onboarding', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test('a first run goes to Welcome, and Start fresh offers a first plan', async ({ page }) => {
+  test('a first run goes to Welcome, Start fresh goes Home, and a first start offers a plan', async ({
+    page,
+  }) => {
     await page.goto('/');
     await expect(page).toHaveURL(/\/welcome$/);
     await expect(page.getByText(/helps you practice one thing: starting/)).toBeVisible();
     await expect(page.getByText(/Add Arohexis to your Home Screen/)).toHaveCount(0);
     await page.getByRole('button', { name: 'Next' }).click();
     await page.getByRole('button', { name: 'Start fresh' }).click();
+    await expect(page).toHaveURL(/\/$/);
+    const card = page.getByRole('region', { name: 'Make a plan' });
+    await expect(card).toHaveCount(0);
+    await page.getByRole('button', { name: 'Light a line' }).click();
+    await page.getByRole('button', { name: 'Anxious' }).click();
+    await page.getByRole('button', { name: 'Start', exact: true }).click();
+    await page.getByRole('button', { name: 'Done for now' }).click();
+    await card.getByRole('link', { name: 'Make a plan' }).click();
     await expect(page).toHaveURL(/\/plans\/new$/);
     await expect(page.getByRole('heading', { level: 1, name: 'New plan' })).toBeVisible();
     await expect(
@@ -137,13 +147,19 @@ test.describe('onboarding', () => {
     await page.reload();
     await expect(page).toHaveURL(/\/$/);
     // Skipping is an answer: Home does not offer the plan again.
-    await expect(page.getByRole('region', { name: 'Make a plan' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Light a line' })).toBeVisible();
+    await expect(card).toHaveCount(0);
   });
 
   test('a first plan saves and opens on its own page with Add to calendar', async ({ page }) => {
     await page.goto('/welcome');
     await page.getByRole('button', { name: 'Next' }).click();
     await page.getByRole('button', { name: 'Start fresh' }).click();
+    await page.getByRole('button', { name: 'Light a line' }).click();
+    await page.getByRole('button', { name: 'Anxious' }).click();
+    await page.getByRole('button', { name: 'Start', exact: true }).click();
+    await page.getByRole('button', { name: 'Done for now' }).click();
+    await page.getByRole('link', { name: 'Make a plan' }).click();
     await page.getByLabel('Place').fill('my desk');
     await page.getByLabel('First action').fill('open the essay doc');
     await page.getByRole('button', { name: 'Save plan' }).click();
