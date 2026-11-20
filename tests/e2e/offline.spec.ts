@@ -67,3 +67,14 @@ test('offline, the chunk is precached and Brain space draws', async ({
   await expect(page.getByRole('region', { name: 'Brain space' })).toBeVisible();
   await expect(page.locator('canvas')).toHaveAttribute('data-loop', /./, { timeout: 15_000 });
 });
+
+test('offline, the lazy Settings and About screens open', async ({ page, context }, testInfo) => {
+  skipIphone(testInfo.project.name);
+  await page.goto('/');
+  await swReady(page);
+  await context.setOffline(true);
+  await page.goto('/settings');
+  await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
+  await page.goto('/about');
+  await expect(page.getByRole('heading', { level: 1, name: 'About' })).toBeVisible();
+});

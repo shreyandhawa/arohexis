@@ -1,12 +1,9 @@
 import { lazy, Suspense } from 'react';
 import { Route, Routes } from 'react-router';
 import { Shell } from './layout/Shell';
-import { About } from './screens/About';
 import { Feeling } from './screens/Feeling';
 import { Home } from './screens/Home';
 import { ResponseScreen } from './screens/ResponseScreen';
-import { Settings } from './screens/Settings';
-import { SettingsParts } from './screens/SettingsParts';
 import { Started } from './screens/Started';
 
 const Plans = lazy(() => import('./screens/Plans').then((m) => ({ default: m.Plans })));
@@ -14,6 +11,11 @@ const PlanEditor = lazy(() =>
   import('./screens/PlanEditor').then((m) => ({ default: m.PlanEditor })),
 );
 
+const About = lazy(() => import('./screens/About').then((m) => ({ default: m.About })));
+const Settings = lazy(() => import('./screens/Settings').then((m) => ({ default: m.Settings })));
+const SettingsParts = lazy(() =>
+  import('./screens/SettingsParts').then((m) => ({ default: m.SettingsParts })),
+);
 const SettingsData = lazy(() =>
   import('./screens/SettingsData').then((m) => ({ default: m.SettingsData })),
 );
@@ -93,8 +95,22 @@ export function AppRoutes() {
             </Suspense>
           }
         />
-        <Route path="settings" element={<Settings />} />
-        <Route path="settings/parts" element={<SettingsParts />} />
+        <Route
+          path="settings"
+          element={
+            <Suspense fallback={null}>
+              <Settings />
+            </Suspense>
+          }
+        />
+        <Route
+          path="settings/parts"
+          element={
+            <Suspense fallback={null}>
+              <SettingsParts />
+            </Suspense>
+          }
+        />
         <Route
           path="settings/feelings"
           element={
@@ -119,7 +135,14 @@ export function AppRoutes() {
             </Suspense>
           }
         />
-        <Route path="about" element={<About />} />
+        <Route
+          path="about"
+          element={
+            <Suspense fallback={null}>
+              <About />
+            </Suspense>
+          }
+        />
       </Route>
     </Routes>
   );
