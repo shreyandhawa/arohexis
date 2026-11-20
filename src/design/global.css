@@ -9,6 +9,7 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  scrollbar-color: var(--color-border) var(--color-bg);
 }
 
 body {
@@ -22,6 +23,11 @@ body {
 
 .numeric {
   font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
 }
 
 :focus-visible {

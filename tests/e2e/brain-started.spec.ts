@@ -66,7 +66,8 @@ test('the strip reveals the new light over two minutes', async ({ page }) => {
   await chip(page, 'Work').click();
   await page.clock.fastForward(60_000);
   await expect.poll(() => reveal(page)).toBeGreaterThan(0.48);
-  expect(await reveal(page)).toBeLessThan(0.52);
+  // The installed clock also ticks in real time, so a slow runner adds a few seconds past 60.
+  expect(await reveal(page)).toBeLessThan(0.56);
   await page.clock.fastForward(60_000);
   await expect.poll(() => reveal(page)).toBe(1);
 });

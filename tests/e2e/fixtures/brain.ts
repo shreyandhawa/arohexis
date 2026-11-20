@@ -127,7 +127,7 @@ const PLAN_BASE = {
 
 /**
  * Six parts, plans at every strength (3 starts: New, 7: Repeated, 20: Steady, 42: Well-worn),
- * one waiting plan, start lines in several parts, core sparks, and starts in the last minutes
+ * one waiting plan, start lines in several parts and with no part, and starts in the last minutes
  * so the signals are moving.
  */
 export function full(now: number): Seed {

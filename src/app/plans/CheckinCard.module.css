@@ -32,7 +32,12 @@
   text-decoration: none;
 }
 
-.action:hover,
 .action:active {
   background: var(--color-hover);
+}
+
+@media (hover: hover) {
+  .action:hover {
+    background: var(--color-hover);
+  }
 }
