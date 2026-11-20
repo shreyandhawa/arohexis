@@ -41,3 +41,23 @@ test('a 5 s drag across the plate keeps the draw mean within budget', async ({
   console.log(`data-draw-mean=${mean} budget=${budget}`);
   expect(mean).toBeLessThanOrEqual(budget);
 });
+
+test('the sky twinkling at rest keeps the draw mean within budget', async ({ page }, testInfo) => {
+  test.setTimeout(60_000);
+  test.skip(testInfo.project.name !== 'iphone', 'frame time is measured on WebKit');
+  await page.goto('/');
+  await expect(page.getByRole('heading', { level: 1 })).toBeAttached();
+  const seed = full(Date.now());
+  await seedParts(page, seed.parts);
+  await seedPlans(page, seed.plans);
+  await seedEvents(page, seed.events);
+  const canvas = page.locator('canvas');
+  await expect(canvas).toHaveAttribute('data-loop', 'running');
+  // Nothing touches the plate: only the sky moves.
+  await page.waitForTimeout(3000);
+  await expect(canvas).toHaveAttribute('data-draw-mean', /^\d/);
+  const mean = Number(await canvas.getAttribute('data-draw-mean'));
+  const budget = process.env['CI'] ? CI_DRAW_MEAN_BUDGET_MS : DRAW_MEAN_BUDGET_MS;
+  console.log(`idle data-draw-mean=${mean} budget=${budget}`);
+  expect(mean).toBeLessThanOrEqual(budget);
+});

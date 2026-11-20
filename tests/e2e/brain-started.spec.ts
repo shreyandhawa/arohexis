@@ -1,8 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import { knownEvents } from './fixtures/brain';
-import { expectAccessible, seedEvents, seedParts, setTheme } from './helpers';
+import { expectAccessible, seedEvents, seedParts } from './helpers';
 
-const stuck = "I'm stuck";
+const stuck = 'Light a line';
 const canvas = (page: Page) => page.locator('canvas');
 const region = (page: Page) => page.getByRole('region', { name: 'Brain space' });
 const chip = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
@@ -164,19 +164,16 @@ test.describe('the part card', () => {
   });
 });
 
-for (const scheme of ['light', 'dark'] as const) {
-  test(`Started and the card are accessible in ${scheme}`, async ({ page }) => {
-    await setTheme(page, scheme);
-    await home(page);
-    await seedEvents(page, knownEvents(Date.now()));
-    await begin(page);
-    await chip(page, 'Work').click();
-    await expect(canvas(page)).toHaveAttribute('data-reveal', /./);
-    await settled(page);
-    await expectAccessible(page);
-    await page.getByRole('button', { name: 'Done for now' }).click();
-    await region(page).getByRole('button', { name: 'Work', exact: true }).click();
-    await expect(dialog(page)).toBeVisible();
-    await expectAccessible(page);
-  });
-}
+test(`Started and the card are accessible`, async ({ page }) => {
+  await home(page);
+  await seedEvents(page, knownEvents(Date.now()));
+  await begin(page);
+  await chip(page, 'Work').click();
+  await expect(canvas(page)).toHaveAttribute('data-reveal', /./);
+  await settled(page);
+  await expectAccessible(page);
+  await page.getByRole('button', { name: 'Done for now' }).click();
+  await region(page).getByRole('button', { name: 'Work', exact: true }).click();
+  await expect(dialog(page)).toBeVisible();
+  await expectAccessible(page);
+});

@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
 import { parseExport } from '../../src/domain/exportFormat';
-import { expectAccessible, setTheme } from './helpers';
+import { expectAccessible } from './helpers';
 
 test.beforeEach(({ page }, testInfo) => {
   void page;
@@ -15,7 +15,7 @@ async function openData(page: Page): Promise<void> {
 
 test('exports a valid backup', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: "I'm stuck" }).click();
+  await page.getByRole('button', { name: 'Light a line' }).click();
   await page.getByRole('button', { name: 'Anxious' }).click();
   await page.getByRole('button', { name: 'Start', exact: true }).click();
   await expect(page.getByText('Started.', { exact: true })).toBeVisible();
@@ -125,10 +125,7 @@ test('a failed load shows the calm message and the button retries it', async ({ 
   await expect(page.getByText('Last backup: today')).toBeVisible();
 });
 
-for (const scheme of ['light', 'dark'] as const) {
-  test(`data screen is accessible in ${scheme}`, async ({ page }) => {
-    await setTheme(page, scheme);
-    await openData(page);
-    await expectAccessible(page);
-  });
-}
+test(`data screen is accessible`, async ({ page }) => {
+  await openData(page);
+  await expectAccessible(page);
+});

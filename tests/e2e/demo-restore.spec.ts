@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { startEvents } from './fixtures/brain';
-import { expectAccessible, seedEvents, setTheme } from './helpers';
+import { expectAccessible, seedEvents } from './helpers';
 
 test.beforeEach(({ page }, testInfo) => {
   void page;
@@ -151,16 +151,6 @@ test.describe('onboarding', () => {
     if (names.includes('arohexis')) expect(await mainEventCount(page)).toBe(0);
   });
 
-  test('a first visit is dark on any device until a theme is chosen', async ({ page }) => {
-    await setTheme(page, 'light');
-    await page.goto('/welcome');
-    // Once the hero has drawn, the default 'system' setting has loaded too; it isn't a choice.
-    await expect(page.locator('canvas[data-field-ms]')).toBeAttached();
-    await page.waitForTimeout(300);
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-    await expectAccessible(page);
-  });
-
   test('Explore the demo from step 1 opens the demo', async ({ page }) => {
     await page.goto('/welcome');
     await page.getByRole('button', { name: 'Explore the demo' }).click();
@@ -215,13 +205,10 @@ test.describe('onboarding', () => {
   });
 });
 
-for (const scheme of ['light', 'dark'] as const) {
-  for (const route of ['/welcome', '/settings/data'] as const) {
-    test(`${route} is accessible in ${scheme}`, async ({ page }) => {
-      await setTheme(page, scheme);
-      await page.goto(route);
-      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-      await expectAccessible(page);
-    });
-  }
+for (const route of ['/welcome', '/settings/data'] as const) {
+  test(`${route} is accessible`, async ({ page }) => {
+    await page.goto(route);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectAccessible(page);
+  });
 }

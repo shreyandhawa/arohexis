@@ -11,7 +11,7 @@ import { buildRig, pulledLabel } from './draw';
 const lookOf = (at: readonly number[]): string => at.map((v) => v.toFixed(2)).join(',');
 
 /** Just enough of a browser for the renderer: a context that does nothing, and a frame queue. */
-function setup(opts: { reduce?: boolean } = {}) {
+function setup(opts: { reduce?: boolean; variant?: 'plate' | 'strip' } = {}) {
   const frames: FrameRequestCallback[] = [];
   const control = { throwOnDraw: false };
   const calls: Record<string, number> = {};
@@ -82,6 +82,19 @@ function setup(opts: { reduce?: boolean } = {}) {
       rect(): void {}
     },
   );
+  let watcher: ((entries: { isIntersecting: boolean }[]) => void) | undefined;
+  vi.stubGlobal(
+    'IntersectionObserver',
+    class {
+      constructor(cb: (entries: { isIntersecting: boolean }[]) => void) {
+        watcher = cb;
+      }
+      observe(): void {}
+      disconnect(): void {}
+    },
+  );
+  /** Tells the renderer whether the plate is in view. */
+  const inView = (isIntersecting: boolean): void => watcher?.([{ isIntersecting }]);
   vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => frames.push(cb));
   vi.stubGlobal('cancelAnimationFrame', () => undefined);
   const clock = { now: 0 };
@@ -89,7 +102,7 @@ function setup(opts: { reduce?: boolean } = {}) {
   vi.stubGlobal('reportError', (e: unknown) => reported.push(e));
 
   const renderer = createRenderer(canvas as unknown as HTMLCanvasElement, {
-    variant: 'plate',
+    variant: opts.variant ?? 'plate',
     now: () => clock.now,
     onPartTap: () => undefined,
   });
@@ -97,9 +110,12 @@ function setup(opts: { reduce?: boolean } = {}) {
     space: projectBrainSpace([], [], DEFAULT_PARTS, 0),
     parts: DEFAULT_PARTS,
     selected: null,
-    still: false,
+    // The living sky keeps the loop running at rest; most tests are about the other motion.
+    still: true,
     ...over,
   });
+  /** A state with Still off, for tests of motion; the default is Still so the sky stays out of the way. */
+  const live = (over: Partial<RenderState> = {}): RenderState => state({ still: false, ...over });
   /** Runs the queued frame, if any, at `time`. */
   const flush = (time: number): void => {
     const next = frames.shift();
@@ -127,6 +143,8 @@ function setup(opts: { reduce?: boolean } = {}) {
     pointer,
     reported,
     state,
+    live,
+    inView,
     flush,
     frames,
     calls,
@@ -154,15 +172,84 @@ describe('a draw error', () => {
   });
 });
 
+describe('the living sky', () => {
+  const draws = (h: ReturnType<typeof setup>): number => h.calls['fillRect'] ?? 0;
+
+  it('keeps the loop running at rest, about 12 times a second', () => {
+    const h = setup();
+    h.renderer.update(h.live());
+    h.flush(0);
+    expect(h.canvas.dataset['loop']).toBe('running');
+    const before = draws(h);
+    // The sky alone wakes on a timer, not on every animation frame.
+    expect(h.frames).toHaveLength(0);
+    vi.advanceTimersByTime(40);
+    expect(h.frames).toHaveLength(0);
+    vi.advanceTimersByTime(60);
+    expect(h.frames).toHaveLength(1);
+    h.flush(100);
+    expect(draws(h)).toBeGreaterThan(before);
+    expect(h.frames).toHaveLength(0);
+  });
+
+  it('cancels its timer when Still turns on', () => {
+    const h = setup();
+    h.renderer.update(h.live());
+    h.flush(0);
+    h.renderer.update(h.state({ still: true }));
+    h.flush(0);
+    vi.advanceTimersByTime(200);
+    expect(h.frames).toHaveLength(0);
+    expect(h.canvas.dataset['loop']).toBe('idle');
+  });
+
+  it('cancels its timer on destroy', () => {
+    const h = setup();
+    h.renderer.update(h.live());
+    h.flush(0);
+    h.renderer.destroy();
+    vi.advanceTimersByTime(200);
+    expect(h.frames).toHaveLength(0);
+  });
+
+  it('does not run under Still', () => {
+    const h = setup();
+    h.renderer.update(h.state({ still: true }));
+    h.flush(0);
+    expect(h.canvas.dataset['loop']).toBe('idle');
+  });
+
+  it('stops when the plate leaves the screen and resumes when it returns', () => {
+    const h = setup();
+    h.renderer.update(h.live());
+    h.flush(0);
+    h.inView(false);
+    vi.advanceTimersByTime(100);
+    h.flush(100);
+    expect(h.canvas.dataset['loop']).toBe('idle');
+    h.inView(true);
+    expect(h.frames).toHaveLength(1);
+    h.flush(200);
+    expect(h.canvas.dataset['loop']).toBe('running');
+  });
+
+  it('does not run in the Started strip', () => {
+    const h = setup({ variant: 'strip' });
+    h.renderer.update(h.live());
+    h.flush(0);
+    expect(h.canvas.dataset['loop']).toBe('idle');
+  });
+});
+
 describe('camera moves', () => {
   const START_YAW = '-1.57';
   const FACING_WORK_YAW = '-1.03';
 
   it('ease to a selected part, aiming the yaw at once', () => {
     const h = setup();
-    h.renderer.update(h.state());
+    h.renderer.update(h.live());
     h.flush(0);
-    h.renderer.update(h.state({ selected: 'work' }));
+    h.renderer.update(h.live({ selected: 'work' }));
     // The yaw that turns region-1's centre to face the viewer (facing() in draw.ts).
     expect(h.canvas.dataset['yaw']).toBe(FACING_WORK_YAW);
     h.flush(0);
@@ -194,7 +281,8 @@ describe('camera moves', () => {
 
   it('keep easing without reduced motion', () => {
     const h = setup();
-    h.renderer.update(h.state());
+    h.inView(false); // the sky would keep the loop running
+    h.renderer.update(h.live());
     h.flush(0);
     h.renderer.turn(1);
     h.flush(0);
@@ -265,17 +353,18 @@ describe('the look-at', () => {
 
   it('eases to the selected region and back to the centre when the selection clears', () => {
     const h = setup();
-    h.renderer.update(h.state());
+    h.inView(false); // the sky would keep the loop running
+    h.renderer.update(h.live());
     h.flush(0);
     expect(h.canvas.dataset['look']).toBe(lookOf(BRAIN_CENTRE));
-    h.renderer.update(h.state({ selected: 'work' }));
+    h.renderer.update(h.live({ selected: 'work' }));
     expect(h.canvas.dataset['look']).toBe(workAt);
     h.flush(0);
     h.flush(16);
     expect(h.canvas.dataset['loop']).toBe('running');
     h.flush(1000);
     expect(h.canvas.dataset['loop']).toBe('idle');
-    h.renderer.update(h.state({ selected: null }));
+    h.renderer.update(h.live({ selected: null }));
     expect(h.canvas.dataset['look']).toBe(lookOf(BRAIN_CENTRE));
     h.flush(1100);
     h.flush(1116);
@@ -396,7 +485,7 @@ describe('the arriving start', () => {
   it('reports reveal progress from the clock, and the part', () => {
     const h = setup();
     h.clock.now = 61_000;
-    h.renderer.update(h.state(arriving));
+    h.renderer.update(h.live(arriving));
     h.flush(0);
     expect(h.canvas.dataset['reveal']).toBe('0.50');
     expect(h.canvas.dataset['revealPart']).toBe(partId);
@@ -409,7 +498,7 @@ describe('the arriving start', () => {
   it('resumes at the right progress after a reload', () => {
     const h = setup();
     h.clock.now = 31_000;
-    h.renderer.update(h.state(arriving));
+    h.renderer.update(h.live(arriving));
     h.flush(0);
     expect(h.canvas.dataset['reveal']).toBe('0.25');
   });
@@ -425,8 +514,9 @@ describe('the arriving start', () => {
 
   it('runs the burst for BURST_MS only', () => {
     const h = setup();
+    h.inView(false); // the sky would keep the loop running
     h.clock.now = 1000 + BURST_MS - 10;
-    h.renderer.update(h.state({ space, burstAt: 1000 }));
+    h.renderer.update(h.live({ space, burstAt: 1000 }));
     h.flush(0);
     expect(h.canvas.dataset['loop']).toBe('running');
     h.clock.now = 1000 + BURST_MS + 1;
@@ -454,13 +544,13 @@ describe('the arriving start', () => {
     const h = setup();
     const other = DEFAULT_PARTS[1]!.id;
     h.clock.now = 61_000;
-    h.renderer.update(h.state(arriving));
+    h.renderer.update(h.live(arriving));
     h.flush(0);
     const moved: BrainSpace = {
       ...space,
       lines: [{ ...space.lines[0]!, partId: other } as BrainSpace['lines'][number]],
     };
-    h.renderer.update(h.state({ ...arriving, space: moved }));
+    h.renderer.update(h.live({ ...arriving, space: moved }));
     h.flush(16);
     expect(h.canvas.dataset['reveal']).toBe('0.50');
     expect(h.canvas.dataset['revealPart']).toBe(other);
@@ -474,5 +564,64 @@ describe('the arriving start', () => {
     h.renderer.update(h.state({ space }));
     h.flush(16);
     expect(h.canvas.dataset['reveal']).toBeUndefined();
+  });
+});
+
+describe('preview and landing', () => {
+  const partId = DEFAULT_PARTS[0]!.id;
+  const space: BrainSpace = {
+    lines: [
+      { kind: 'start', id: 'a1', partId, at: 1000, order: 1000, settled: true, undone: false },
+    ],
+    parts: [],
+    motion: 'moving',
+    totalStarts: 1,
+  };
+
+  it('previews a part without moving the camera', () => {
+    const h = setup();
+    h.renderer.update(h.state({ space }));
+    h.flush(0);
+    const yaw = h.canvas.dataset['yaw'];
+    h.renderer.update(h.state({ space, preview: 'work' }));
+    h.flush(16);
+    expect(h.canvas.dataset['yaw']).toBe(yaw);
+    expect(h.canvas.dataset['loop']).toBe('idle');
+  });
+
+  it('lands once: eases to the line, glows for BURST_MS, then idles', () => {
+    const h = setup();
+    h.clock.now = 5000;
+    h.renderer.update(h.state({ space }));
+    h.flush(0);
+    const yaw = h.canvas.dataset['yaw'];
+    h.renderer.update(h.state({ space, land: 'a1' }));
+    expect(h.canvas.dataset['yaw']).not.toBe(yaw);
+    h.flush(16);
+    expect(h.canvas.dataset['loop']).toBe('running');
+    // The same land again does not start over.
+    h.clock.now = 5000 + BURST_MS - 10;
+    h.renderer.update(h.state({ space, land: 'a1' }));
+    h.flush(2000);
+    h.flush(4000);
+    h.clock.now = 5000 + BURST_MS + 1;
+    h.flush(6000);
+    expect(h.canvas.dataset['loop']).toBe('idle');
+    h.renderer.update(h.state({ space, land: 'a1' }));
+    h.flush(8000);
+    expect(h.canvas.dataset['loop']).toBe('idle');
+  });
+
+  it('under Still the camera snaps and the glow is a fade of at most 120 ms', () => {
+    const h = setup();
+    h.clock.now = 5000;
+    h.renderer.update(h.state({ space, still: true }));
+    h.flush(0);
+    h.renderer.update(h.state({ space, still: true, land: 'a1' }));
+    h.flush(16);
+    expect(h.canvas.dataset['loop']).toBe('running');
+    h.clock.now = 5000 + STILL_FADE_MS + 1;
+    h.flush(32);
+    expect(h.canvas.dataset['loop']).toBe('idle');
   });
 });

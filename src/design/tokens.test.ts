@@ -33,18 +33,8 @@ function declarations(body: string): Theme {
 }
 
 const rootBlock = blockAfter(tokensCss, ':root {');
-const light = declarations(rootBlock);
-const mediaDarkBlock = blockAfter(
-  blockAfter(tokensCss, '@media (prefers-color-scheme: dark)'),
-  ":root:not([data-theme='light'])",
-);
-const attrDarkBlock = blockAfter(tokensCss, ":root[data-theme='dark']");
-const dark = declarations(attrDarkBlock);
-
-const themes: [string, Theme][] = [
-  ['light', light],
-  ['dark', dark],
-];
+const root = declarations(rootBlock);
+const themes: [string, Theme][] = [['dark', root]];
 
 const hex = (theme: Theme, name: string): string => {
   const value = theme[`--color-${name}`];
@@ -108,18 +98,10 @@ describe.each(themes)('%s theme', (_name, theme) => {
   });
 });
 
-describe('theme blocks', () => {
-  it('the media-query dark block equals the data-theme dark block', () => {
-    const media = declarations(mediaDarkBlock);
-    expect(Object.keys(media).length).toBeGreaterThan(10);
-    expect(media).toEqual(dark);
-  });
-
-  it('dark overrides exactly the colour tokens defined in light', () => {
-    const lightColours = Object.keys(light)
-      .filter((k) => k.startsWith('--color-'))
-      .sort();
-    expect(Object.keys(dark).sort()).toEqual(lightColours);
+describe('theme', () => {
+  it('is dark only (ADR-038)', () => {
+    expect(rootBlock).toMatch(/color-scheme:\s*dark/);
+    expect(tokensCss).not.toMatch(/prefers-color-scheme|data-theme|plate-scope/);
   });
 });
 
@@ -154,25 +136,25 @@ describe('semantic tokens', () => {
       '--ease-standard',
       '--target-min',
     ];
-    for (const name of names) expect(light, name).toHaveProperty([name]);
+    for (const name of names) expect(root, name).toHaveProperty([name]);
   });
 
   it('uses the ADR-018 fonts with fallbacks', () => {
-    expect(light['--font-display']).toMatch(/^'Newsreader Variable',.*serif$/);
-    expect(light['--font-text']).toMatch(/^'Atkinson Hyperlegible Next Variable',.*sans-serif$/);
+    expect(root['--font-display']).toMatch(/^'Newsreader Variable',.*serif$/);
+    expect(root['--font-text']).toMatch(/^'Atkinson Hyperlegible Next Variable',.*sans-serif$/);
   });
 
   it('uses the ADR-018 shape, motion and spacing values', () => {
-    expect(light['--radius-s']).toBe('6px');
-    expect(light['--radius-m']).toBe('10px');
-    expect(light['--radius-pill']).toBe('999px');
-    expect(light['--motion-quick']).toBe('120ms');
-    expect(light['--motion-calm']).toBe('240ms');
-    expect(light['--motion-slow']).toBe('480ms');
-    expect(light['--ease-standard']).toBe('cubic-bezier(0.23, 1, 0.32, 1)');
-    expect(light['--target-min']).toBe('48px');
+    expect(root['--radius-s']).toBe('6px');
+    expect(root['--radius-m']).toBe('10px');
+    expect(root['--radius-pill']).toBe('999px');
+    expect(root['--motion-quick']).toBe('120ms');
+    expect(root['--motion-calm']).toBe('240ms');
+    expect(root['--motion-slow']).toBe('480ms');
+    expect(root['--ease-standard']).toBe('cubic-bezier(0.23, 1, 0.32, 1)');
+    expect(root['--target-min']).toBe('48px');
     for (let i = 1; i <= 10; i++) {
-      expect(light[`--space-${i}`]).toBe(`${i * 4}px`);
+      expect(root[`--space-${i}`]).toBe(`${i * 4}px`);
     }
   });
 });
@@ -199,18 +181,18 @@ describe('fluid type scale', () => {
   ];
 
   it.each(listed)('step %i matches ADR-018 at 375px and 1280px', (n, phone, desktop) => {
-    const value = light[`--step-${n}`]!;
+    const value = root[`--step-${n}`]!;
     expect(Math.abs(evalStep(value, 375) - phone)).toBeLessThanOrEqual(0.1);
     expect(Math.abs(evalStep(value, 1280) - desktop)).toBeLessThanOrEqual(0.1);
   });
 
   it('step 4 follows the 4/3 ratio', () => {
-    const step3 = evalStep(light['--step-3']!, 375);
-    expect(evalStep(light['--step-4']!, 375)).toBeCloseTo((step3 * 4) / 3, 1);
+    const step3 = evalStep(root['--step-3']!, 375);
+    expect(evalStep(root['--step-4']!, 375)).toBeCloseTo((step3 * 4) / 3, 1);
   });
 
   it('is fluid between the two widths', () => {
-    const mid = evalStep(light['--step-0']!, 827.5);
+    const mid = evalStep(root['--step-0']!, 827.5);
     expect(mid).toBeGreaterThan(17.4);
     expect(mid).toBeLessThan(17.6);
   });
@@ -243,31 +225,16 @@ describe('global.css', () => {
 
 describe('plate tokens', () => {
   it('mirror partColours.ts', () => {
-    expect(light['--plate-bg']!.toLowerCase()).toBe(PLATE.bg.toLowerCase());
-    expect(light['--plate-dim-point']!.toLowerCase()).toBe(PLATE.dimPoint.toLowerCase());
-    expect(light['--plate-dim-trace']!.toLowerCase()).toBe(PLATE.dimTrace.toLowerCase());
-    expect(light['--plate-waiting']!.toLowerCase()).toBe(PLATE.waiting.toLowerCase());
-    expect(light['--plate-core']!.toLowerCase()).toBe(PLATE.core.toLowerCase());
+    expect(root['--plate-bg']!.toLowerCase()).toBe(PLATE.bg.toLowerCase());
+    expect(root['--plate-dim-point']!.toLowerCase()).toBe(PLATE.dimPoint.toLowerCase());
+    expect(root['--plate-dim-trace']!.toLowerCase()).toBe(PLATE.dimTrace.toLowerCase());
+    expect(root['--plate-waiting']!.toLowerCase()).toBe(PLATE.waiting.toLowerCase());
+    expect(root['--plate-core']!.toLowerCase()).toBe(PLATE.core.toLowerCase());
     for (const id of [1, 2, 3, 4, 5, 6] as const) {
       const { h, s, l } = PART_COLOURS[id];
-      expect(light[`--part-${id}`], `--part-${id}`).toBe(`hsl(${h} ${s}% ${l}%)`);
+      expect(root[`--part-${id}`], `--part-${id}`).toBe(`hsl(${h} ${s}% ${l}%)`);
       expect(hslToHex({ h, s, l })).toMatch(/^#[0-9a-f]{6}$/);
     }
-  });
-
-  it('are declared only outside the theme blocks', () => {
-    expect(attrDarkBlock).not.toMatch(/--plate-|--part-/);
-    expect(mediaDarkBlock).not.toMatch(/--plate-|--part-/);
-  });
-
-  it('.plate-scope equals the dark block', () => {
-    const scope = declarations(blockAfter(tokensCss, '.plate-scope'));
-    expect(Object.keys(scope).length).toBeGreaterThan(10);
-    expect(scope).toEqual(dark);
-  });
-
-  it('.plate-scope sets its own text colour, so descendants do not inherit the light theme', () => {
-    expect(blockAfter(tokensCss, '.plate-scope')).toMatch(/(^|[\s;])color:\s*var\(--color-text\)/);
   });
 });
 

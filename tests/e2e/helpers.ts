@@ -8,10 +8,6 @@ export async function expectAccessible(page: Page): Promise<void> {
   expect(results.violations).toEqual([]);
 }
 
-export async function setTheme(page: Page, colorScheme: 'light' | 'dark'): Promise<void> {
-  await page.emulateMedia({ colorScheme });
-}
-
 type Table = 'events' | 'parts' | 'plans';
 
 /** Writes rows into the app's own database, which must already exist, then reloads. */

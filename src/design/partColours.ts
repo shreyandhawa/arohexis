@@ -2,7 +2,7 @@ import type { ColourId } from '../domain/config';
 
 export type Hsl = { h: number; s: number; l: number };
 
-/** The plate is always dark, in both themes (ADR-026, spec §16.7). */
+/** The plate is dark like the rest of the app (ADR-026, ADR-038, spec §16.7). */
 export const PLATE = {
   bg: '#05060A',
   dimPoint: '#8E98AC',

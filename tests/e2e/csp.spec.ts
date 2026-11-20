@@ -37,7 +37,7 @@ test('serves the CSP and the app runs without a single violation', async ({ page
   await page.keyboard.press('Escape');
   await page.goto('/');
 
-  await page.getByRole('button', { name: "I'm stuck" }).click();
+  await page.getByRole('button', { name: 'Light a line' }).click();
   await page.getByRole('button', { name: 'Anxious' }).click();
   await page.getByRole('button', { name: 'Start', exact: true }).click();
   await expect(page.getByText('Started.', { exact: true })).toBeVisible();

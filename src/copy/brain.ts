@@ -7,6 +7,8 @@ const plural = (n: number, one: string, many: string): string => `${n} ${n === 1
 export const brain = {
   regionLabel: 'Brain space',
   empty: 'Your starts will light up here.',
+  /** Added to the summary while a record is young. */
+  firstLines: 'Each start lights a line. Starts that repeat make it brighter.',
   /** Replay, "watch it grow" (ADR-037): cumulative only, never a comparison. */
   replay: {
     title: 'Replay',
@@ -17,6 +19,8 @@ export const brain = {
     pause: 'Pause',
   },
   noPart: 'No part',
+  /** Shown on the plate when a card's code could not load. */
+  cardUnavailable: "That card didn't open. Try again.",
   moving: 'Signals are moving.',
   resting: 'Signals are resting. One start sets them moving again.',
   summary: (starts: number, lines: number): string =>
@@ -44,6 +48,13 @@ export const brain = {
     return text;
   },
   partsLabel: 'Parts',
+  line: {
+    since: (date: string): string => `Since ${date}`,
+    /** The text equivalent's button that opens a line's card. */
+    open: (part: string, detail: string, n: number, total: number): string =>
+      `Open ${part} line, ${detail}, ${n} of ${total}`,
+    listLabel: 'Lines',
+  },
   card: {
     close: 'Close',
     focusTitle: 'What to focus on',

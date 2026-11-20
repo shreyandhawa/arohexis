@@ -173,6 +173,7 @@ const settingsEntries = {
   checkinDay: weekDay,
   checkinDismissedWeek: v.exactOptional(v.string()),
   lastExportAt: v.exactOptional(v.number()),
+  lastSeenStart: v.exactOptional(v.number()),
   persistRequested: v.boolean(),
   onboarded: v.boolean(),
 };

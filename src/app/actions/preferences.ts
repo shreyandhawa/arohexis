@@ -6,10 +6,10 @@ export async function setStill(d: AppDeps, value: 'still' | 'moving'): Promise<v
   await d.config.applyConfigPatch({ settings: { brainStill: value } });
 }
 
-/** Theme, week start and check-in day. */
+/** Week start and check-in day. */
 export async function setPreference(
   d: AppDeps,
-  change: Partial<Pick<Settings, 'theme' | 'weekStartsOn' | 'checkinDay'>>,
+  change: Partial<Pick<Settings, 'weekStartsOn' | 'checkinDay'>>,
 ): Promise<void> {
   await d.config.applyConfigPatch({ settings: change });
 }

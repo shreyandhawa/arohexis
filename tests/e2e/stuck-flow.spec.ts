@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
-import { expectAccessible, setTheme } from './helpers';
+import { expectAccessible } from './helpers';
 
-const stuck = "I'm stuck";
+const stuck = 'Light a line';
 const startBtn = (page: Page) => page.getByRole('button', { name: 'Start', exact: true });
 
 /** Waits for every running CSS animation (the reward settle, fades) to finish. */
@@ -310,25 +310,22 @@ test('reduced motion has no transforms', async ({ page }) => {
   }
 });
 
-for (const scheme of ['light', 'dark'] as const) {
-  test(`stuck screens are accessible in ${scheme}`, async ({ page }) => {
-    await setTheme(page, scheme);
-    await page.goto('/');
-    await page.getByRole('button', { name: stuck }).click();
-    await expect(page.getByRole('button', { name: 'Anxious' })).toBeEnabled();
-    await settled(page);
-    await expectAccessible(page);
-    await page.getByRole('button', { name: 'Anxious' }).click();
-    await expect(startBtn(page)).toBeVisible();
-    await settled(page);
-    await expectAccessible(page);
-    await startBtn(page).click();
-    await expect(page.getByText('Started.', { exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Work' }).click();
-    await settled(page);
-    await expectAccessible(page);
-  });
-}
+test(`stuck screens are accessible`, async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: stuck }).click();
+  await expect(page.getByRole('button', { name: 'Anxious' })).toBeEnabled();
+  await settled(page);
+  await expectAccessible(page);
+  await page.getByRole('button', { name: 'Anxious' }).click();
+  await expect(startBtn(page)).toBeVisible();
+  await settled(page);
+  await expectAccessible(page);
+  await startBtn(page).click();
+  await expect(page.getByText('Started.', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Work' }).click();
+  await settled(page);
+  await expectAccessible(page);
+});
 
 test('a failed Done for now shows a message and can be retried', async ({ page }) => {
   await toStarted(page);

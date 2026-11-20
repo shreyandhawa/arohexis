@@ -4,7 +4,7 @@ Status: **approved** by the owner on 2026-11-11, and amended with §16 Brain spa
 
 ## 1. Summary
 
-Arohexis is a local-first, installable web app for chronic procrastination. It trains **the moment of starting**, not task management. When you are stuck you tap one button and name the feeling. Arohexis shows a short response matched to that feeling, and you take a two-minute first step. Each start is rewarded right away. If-then plans tie a cue (a fixed time and place) to a first action. When a plan doesn't happen, you get a short forgive-and-replan script. The insights show which feelings, hours, parts, and responses lead to starts, plus a weekly check-in on how automatic starting feels. Brain space, the main visual, draws your starts as light in the shape of a brain. It's a picture, not a scan.
+Arohexis is a local-first, installable web app for chronic procrastination. It trains **the moment of starting**, not task management. When you are stuck you tap **Light a line** and name the feeling. Arohexis shows a short response matched to that feeling, and you take a two-minute first step. Each start is rewarded right away. If-then plans tie a cue (a fixed time and place) to a first action. When a plan doesn't happen, you get a short forgive-and-replan script. The insights show which feelings, hours, parts, and responses lead to starts, plus a weekly check-in on how automatic starting feels. Brain space, the main visual, draws your starts as light in the shape of a brain. It's a picture, not a scan.
 
 "Training" here means ordinary learning: the same cue, a new response, an immediate reward, repeated until it is automatic. Arohexis makes no claims about brain change and does not diagnose or treat any condition.
 
@@ -25,11 +25,11 @@ Accounts, cloud sync, AI chat, social features, native apps, site or app blockin
 
 | Criterion | How it is checked |
 |---|---|
-| From the Stuck button to a running timer takes at most 3 taps, no typing, and no scrolling at 375×667 | Playwright E2E on the WebKit iPhone preset |
+| From **Light a line** to a running timer takes at most 3 taps, no typing, and no scrolling at 375×667 | Playwright E2E on the WebKit iPhone preset |
 | The stuck flow takes under 30 s from tap to timer | Responses are capped at 40 words (unit test); one timed manual check on the owner's iPhone per release |
 | Works offline after the first load | Playwright offline scenario |
 | Installable on the iOS Home Screen; data survives restarts | Manual check on an iPhone; persistence E2E |
-| WCAG 2.2 AA on every screen, light and dark | axe in E2E plus a manual keyboard and VoiceOver pass |
+| WCAG 2.2 AA on every screen | axe in E2E plus a manual keyboard and VoiceOver pass |
 | The domain is pure and covered | Domain `tsconfig` has no DOM lib; at least 95% line coverage on `src/domain` |
 | CI on every push; `main` deploys to a public URL | GitHub Actions to Cloudflare |
 | Demo mode shows 10 realistic weeks without touching real data | E2E demo-isolation test |
@@ -125,7 +125,7 @@ src/
   app/             React: routes, screens, components, hooks, actions
     brain/           The Brain space canvas renderer, a lazy chunk (§16.6)
   copy/            Every user-facing string, grouped by screen
-  design/          tokens.css, themes, global styles, fonts
+  design/          tokens.css, global styles, fonts
 tests/e2e/         Playwright specs
 ```
 
@@ -307,7 +307,7 @@ interface ConfigStore {
 | `plans` | `id, active` | `{ id, place, cueDetail?, firstAction, partId? (M3), time: 'HH:MM', days: number[], graceMin, active, createdAt, editCount, activeSince? }` |
 | `kv` | `key` | `{ key, value }` |
 
-`kv` keys: `schemaVersion`, `onboarded`, `theme: 'system' | 'light' | 'dark'`, `weekStartsOn`, `checkinDay`, `checkinDismissedWeek`, `lastExportAt`, `persistRequested`, `brainStill: 'still' | 'moving'` (§16.8).
+`kv` keys: `schemaVersion`, `onboarded`, `theme: 'system' | 'light' | 'dark'` (unused since ADR-038, kept so older backups import), `weekStartsOn`, `checkinDay`, `checkinDismissedWeek`, `lastExportAt`, `persistRequested`, `brainStill: 'still' | 'moving'` (§16.8), `lastSeenStart` (§16.8, the `start.at` of the newest start Home has shown landing).
 
 Version 1 (shipped in M1) had a `taskTypes` table in place of `parts`. The version 1 to 2 upgrade is in §16.3.
 
@@ -375,7 +375,7 @@ Merging imports is out of scope for v1.
 
 ## 8. Screens and flows
 
-Layout: a single column, at most 34rem wide, except Home at 64rem and wider, which is a stage and a rail (ADR-036). The primary action sits in the bottom thumb zone on phones. A persistent quiet Stuck button appears on every screen except the stuck flow itself.
+Layout: a single column, at most 34rem wide, except Home at 64rem and wider, which is a stage and a rail (ADR-036). The primary action sits in the bottom thumb zone on phones. A persistent quiet **Light a line** button appears on every screen except the stuck flow itself.
 
 **Routes:**
 
@@ -401,11 +401,11 @@ Layout: a single column, at most 34rem wide, except Home at 64rem and wider, whi
 
 The lapse repair is a sheet over Home.
 
-**Keyboard (desktop):** `S` opens the stuck flow from anywhere, except while typing in a field. On the Feeling screen, number keys `1`–`9` pick feelings in the order shown. `Enter` activates the primary action. `Esc` goes back or dismisses.
+**Keyboard (desktop):** `S` opens the stuck flow (**Light a line**) from anywhere, except while typing in a field. On the Feeling screen, number keys `1`–`9` pick feelings in the order shown. `Enter` activates the primary action. `Esc` goes back or dismisses.
 
 ### 8.1 Home (`/`)
 - **Layout:** the Brain space plate sits above everything else, then the card, then the button. The visible heading becomes visually hidden. Home never scrolls at 375×667. See §16.10.
-- **Primary:** a large **I'm stuck** button.
+- **Primary:** a large **Light a line** button.
 - **Above it, at most one card**, in this priority order:
   1. lapse to repair;
   2. plan open now;
@@ -459,7 +459,7 @@ The lapse repair is a sheet over Home.
 - **Appears:** while an occurrence is open.
 - **Content:** "9:00 · at my desk", then "Open the essay doc".
 - **Primary:** **Start now**. It emits `attempt.opened { source: 'plan', planId, occurrence }` and `start.made { planId, occurrence }`, then goes to Started. The plan *is* the first step.
-- **Quiet:** "I'm stuck on this" runs the stuck flow with the plan linked to the attempt.
+- **Quiet:** "Light this line" runs the stuck flow with the plan linked to the attempt.
 
 ### 8.7 Lapse repair (sheet on Home)
 Under 30 seconds. Every step can be skipped.
@@ -493,7 +493,7 @@ Every chart has a visually hidden data table and a one-sentence text summary. Co
   - picking a basis for a new response is optional and defaults to `shrink-the-step`.
 - **Parts** (`/settings/parts`): rename, recolor, enable or disable, and add up to six. Parts are never deleted. See §16.3.
 - **Obstacles:** the same list editor as feelings.
-- **Preferences:** theme, week start day, check-in day, and the **Still** toggle for Brain space (§16.8).
+- **Preferences:** week start day, check-in day, and the **Still** toggle for Brain space (§16.8).
 - **Data:**
   - export and import;
   - last backup;
@@ -600,7 +600,7 @@ Timing didn't fit · Low energy · First step felt too big · Something came up 
   - one primary action per screen;
   - generous space;
   - restrained color, with a single accent reserved for the primary action and the "Started." moment;
-  - **night sky** (ADR-036): dark by default, the page shares the plate's background, and chrome may carry soft light (a glow on the primary action and focus, rules in the plate's dim tones).
+  - **night sky** (ADR-036, ADR-038): dark only, the page shares the plate's background, and chrome may carry soft light (a glow on the primary action and focus, rules in the plate's dim tones).
 - **Avoid** the generic dashboard look (cards in grids, KPI tiles, gradient charts) and gamification (confetti, badges, streak flames, points).
 - **Visual direction gate.** The gate is complete (ADR-018). Brain space's look is gated by the owner's review of the built Home screen (ADR-021). Part colors are data, not accents (§16.7), and since ADR-036 they may appear outside the plate as data.
 
@@ -608,16 +608,15 @@ Timing didn't fit · Low energy · First step felt too big · Something came up 
 Two layers of CSS custom properties: primitives (`--ink-900`, `--paper-50`, `--size-5`, …) and semantic tokens (`--color-bg`, `--color-text`, `--color-accent`, `--color-focus`, `--space-stack-lg`, `--motion-calm`, …). Components use semantic tokens only.
 
 - **Color:**
-  - light and dark themes;
-  - `:root` follows `prefers-color-scheme` unless `data-theme` is set from Settings;
-  - text contrast is at least 4.5:1 (large text and UI at least 3:1), checked by a unit test that computes contrast for every semantic pair in both themes.
+  - one dark theme, declared on `:root` (ADR-038), with no theme switch;
+  - text contrast is at least 4.5:1 (large text and UI at least 3:1), checked by a unit test that computes contrast for every semantic pair.
 - **Type:** a fluid modular scale (`clamp()`), with at most two families (display and text), self-hosted. Body text is at least 17px on mobile. Tabular numbers are used for the timer and counts.
 - **Space:** a 4-px base scale.
 - **Radius:** a small set (`--radius-s`, `--radius-m`, `--radius-pill`).
-- **Plate:** Brain space adds plate tokens (`--plate-bg`, `--plate-dim-point`, `--plate-dim-trace`, `--plate-waiting`, `--plate-core`) and six part colors. They are the same in both themes. See §16.7.
+- **Plate:** Brain space adds plate tokens (`--plate-bg`, `--plate-dim-point`, `--plate-dim-trace`, `--plate-waiting`, `--plate-core`) and six part colors. See §16.7.
 - **Motion:**
   - `--motion-quick: 120ms`, `--motion-calm: 240ms`, `--motion-slow: 480ms`, with a single standard easing;
-  - no motion is decorative or looping, with one exception: Brain space's state motion (signals along plan lines), which stops with **Still** or while resting (§16.8);
+  - no motion is decorative or looping, with one exception: Brain space's motion (signals along plan lines, and the sky's slow twinkle, ADR-040), which stops with **Still** (§16.8); signals also stop while resting;
   - under `prefers-reduced-motion: reduce`, transforms are removed and only opacity fades of 120 ms or less remain.
 
 ### 11.3 Accessibility (WCAG 2.2 AA)
@@ -654,7 +653,7 @@ Brain space adds its own tests in §16.13.
 | Domain unit | Vitest (node) | Every module in `src/domain`; gate of at least 95% lines and at least 90% branches |
 | Property | fast-check | the invariants below |
 | Storage | Vitest + fake-indexeddb | Repositories, transactions (import rollback), seeding, migrations from fixture DBs |
-| Copy and tokens | Vitest | Banned words, 40-word cap, contrast of every semantic color pair in both themes |
+| Copy and tokens | Vitest | Banned words, 40-word cap, contrast of every semantic color pair |
 | E2E | Playwright | the projects and scenarios below |
 
 **Property tests:**
@@ -679,7 +678,7 @@ Brain space adds its own tests in §16.13.
 8. Check-in due on the configured day; submitting it shows in the trend.
 9. Export, delete everything, import, and the same Insights reappear.
 10. Demo: enter, see 10 weeks, exit, and the main database is unchanged.
-11. axe-core scan of every route in light and dark, with zero violations at AA.
+11. axe-core scan of every route, with zero violations at AA.
 12. Reduced-motion emulation: no transform animations.
 13. Keyboard-only stuck flow on desktop (`S`, a number key, `Enter`).
 
@@ -730,7 +729,7 @@ Brain space is the main visual: a picture of your starts, drawn as a brain made 
 |---|---|
 | **Part** | A part of life the user names, such as "Portfolio". It has a colour from a fixed set and a fixed region of the drawing. Part replaces Task type (ADR-023) |
 | **Region** | One of six fixed areas of the drawing. A seventh area, the **core**, holds light that has no part |
-| **On-cue start** | A counted start whose attempt is linked to a plan occurrence: it carries both `planId` and `occurrence`. That covers **Start now** and **I'm stuck on this** (§8.6) and **Yes, I started** (§8.7). Each occurrence counts once |
+| **On-cue start** | A counted start whose attempt is linked to a plan occurrence: it carries both `planId` and `occurrence`. That covers **Start now** and **Light this line** (§8.6) and **Yes, I started** (§8.7). Each occurrence counts once |
 | **Plan line** | One line per plan and part. Dashed while the plan has no on-cue start, then solid, growing in steps with on-cue starts |
 | **Start line** | A faint line left in its part by any other counted start. It never grows |
 | **Core spark** | A faint point near the core, left by a counted start that has no part |
@@ -830,7 +829,7 @@ export function projectBrainSpace(attempts: readonly Attempt[], plans: readonly 
 
 ### 16.7 Look and colour
 
-**Plate tokens.** They are the same in both themes (ADR-026).
+**Plate tokens.** The app has one dark theme (ADR-026, ADR-038).
 
 | Token | Value | Use |
 |---|---|---|
@@ -876,8 +875,10 @@ Id 6 is blue `hsl(225 90% 76%)`. M2 Task 6 chose it from two candidates: blue at
   - **Reveal:** during the two-minute timer, the new light is drawn from the core out to its place. Progress comes from `timerState(start.at, now)`, so it stays right after the phone locks or the page reloads. If the start is re-tagged mid-reveal, the reveal carries on, at the same progress, to the new place. For an on-cue start, the reveal runs a bright pass along the plan's existing line, and a new strength step takes effect when the pass ends.
   - **Settle:** a small ring settles at the line's end when the reveal finishes.
   - **Backfilled starts** (**Yes, I started**) have no burst and no reveal, because they aren't made on Started. Their light simply appears, and they count for moving like any start.
-- **Interaction motion:** the camera eases to a tapped part or a zoom step over `--motion-slow`.
-- **Never:** auto-rotation, idle drift, looping decoration, or motion on chrome.
+  - **Landing (Home):** when the newest counted start is newer than `kv.lastSeenStart`, Home lights that start's line once, reusing the burst, and the camera eases to face it. Under Still there is no ease, only the fade of at most 120 ms. On a first visit (no `lastSeenStart`) only a start from the last hour lands, so old starts are not replayed. The demo never writes `lastSeenStart`.
+- **Interaction motion:** hovering or focusing a part's chip previews that part's lines (no card, no camera move); the camera eases to a tapped part or a zoom step over `--motion-slow`.
+- **Living sky (ADR-040):** at rest, about 64 dim field points fade in and out on their own periods of 4 to 9 s, redrawn at about 12 fps. Nothing changes position. It stops under **Still** (the reduced-motion default), when the tab is hidden, when the plate is off-screen, and on the Started strip.
+- **Never:** auto-rotation, drift, a change of position, looping decoration, or motion on chrome. (The twinkle above is the one idle motion.)
 - **The light exists from the tap** (ADR-004). The reveal only animates it. Leaving Started early or tapping **Done for now** never leaves a partial line: Home always shows it whole.
 - **Still:** a visible toggle on every plate, on Home and on Started, labelled **Still**, with `aria-pressed`, at least 48×48 px.
   - It stops state and event motion: signals stop, the burst becomes a fade of at most 120 ms, and new light appears whole.
@@ -918,14 +919,15 @@ Parts are named by the user, so no line gives advice about one kind of part. The
 
 ### 16.10 Placement and accessibility
 
-**Layout budget at 375×667.** These figures were measured on the M1 build (2026-11-12): about 372 px between Home's heading and **I'm stuck**, and 80 to 94 px free on Started between the chips and **Done for now**.
+**Layout budget at 375×667.** These figures were measured on the M1 build (2026-11-12): about 372 px between Home's heading and **Light a line**, and 80 to 94 px free on Started between the chips and **Done for now**.
 
-**Home (§8.1)**, top to bottom: the plate, the one card (if any), **I'm stuck** in the thumb zone, then the quiet links.
+**Home (§8.1)**, top to bottom: the plate, the one card (if any), **Light a line** in the thumb zone, then the quiet links.
 - **What goes on the plate:** the visible heading moves into a visually hidden `h1`. The summary line, the controls (**Still**, zoom, turn) and the parts row all sit on the plate, on its dark tokens, so they cost no height.
 - **Plate height:** it takes all the height left, and at least 200 px at 375×667 with the tallest card and the Demo ribbon showing.
 - **Card budgets:** plan card at most 180 px, check-in card 120, update card 96, Demo ribbon 40.
-- **The stuck flow is unchanged.** Home never scrolls at 375×667, **I'm stuck** stays where it is, and Stuck to timer stays at 3 taps.
-- **Loading:** the renderer loads after **I'm stuck** is on screen. Until then the plate shows the summary line.
+- **The stuck flow is unchanged.** Home never scrolls at 375×667, **Light a line** stays where it is, and Stuck to timer stays at 3 taps.
+- **Loading:** the renderer loads after **Light a line** is on screen. Until then the plate shows the summary line.
+- **Quiet records:** with fewer than 5 counted starts the summary adds `brain.firstLines`.
 - **Parts row:** an **All** chip and one chip per part with its swatch, 48 px tall, scrolling sideways. A chip does what tapping its part on the plate does.
 - **Tapping a part**, on the plate or its chip: the rest fades to `UNSELECTED_ALPHA`, the camera eases to it, and its card opens as a sheet. The sheet traps focus, Esc closes it, and focus returns, like the lapse sheet.
 - **Navigation:** drag turns. **Turn left** and **Turn right** turn by `TURN_STEP_RAD` (WCAG 2.5.7). Pinch, the wheel, or **Zoom in** and **Zoom out** zoom. Zooming past `EXPLODE_FROM_ZOOM` pulls the regions apart and labels them.
@@ -940,7 +942,7 @@ Parts are named by the user, so no line gives advice about one kind of part. The
 **Accessibility (ADR-033):**
 - **The canvas is never needed.** It is `aria-hidden="true"` and never focusable. Every action is a DOM control: part chips, **Still**, zoom and turn buttons, and the part card.
 - **Text equivalent:** a list inside the plate's region (`role="region"`, `aria-label="Brain space"`), visually hidden except the summary line. For each part it reads, for example, "Portfolio: 30 starts. Plan lines: Steady, 18 starts on cue; New, 3 starts on cue. 9 start lines." Then "No part: 4 starts.", then the motion sentence. It follows the projection and is not announced live.
-- **Targets and focus:** touch targets are at least 48×48 px. Controls on the plate use the dark theme's tokens, including its focus ring (ADR-026).
+- **Targets and focus:** touch targets are at least 48×48 px. Controls on the plate use the same tokens as the page, including the focus ring (ADR-026, ADR-038).
 - **Keyboard:** Tab reaches the chips and every plate control. Enter or Space activates, and Esc closes the card. While a plate control has focus, ← and → turn, and + and − zoom. `S` still opens the stuck flow.
 - **WCAG:** 2.2.2 is met by **Still**. 2.3.1 is met by one burst under the flash threshold. 2.5.7 is met by the turn buttons. 1.4.1 is met because colour is never alone.
 
@@ -981,7 +983,7 @@ The 10-week demo fills the brain (ADR-034) and keeps §7.4's bands:
 | §9.3 | Default parts (§16.3) replace the default task types |
 | §9.5 | Add the banned words in §16.9 and the anatomy list in §16.5 |
 | §11.1 | The direction gate is complete (ADR-018). Brain space's gate is the owner's review of the built Home screen (ADR-021). Part colours are data, not accents |
-| §11.2 | Motion per §16.8: the one exception to "no looping motion" is Brain space's state motion, which stops with Still or while resting. Add the plate tokens |
+| §11.2 | Motion per §16.8: the one exception to "no looping motion" is Brain space's motion (state motion and the sky's twinkle, ADR-040), which stops with Still; signals also stop while resting. Add the plate tokens |
 | §11.3 | Add the text equivalent, Still on every plate, and the turn buttons (2.5.7) |
 | §12 | The CSP stays exactly as written. "No network requests after load" means no requests to other origins. The app's own same-origin chunks are precached, and may be fetched from the origin on the very first visit before the service worker is ready |
 | §13 | Add the tests in §16.13. Scenario 3 tags a part. CI typechecks `src/geometry` and gates its coverage at lines ≥ 90% |

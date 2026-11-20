@@ -1,6 +1,6 @@
 # Arohexis
 
-<img src="docs/media/home-desktop.png" alt="The demo's Brain space on a laptop, beside the I'm stuck button" />
+<img src="docs/media/home-desktop.png" alt="The demo's Brain space on a laptop, beside the Light a line button" />
 
 Live demo: https://arohexis.arohexis.workers.dev/welcome (tap Explore the demo; it uses a separate database)
 
@@ -18,7 +18,7 @@ Android and desktop browsers can install it too, from the browser's install opti
 
 ## What it is and isn't
 
-Arohexis is a stuck button with a timer, a reward and a record of what helped. It also has Brain space, if-then plans, Insights and a weekly check-in. Feelings, responses, obstacles and parts are all editable.
+Arohexis is a button, Light a line, with a timer, a reward and a record of what helped. It also has Brain space, if-then plans, Insights and a weekly check-in. Feelings, responses, obstacles and parts are all editable.
 
 It is not a task manager. It has no task lists, due dates or completion tracking. It has no accounts, no cloud sync, no AI chat, no social features and no app or site blocking.
 
@@ -34,7 +34,7 @@ Brain space draws your starts as lines of light in the shape of a brain. It's a 
 
 ## Night sky
 
-The app is dark first and built around the light of the plate, with a light theme kept in Settings. Replay (`/replay`) shows the light arriving start by start. It is cumulative only and never moves light. Here is [a recording of Replay](docs/media/replay.webm). The Welcome screen plays the demo brain lighting up once.
+The app is dark only and built around the light of the plate. Replay (`/replay`) shows the light arriving start by start. It is cumulative only and never moves light. Here is [a recording of Replay](docs/media/replay.webm). The Welcome screen plays the demo brain lighting up once.
 
 ## Demo
 

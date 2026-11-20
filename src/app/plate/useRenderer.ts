@@ -36,6 +36,7 @@ export function useRenderer(
         variant,
         now: () => latest.current.now(),
         onPartTap: (partId) => latest.current.onPartTap(partId),
+        onLineTap: (id) => latest.current.onLineTap?.(id),
       });
       if (cancelled) {
         loaded?.destroy();

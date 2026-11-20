@@ -717,7 +717,7 @@ Statuses:
 
 ## ADR-036: Night sky, the app is built around Brain space's light
 
-- Date: 2026-11-18 · Status: **Accepted** (owner decision, 2026-11-18) · Amends ADR-018, ADR-021 and ADR-026
+- Date: 2026-11-18 · Status: **Accepted** (owner decision, 2026-11-18) · Amends ADR-018, ADR-021 and ADR-026 · Amended by ADR-038: dark only
 - **Context:** v1 has two visual languages. The plate is additive light on black, and everything around it is monochrome hairlines, so the main visual reads as a widget inside a different app. A laptop shows a 34rem phone column. The owner wants v2 built around the lines of light.
 - **Options:**
   - keep mono chrome and upgrade only the plate;
@@ -749,3 +749,39 @@ Statuses:
 - **Consequences:**
   - only cumulative wording appears. A frame never compares one time with another;
   - the part card opened from Replay shows today's counts, not the frame's.
+
+## ADR-038: Dark only
+
+- Date: 2026-11-19 · Status: **Accepted** (owner decision, 2026-11-19) · Amends ADR-036: "light theme stays" no longer holds
+- **Context:** the owner found the light theme harsh. Its always-black brain plate sat on a near-white page.
+- **Decision:** one dark theme.
+  - The dark values are `:root`, with `color-scheme: dark`. The light block, the `prefers-color-scheme` block, `[data-theme]`, `.plate-scope`, `public/theme.js` and `ThemeSync` are gone.
+  - Settings has no Theme field. The manifest `background_color` and `theme_color`, and the `theme-color` meta, are `#05060A`.
+  - `theme` stays in the stored settings type and the import schema so older backups import. The value is ignored. There is no data migration.
+- **Consequences:**
+  - `tokens.test.ts` and axe check one theme;
+  - ADR-036's Settings choice of Dark, Light and System no longer exists; its other points stand.
+
+## ADR-039: Light a line
+
+- Date: 2026-11-19 · Status: **Accepted** (owner decision, 2026-11-19) · Renames the primary action; ADR-001 to ADR-038 keep their wording as history
+- **Context:** the owner found "I'm stuck" weak. The button is the app's one door, and Brain space is made of lines of light.
+- **Decision:** the button reads **Light a line**, and a plan card's quiet action reads **Light this line**.
+  - **Look:** a dark capsule (`--color-surface` fill, a 1px edge in `--color-text-muted`, a pill radius, the text face at weight 600) with a glowing ring. The ring is the point at the brain's stem where every line begins.
+  - **States:** hover and focus brighten the ring. A press flares it once and runs a hairline across the capsule in 240 ms. Under reduced motion both use opacity only, at 120 ms.
+  - **Sizes:** Home's primary stays 72 px tall. The quiet footer variant stays 48 px and keeps the ring.
+  - **Unchanged:** the `/stuck` route, the `S` key, "What's in the way?", the 3-tap path, the copy rules and the CSP. The change is CSS and a small inline SVG, so the initial bundle barely moves.
+- **Consequences:** the e2e suites find the button as "Light a line"; spec §2, §8.1, §8.2 and §16.10 say so.
+
+## ADR-040: The living sky
+
+- Date: 2026-11-19 · Status: **Accepted** (owner decision, 2026-11-19) · Amends ADR-027 and spec §11.2 and §16.8 on idle drift
+- **Context:** the owner wants the brain to feel alive while staying calm. ADR-027 allowed only state motion at rest.
+- **Decision:** at rest, a fixed set of about 64 dim field points twinkles.
+  - **Look:** each point's alpha is `base·(0.6+0.4·sin(2πt/period+seed))`, with a period of 4 to 9 s taken from the point's index. Nothing changes position: no drift, no rotation.
+  - **Cost:** the points are redrawn over the cached image at about 12 fps. Nothing is added to the initial bundle.
+  - **Stops when:** Still is on (the reduced-motion default), the tab is hidden, the plate is off-screen (IntersectionObserver), or it is the Started strip.
+- **Consequences:**
+  - ADR-027's "never drift" stays; the twinkle is the one idle motion and moves nothing;
+  - WCAG 2.2.2 is met because Still is on every plate;
+  - the loop now runs at rest, so the owner checks battery and smoothness on the iPhone.

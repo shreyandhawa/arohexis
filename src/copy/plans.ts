@@ -56,7 +56,7 @@ export const planWords = {
 export const planDue = {
   region: 'Plan due now',
   startNow: 'Start now',
-  stuckOnThis: "I'm stuck on this",
+  stuckOnThis: 'Light this line',
 } as const;
 
 /** The lapse repair sheet (spec §8.7). */

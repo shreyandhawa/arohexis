@@ -12,6 +12,8 @@
   transition:
     background-color var(--motion-quick) var(--ease-standard),
     color var(--motion-quick) var(--ease-standard),
+    border-color var(--motion-quick) var(--ease-standard),
+    box-shadow var(--motion-quick) var(--ease-standard),
     transform var(--motion-quick) var(--ease-standard);
 }
 
@@ -20,7 +22,45 @@
 }
 
 .pressed {
-  border-color: var(--color-selected);
-  background: var(--color-selected);
-  color: var(--color-on-selected);
+  border: 2px solid var(--color-selected);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.chip[data-colour='1'] {
+  --glow: var(--part-1);
+}
+
+.chip[data-colour='2'] {
+  --glow: var(--part-2);
+}
+
+.chip[data-colour='3'] {
+  --glow: var(--part-3);
+}
+
+.chip[data-colour='4'] {
+  --glow: var(--part-4);
+}
+
+.chip[data-colour='5'] {
+  --glow: var(--part-5);
+}
+
+.chip[data-colour='6'] {
+  --glow: var(--part-6);
+}
+
+/* A part's chip lights in its colour on hover, focus and press: a state change, not a loop. */
+.chip:focus-visible[data-colour],
+.chip:active[data-colour] {
+  border-color: var(--glow);
+  box-shadow: 0 0 7px 1px var(--glow);
+}
+
+@media (hover: hover) {
+  .chip:hover[data-colour] {
+    border-color: var(--glow);
+    box-shadow: 0 0 7px 1px var(--glow);
+  }
 }

@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { knownEvents } from './fixtures/brain';
-import { expectAccessible, seedEvents, setTheme } from './helpers';
+import { expectAccessible, seedEvents } from './helpers';
 
 const region = (page: Page) => page.getByRole('region', { name: 'Brain space' });
 const slider = (page: Page) => page.getByRole('slider', { name: 'Moment' });
@@ -64,13 +64,10 @@ test.describe('with the renderer chunk blocked', () => {
   });
 });
 
-for (const scheme of ['light', 'dark'] as const) {
-  test(`Replay is accessible in ${scheme}`, async ({ page }) => {
-    await setTheme(page, scheme);
-    await replay(page);
-    await expectAccessible(page);
-  });
-}
+test(`Replay is accessible`, async ({ page }) => {
+  await replay(page);
+  await expectAccessible(page);
+});
 
 test.describe('at 375x667', () => {
   test.use({ viewport: { width: 375, height: 667 } });

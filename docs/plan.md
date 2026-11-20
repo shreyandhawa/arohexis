@@ -1663,3 +1663,14 @@ Plan approved by the owner on 2026-11-18. One branch, `v2-night-sky`, with a dra
   - M10 notes (2026-11-18): Replay needed no renderer change. `Plate` takes an override `data`, and `/replay` feeds it `projectAt` frames. Tests: `tests/e2e/replay.spec.ts` plus the domain and geometry properties.
 - [x] M11: Live demo first: a Welcome hero from in-memory demo light, link previews, README and case study, v2.0.0
   - M11 notes (2026-11-18): the hero is a plate-only canvas, not `Plate`, because the plate's part card reads the live database. **Explore the demo** sits on step 1 and stays on the choice step. `scripts/capture-showcase.mjs` makes `docs/media/` and `public/og.png`. The M7 to M11 gate ran once: the design-critic (Opus) and the code-reviewer (Opus). Fixed: a first visit lost theme.js's dark paint once the default "system" setting loaded; the hero could start over after a Still toggle; the blocked-chunk Replay test didn't block the service worker; Replay's date line sat under the sticky button at 1440x900; the Started strip got a hairline frame; Welcome's intro moved up under the hero; the link preview keeps the whole brain. Left as designed: a Replay frame's signals move (each frame is the picture just after a start), and the part card shows today's counts (ADR-037). Budgets at v2.0.0: initial JS 149.3 of 150 kB, brain chunk 11.0 of 30 kB. Success criteria: `docs/v2-success-criteria.md`.
+
+## v2.1 (M12 to M14)
+
+- [x] M12 step 1: Dark only (ADR-038)
+- [x] M12 step 2: Light a line (ADR-039)
+- [x] M13: Light that answers you, and the light lands
+  - M13 notes (2026-11-19): preview is a separate `preview` field in `RenderState`, so hovering a chip lights the part without turning the camera. `lastSeenStart` lives in kv (Settings). First visit lands only a start from the last hour. Initial JS 149.6 of 150 kB, brain chunk 11.2 of 30 kB.
+- [x] M14: Tap a line, and the living sky
+  - M14 notes (2026-11-19): tap picks the nearest lit line within 16 px (`onLineTap`), else the part. `LineCard` is lazy; the text list has a button per lit line. Sky twinkle: ADR-040.
+- [x] v2.1 design gate: outlined actions, capsule primaries, selected states with a 2px edge. Skipped two critic items: a fuller line card, and the Started strip crop (pre-existing).
+- [x] v2.1 release: 2.1.0

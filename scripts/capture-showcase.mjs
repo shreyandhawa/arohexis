@@ -44,7 +44,7 @@ try {
       await page.screenshot({ path: `${MEDIA}/${file}-${name}.png` });
     }
     await page.goto(BASE + '/');
-    await page.getByRole('button', { name: "I'm stuck" }).click();
+    await page.getByRole('button', { name: 'Light a line' }).click();
     await page.getByRole('button', { name: 'Anxious' }).click();
     await page.getByRole('button', { name: 'Start', exact: true }).click();
     await page.getByText('Started.', { exact: true }).waitFor();

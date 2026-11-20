@@ -14,6 +14,7 @@
   transition:
     background-color var(--motion-quick) var(--ease-standard),
     color var(--motion-quick) var(--ease-standard),
+    box-shadow var(--motion-quick) var(--ease-standard),
     transform var(--motion-quick) var(--ease-standard);
 }
 
@@ -25,21 +26,28 @@
 
 .primary {
   min-height: calc(var(--target-min) * 1.5);
-  background: var(--color-accent);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
   box-shadow: 0 0 28px var(--color-glow);
-  color: var(--color-on-accent);
-  font-family: var(--font-display);
-  font-size: var(--step-2);
+  color: var(--color-text);
+  font-family: var(--font-text);
+  font-size: var(--step-1);
 }
 
 .primary:active {
-  background: var(--color-accent-pressed);
+  background: var(--color-hover);
 }
 
 .quiet {
   background: transparent;
   border-color: var(--color-border);
   color: var(--color-text);
+}
+
+@media (hover: hover) {
+  .primary:hover:not(:disabled) {
+    box-shadow: 0 0 40px var(--color-glow);
+  }
 }
 
 /* Hover only where a pointer can hover, so a tap on iOS does not leave it stuck on. */

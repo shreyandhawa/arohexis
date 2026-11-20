@@ -315,6 +315,38 @@ export function drawDim(
   ctx.globalAlpha = 1;
 }
 
+/** The living sky (ADR-040): a fixed subset of field points, each fading on its own slow period. */
+const TWINKLE_POINTS = 64;
+const TWINKLE_BASE = 0.7;
+
+export function drawTwinkle(
+  ctx: CanvasRenderingContext2D,
+  field: Field,
+  rig: Rig,
+  view: View,
+  time: number,
+): void {
+  const project = makeProject(view);
+  const amount = explodeAmount(view.cam.zoom);
+  const d: Disp = { x: 0, y: 0, z: 0 };
+  const step = Math.max(1, Math.floor(field.fibres.length / TWINKLE_POINTS));
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = PLATE.dimPoint;
+  for (let i = 0; i < TWINKLE_POINTS; i++) {
+    const f = field.fibres[i * step];
+    const s = f?.strands[i % f.strands.length];
+    if (!f || !s) continue;
+    displace(rig, f.index, amount, d);
+    const p = endOf(s, d, project);
+    // The seed and period come from the index alone, so the same points always keep the same rhythm.
+    const seed = i * 2.399963;
+    const period = 4000 + ((i * 2654435761) % 5001);
+    ctx.globalAlpha = TWINKLE_BASE * (0.6 + 0.4 * Math.sin((2 * Math.PI * time) / period + seed));
+    ctx.fillRect(p.x - 0.9, p.y - 0.9, 1.8, 1.8);
+  }
+  ctx.globalAlpha = 1;
+}
+
 export type LitFrame = {
   ctx: CanvasRenderingContext2D;
   field: Field;
@@ -796,14 +828,15 @@ export function hitTest(
   x: number,
   y: number,
   radius: number,
-): { partId: string } | undefined {
+  litOnly = false,
+): { partId: string; lineId: string } | undefined {
   const project = makeProject(view);
   const amount = explodeAmount(view.cam.zoom);
   const d: Disp = { x: 0, y: 0, z: 0 };
   let best = radius;
-  let found: { partId: string } | undefined;
+  let found: { partId: string; lineId: string } | undefined;
   for (const it of scene.items) {
-    if (it.partId === null) continue;
+    if (it.partId === null || (litOnly && it.kind === 'waiting')) continue;
     const fibre = field.fibres[it.fibre];
     if (!fibre) continue;
     displace(rig, it.fibre, amount, d);
@@ -821,7 +854,7 @@ export function hitTest(
         const dist = Math.hypot(p.x - x, p.y - y);
         if (dist < best) {
           best = dist;
-          found = { partId: it.partId };
+          found = { partId: it.partId, lineId: it.id };
         }
       }
     }

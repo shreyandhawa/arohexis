@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { startEvents } from './fixtures/brain';
-import { expectAccessible, seedEvents, setTheme } from './helpers';
+import { expectAccessible, seedEvents } from './helpers';
 
 /** The app has created its database once it has rendered Home's heading. */
 async function home(page: Page): Promise<void> {
@@ -20,7 +20,7 @@ test('a renamed feeling appears in What is it?', async ({ page }) => {
   await page.getByRole('button', { name: 'Save' }).first().click();
   await expect(page.getByRole('group', { name: 'Tense', exact: true })).toBeVisible();
   await page.goto('/');
-  await page.getByRole('button', { name: "I'm stuck" }).click();
+  await page.getByRole('button', { name: 'Light a line' }).click();
   await expect(page.getByRole('button', { name: 'Tense', exact: true })).toBeVisible();
 });
 
@@ -47,16 +47,11 @@ test('Something else cannot be turned off', async ({ page }) => {
   await expect(other.getByRole('checkbox')).toBeDisabled();
 });
 
-test('the theme switch sets data-theme', async ({ page }) => {
+test('Settings has no theme switch (dark only)', async ({ page }) => {
   await home(page);
   await open(page, '/settings', 'Settings');
-  const html = page.locator('html');
-  await page.getByLabel('Theme').selectOption('dark');
-  await expect(html).toHaveAttribute('data-theme', 'dark');
-  await page.reload();
-  await expect(html).toHaveAttribute('data-theme', 'dark');
-  await page.getByLabel('Theme').selectOption('system');
-  await expect(html).not.toHaveAttribute('data-theme', /.*/);
+  await expect(page.getByLabel('Theme')).toHaveCount(0);
+  await expect(page.locator('html')).not.toHaveAttribute('data-theme', /.*/);
 });
 
 test('About shows the version and build', async ({ page }) => {
@@ -68,24 +63,21 @@ test('About shows the version and build', async ({ page }) => {
   ).toBeVisible();
 });
 
-for (const scheme of ['light', 'dark'] as const) {
-  test(`the new screens have no axe violations in ${scheme}`, async ({ page }) => {
-    await setTheme(page, scheme);
-    await home(page);
-    for (const [path, title] of [
-      ['/settings', 'Settings'],
-      ['/settings/feelings', 'Feelings and responses'],
-      ['/settings/obstacles', 'Obstacles'],
-      ['/about', 'About'],
-    ] as const) {
-      await open(page, path, title);
-      await expectAccessible(page);
-    }
-    await open(page, '/settings/feelings', 'Feelings and responses');
-    await page.getByText('Responses (3)').first().click();
+test(`the new screens have no axe violations`, async ({ page }) => {
+  await home(page);
+  for (const [path, title] of [
+    ['/settings', 'Settings'],
+    ['/settings/feelings', 'Feelings and responses'],
+    ['/settings/obstacles', 'Obstacles'],
+    ['/about', 'About'],
+  ] as const) {
+    await open(page, path, title);
     await expectAccessible(page);
-  });
-}
+  }
+  await open(page, '/settings/feelings', 'Feelings and responses');
+  await page.getByText('Responses (3)').first().click();
+  await expectAccessible(page);
+});
 
 test('changing the check-in day changes when the check-in card shows', async ({ page }) => {
   // A Sunday, the default check-in day.
@@ -96,7 +88,7 @@ test('changing the check-in day changes when the check-in card shows', async ({ 
   await expect(card).toBeVisible();
   await card.getByRole('link', { name: 'Check in' }).click();
   await page.getByRole('button', { name: 'Skip this week' }).click();
-  await expect(page.getByRole('button', { name: "I'm stuck" })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Light a line' })).toBeVisible();
   await expect(card).toHaveCount(0);
   await page.getByRole('link', { name: 'Settings' }).click();
   await page.getByLabel('Weekly check-in day').selectOption('3');

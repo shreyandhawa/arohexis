@@ -54,6 +54,7 @@ export function Home() {
         <Plate
           selected={selected}
           onSelect={setSelected}
+          lands={deps.mode === 'main'}
           notice={notice ? homeNotices[notice] : undefined}
         />
       </PlateBoundary>

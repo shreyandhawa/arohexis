@@ -41,7 +41,7 @@ export function Strip({ attempt }: { attempt: Attempt }) {
 
   const motion = still ? 'still' : (data?.space.motion ?? 'moving');
   return (
-    <div className={`plate plate-scope ${styles['strip']}`} data-motion={motion}>
+    <div className={`plate ${styles['strip']}`} data-motion={motion}>
       <canvas ref={canvas} aria-hidden="true" className={styles['canvas']} />
       {data && (
         <>

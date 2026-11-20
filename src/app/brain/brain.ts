@@ -39,6 +39,7 @@ import {
   drawLabels,
   drawLit,
   drawSignals,
+  drawTwinkle,
   drawWaiting,
   facing,
   hitTest,
@@ -58,6 +59,10 @@ export type RenderState = {
   reveal?: { lineId: string; startAt: number };
   /** The `start.at` of a start made on Started. The burst's phase is `(now - burstAt) / BURST_MS`. */
   burstAt?: number;
+  /** A chip is hovered or focused: its part's lines show, but the camera stays put. */
+  preview?: string;
+  /** Home: the line of a start not yet seen. It glows once and the camera eases to face it. */
+  land?: string;
 };
 
 export interface BrainRenderer {
@@ -71,13 +76,18 @@ type Options = {
   variant: 'plate' | 'strip';
   now: () => number;
   onPartTap: (partId: string | null) => void;
+  /** A tap landed on a lit line (within LINE_RADIUS); the part tap does not fire. */
+  onLineTap?: (lineId: string) => void;
 };
 
 /** Side view with the front on the left. */
 const START_CAMERA: Camera = { yaw: -Math.PI / 2, pitch: 0, zoom: 1, look: BRAIN_CENTRE };
 const TAP_SLOP = 6;
 const TAP_RADIUS = 24;
+const LINE_RADIUS = 16;
 const DRAW_SAMPLES = 120;
+/** The living sky redraws about 12 times a second (ADR-040). */
+const TWINKLE_MS = 83;
 const REVEAL_MS = TIMER_SECONDS * 1000;
 
 type Motion = {
@@ -146,6 +156,11 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   let insetBottom = 0;
   let dpr = 1;
   let raf = 0;
+  /** The pending twinkle-only frame, scheduled by timer so the page isn't woken at 60 Hz for the sky. */
+  let twinkleTimer: ReturnType<typeof setTimeout> | undefined;
+  /** Whether the plate is in view; the sky rests when it is not. */
+  let onScreen = true;
+  let lastTwinkle = -Infinity;
   let running = false;
   let dragging = false;
   let settling = false;
@@ -189,6 +204,9 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   canvas.dataset['loop'] = 'idle';
 
   const still = (): boolean => state?.still ?? false;
+  const shown = (): string | null => state?.preview ?? state?.selected ?? null;
+  /** The landed line, and when its glow began. */
+  let landed: { id: string; at: number } | undefined;
 
   /** What the clock says about the arriving start at `now` (spec §16.8). Nothing here is stored. */
   function motionAt(now: number): Motion {
@@ -216,8 +234,14 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
         out.animating = true;
       }
     }
-    if (state.burstAt !== undefined) {
-      const phase = (now - state.burstAt) / (calm ? STILL_FADE_MS : BURST_MS);
+    // A landing reuses the burst, on the landed line's core.
+    const burstAt = state.burstAt ?? (landed && now >= landed.at ? landed.at : undefined);
+    if (state.burstAt === undefined && landed && !out.item) {
+      const item = scene.items.find((i) => i.id === landed?.id);
+      if (item) out.item = item;
+    }
+    if (burstAt !== undefined) {
+      const phase = (now - burstAt) / (calm ? STILL_FADE_MS : BURST_MS);
       if (phase >= 0 && phase < 1) {
         out.burst = phase;
         out.animating = true;
@@ -304,8 +328,12 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     cam.zoom !== target.zoom ||
     !sameLook(cam.look, target.look);
   const signalsOn = (): boolean => scene.signals && state?.space.motion === 'moving' && !still();
+  /** The living sky: on the plate only, at rest, never under Still, and only while in view (ADR-040). */
+  const twinkleOn = (): boolean => !strip && !still() && onScreen && state !== undefined;
+  const skyOnly = (): boolean =>
+    twinkleOn() && !dragging && !easing() && !signalsOn() && !current.animating;
   const needsLoop = (): boolean =>
-    !document.hidden && (dragging || easing() || signalsOn() || current.animating);
+    !document.hidden && (dragging || easing() || signalsOn() || current.animating || twinkleOn());
 
   function syncTouchAction(): void {
     const scrolls = document.documentElement.scrollHeight > window.innerHeight + 1;
@@ -374,6 +402,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     if (strip) frameStrip();
     reportReveal();
     const view = viewNow();
+    const sel = shown();
     const resting = state.space.motion === 'resting';
     const lit = {
       ctx,
@@ -381,7 +410,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       rig: r,
       scene,
       view,
-      selected: state.selected,
+      selected: sel,
       resting,
       time,
       restingBrightness: RESTING_BRIGHTNESS,
@@ -400,7 +429,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       cam.look.join(','),
       detailed,
       sceneVersion,
-      state.selected,
+      sel,
       resting,
       current.revealing ? current.item?.id : '',
       fit,
@@ -419,7 +448,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
         cacheCtx.fillRect(0, 0, width, height);
         cacheCtx.save();
         clipToBand(cacheCtx, view);
-        drawDim(cacheCtx, f, r, view, detailed, state.selected !== null);
+        drawDim(cacheCtx, f, r, view, detailed, sel !== null);
         litCtx.setTransform(1, 0, 0, 1, 0, 0);
         litCtx.clearRect(0, 0, litLayer.width, litLayer.height);
         litCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -456,7 +485,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       ctx.fillRect(0, 0, width, height);
       ctx.save();
       clipToBand(ctx, view);
-      drawDim(ctx, f, r, view, detailed, state.selected !== null);
+      drawDim(ctx, f, r, view, detailed, sel !== null);
       drawLit({ ...lit, scene: settled });
       ctx.restore();
     }
@@ -475,9 +504,10 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       const end = endPointOf(lit, arriving);
       if (end) drawSettle(ctx, end, arriving.css, current.settle);
     }
+    if (twinkleOn()) drawTwinkle(ctx, f, r, view, time);
     if (signalsOn()) drawSignals(lit);
     drawWaiting(lit);
-    drawLabels(ctx, r, state.parts, view, { selected: state.selected, lit: { scene, field: f } });
+    drawLabels(ctx, r, state.parts, view, { selected: sel, lit: { scene, field: f } });
     ctx.restore();
   }
 
@@ -526,8 +556,25 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     else console.error(e);
   }
 
+  function clearTwinkle(): void {
+    clearTimeout(twinkleTimer);
+    twinkleTimer = undefined;
+  }
+
+  /** Wakes for the sky's next frame after `delay` ms. */
+  function waitForTwinkle(delay: number): void {
+    twinkleTimer ??= setTimeout(
+      () => {
+        twinkleTimer = undefined;
+        request();
+      },
+      Math.max(0, delay),
+    );
+  }
+
   function stop(): void {
     raf = 0;
+    clearTwinkle();
     setLoop(false);
   }
 
@@ -537,6 +584,12 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     try {
       at = opts.now();
       current = motionAt(at);
+      // When only the sky is moving, a frame that comes early waits for a timer, to hold about 12 fps.
+      if (skyOnly() && time - lastTwinkle < TWINKLE_MS) {
+        waitForTwinkle(TWINKLE_MS - (time - lastTwinkle));
+        return;
+      }
+      lastTwinkle = time;
       stepCamera(time);
       const moving = dragging || easing();
       const t0 = performance.now();
@@ -560,7 +613,9 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
           const mean = samples.reduce((a, b) => a + b, 0) / samples.length;
           canvas.dataset['drawMean'] = mean.toFixed(2);
         }
-        raf = requestAnimationFrame(frame);
+        // Real motion keeps the frame loop; the sky alone wakes on a timer.
+        if (skyOnly()) waitForTwinkle(TWINKLE_MS);
+        else raf = requestAnimationFrame(frame);
       }
     } catch (e) {
       fail(e);
@@ -691,6 +746,11 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     if (wasTap && state && field && rig) {
       const p = local(e);
       const view = viewNow();
+      const line = opts.onLineTap && hitTest(scene, field, rig, view, p.x, p.y, LINE_RADIUS, true);
+      if (line && opts.onLineTap) {
+        opts.onLineTap(line.lineId);
+        return;
+      }
       const hit = hitTest(scene, field, rig, view, p.x, p.y, TAP_RADIUS);
       opts.onPartTap(hit ? hit.partId : null);
     }
@@ -716,6 +776,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     if (document.hidden) {
       cancelAnimationFrame(raf);
       raf = 0;
+      clearTwinkle();
       setLoop(false);
     } else {
       request();
@@ -760,6 +821,14 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   }
   document.addEventListener('visibilitychange', onVisibility);
   window.addEventListener('resize', syncTouchAction);
+  const seen =
+    !strip && typeof IntersectionObserver === 'function'
+      ? new IntersectionObserver((entries) => {
+          onScreen = entries.at(-1)?.isIntersecting ?? true;
+          if (onScreen) request();
+        })
+      : undefined;
+  seen?.observe(canvas);
   const observer = new ResizeObserver(resize);
   observer.observe(canvas);
   size();
@@ -773,6 +842,20 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     else aim(target);
   }
 
+  /** Eases the camera so a line's side faces the viewer. */
+  function faceLine(lineId: string): void {
+    const item = scene.items.find((i) => i.id === lineId);
+    const fibre = item && field?.fibres[item.fibre];
+    const strand = fibre && fibre.strands[Math.max(0, item.strand)];
+    if (!strand || strand.length < 3 || state?.selected != null) return;
+    aim(
+      facing(
+        [strand[strand.length - 3]!, strand[strand.length - 2]!, strand[strand.length - 1]!],
+        target,
+      ),
+    );
+  }
+
   return {
     update(next) {
       const before = state?.selected ?? null;
@@ -780,12 +863,18 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       at = opts.now();
       const { field: f } = ensureField();
       const built = buildScene(next.space, next.parts, f);
+      const landing = !strip && next.land !== undefined && next.land !== landed?.id;
+      if (landing) landed = { id: next.land!, at };
       // Spec §16.6: the cached layer is redrawn only when the data changes, not on every re-emit.
       if (!sameScene(scene, built)) sceneVersion += 1;
       scene = built;
       current = motionAt(at);
-      if (next.still) cam = { ...target };
-      if (!strip && next.selected !== before) {
+      if (next.still) {
+        cam = { ...target };
+        clearTwinkle();
+      }
+      if (landing) faceLine(next.land!);
+      else if (!strip && next.selected !== before) {
         if (next.selected !== null) faceRegion(next.selected, next.parts);
         else aim(target); // the look-at returns to the centre
       }
@@ -801,7 +890,9 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
     destroy() {
       destroyed = true;
       cancelAnimationFrame(raf);
+      clearTwinkle();
       observer.disconnect();
+      seen?.disconnect();
       dprWatch?.removeEventListener('change', onDpr);
       canvas.removeEventListener('pointerdown', onDown);
       canvas.removeEventListener('pointermove', onMove);

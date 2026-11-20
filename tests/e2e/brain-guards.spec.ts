@@ -1,8 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import { full, knownEvents } from './fixtures/brain';
-import { expectAccessible, seedEvents, seedParts, seedPlans, setTheme } from './helpers';
+import { expectAccessible, seedEvents, seedParts, seedPlans } from './helpers';
 
-const stuck = "I'm stuck";
+const stuck = 'Light a line';
 const region = (page: Page) => page.getByRole('region', { name: 'Brain space' });
 const canvas = (page: Page) => page.locator('canvas');
 const dialog = (page: Page) => page.getByRole('dialog');
@@ -51,6 +51,18 @@ test.describe('with the renderer chunk blocked', () => {
     await region(page).getByRole('button', { name: 'Work', exact: true }).click();
     await expect(dialog(page)).toBeVisible();
     await expect(dialog(page)).toContainText('3 starts');
+    await page.keyboard.press('Escape');
+    await expect(dialog(page)).toBeHidden();
+
+    // A line opens its card from the text list, with no canvas.
+    const lineButton = region(page)
+      .getByRole('list', { name: 'Lines' })
+      .getByRole('button')
+      .first();
+    await lineButton.focus();
+    await page.keyboard.press('Enter');
+    await expect(dialog(page)).toContainText(/Since /);
+    await expect(dialog(page)).toContainText(/start/);
     await page.keyboard.press('Escape');
     await expect(dialog(page)).toBeHidden();
 
@@ -127,34 +139,29 @@ test('keyboard only', async ({ page }, testInfo) => {
   await expect(page).toHaveURL(/\/stuck$/);
 });
 
-for (const scheme of ['light', 'dark'] as const) {
-  test(`Home, Started, the card and Settings → Parts are accessible in ${scheme}`, async ({
-    page,
-  }) => {
-    await setTheme(page, scheme);
-    await home(page);
-    const seed = full(Date.now());
-    await seedParts(page, seed.parts);
-    await seedPlans(page, seed.plans);
-    await seedEvents(page, seed.events);
-    await expect(region(page)).toBeVisible();
-    await expectAccessible(page);
+test(`Home, Started, the card and Settings → Parts are accessible`, async ({ page }) => {
+  await home(page);
+  const seed = full(Date.now());
+  await seedParts(page, seed.parts);
+  await seedPlans(page, seed.plans);
+  await seedEvents(page, seed.events);
+  await expect(region(page)).toBeVisible();
+  await expectAccessible(page);
 
-    await region(page).getByRole('button', { name: 'Work', exact: true }).click();
-    await expect(dialog(page)).toBeVisible();
-    await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
-    await expectAccessible(page);
-    await page.keyboard.press('Escape');
+  await region(page).getByRole('button', { name: 'Work', exact: true }).click();
+  await expect(dialog(page)).toBeVisible();
+  await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
+  await expectAccessible(page);
+  await page.keyboard.press('Escape');
 
-    await page.goto('/settings/parts');
-    await expect(page.getByRole('heading', { level: 1, name: 'Parts' })).toBeVisible();
-    await expectAccessible(page);
+  await page.goto('/settings/parts');
+  await expect(page.getByRole('heading', { level: 1, name: 'Parts' })).toBeVisible();
+  await expectAccessible(page);
 
-    await page.goto('/');
-    await begin(page);
-    await page.getByRole('button', { name: 'Work', exact: true }).click();
-    await expect(canvas(page)).toHaveAttribute('data-reveal', /./);
-    await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
-    await expectAccessible(page);
-  });
-}
+  await page.goto('/');
+  await begin(page);
+  await page.getByRole('button', { name: 'Work', exact: true }).click();
+  await expect(canvas(page)).toHaveAttribute('data-reveal', /./);
+  await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
+  await expectAccessible(page);
+});

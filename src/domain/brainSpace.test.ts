@@ -150,6 +150,19 @@ describe('helpers', () => {
 });
 
 describe('projectBrainSpace', () => {
+  it('names the newest counted start and the line it lit', () => {
+    expect(projectBrainSpace([], [], PARTS, T0).newest).toBeUndefined();
+    const s = projectBrainSpace(
+      [started('a1', 1, 'work'), started('a2', 5, undefined, { undone: true })],
+      [],
+      PARTS,
+      T0 + 60 * MIN,
+    );
+    expect(s.newest).toEqual({ at: T0 + MIN + 1, lineId: 'a1' });
+    const cue = projectBrainSpace([onCue('a1', 1, 'p1', 'o1', 'work')], [plan('p1')], PARTS, T0);
+    expect(cue.newest?.lineId).toBe('p1:work');
+  });
+
   it('an M1 history becomes start lines and sparks', () => {
     const attempts = [
       started('a1', 1, 'work'),

@@ -25,13 +25,13 @@ test.describe('keyboard only', () => {
 
   test('the stuck flow and the main screens work without a pointer', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('button', { name: "I'm stuck" })).toBeVisible();
-    await tabTo(page, "I'm stuck");
+    await expect(page.getByRole('button', { name: 'Light a line' })).toBeVisible();
+    await tabTo(page, 'Light a line');
     await tabTo(page, 'Anxious');
     await tabTo(page, 'Start');
     await expect(page).toHaveURL(/\/started\//);
     await tabTo(page, 'Done for now');
-    await expect(page.getByRole('button', { name: "I'm stuck" })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Light a line' })).toBeVisible();
     for (const [link, title] of [
       ['Plans', 'Plans'],
       ['Home', ''],
@@ -41,7 +41,7 @@ test.describe('keyboard only', () => {
     ] as const) {
       await tabTo(page, link);
       if (title) await heading(page, title);
-      else await expect(page.getByRole('button', { name: "I'm stuck" })).toBeVisible();
+      else await expect(page.getByRole('button', { name: 'Light a line' })).toBeVisible();
     }
   });
 });

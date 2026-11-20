@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { knownEvents } from './fixtures/brain';
-import { expectAccessible, seedEvents, setTheme } from './helpers';
+import { expectAccessible, seedEvents } from './helpers';
 
 const plate = (page: Page) => page.getByRole('region', { name: 'Brain space' });
 const partGroup = (page: Page, name: string) => page.getByRole('group', { name, exact: true });
@@ -25,7 +25,7 @@ async function openParts(page: Page): Promise<void> {
 
 async function startFlow(page: Page): Promise<void> {
   await page.goto('/');
-  await page.getByRole('button', { name: "I'm stuck" }).click();
+  await page.getByRole('button', { name: 'Light a line' }).click();
   await page.getByRole('button', { name: 'Anxious' }).click();
   await page.getByRole('button', { name: 'Start', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'What is it?' })).toBeVisible();
@@ -65,10 +65,10 @@ test('renaming changes the chip and card, and the light count stays', async ({ p
   await partGroup(page, 'Work').getByRole('button', { name: 'Save' }).click();
   await expect(partGroup(page, 'Job')).toBeVisible();
   await page.goto('/');
-  await expect(plate(page).getByRole('button', { name: 'Job' })).toBeVisible();
-  await expect(plate(page).getByRole('button', { name: 'Work' })).toHaveCount(0);
+  await expect(plate(page).getByRole('button', { name: 'Job', exact: true })).toBeVisible();
+  await expect(plate(page).getByRole('button', { name: 'Work', exact: true })).toHaveCount(0);
   await expect(plate(page).getByText(/starts · /)).toHaveText(summary ?? '');
-  await plate(page).getByRole('button', { name: 'Job' }).click();
+  await plate(page).getByRole('button', { name: 'Job', exact: true }).click();
   await expect(plate(page)).toContainText('Job: 3 starts.');
 });
 
@@ -85,7 +85,7 @@ test('a disabled part leaves What is it?, and its chip and light stay on Home', 
   await expect(page.getByRole('button', { name: 'Work', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Study', exact: true })).toBeVisible();
   await page.goto('/');
-  await expect(plate(page).getByRole('button', { name: 'Work' })).toBeVisible();
+  await expect(plate(page).getByRole('button', { name: 'Work', exact: true })).toBeVisible();
   await expect(plate(page)).toContainText('Work: 3 starts.');
 });
 
@@ -117,9 +117,9 @@ test.describe('at 320 px', () => {
     await expect(partGroup(page, long)).toBeVisible();
     expect(await fits()).toBe(true);
     await page.goto('/');
-    await expect(plate(page).getByRole('button', { name: long })).toBeVisible();
+    await expect(plate(page).getByRole('button', { name: long, exact: true })).toBeVisible();
     expect(await fits()).toBe(true);
-    await plate(page).getByRole('button', { name: long }).click();
+    await plate(page).getByRole('button', { name: long, exact: true }).click();
     expect(await fits()).toBe(true);
     await startFlow(page);
     await expect(page.getByRole('button', { name: long, exact: true })).toBeVisible();
@@ -157,15 +157,12 @@ test('About shows the Brain space paragraph', async ({ page }) => {
   ).toBeVisible();
 });
 
-for (const scheme of ['light', 'dark'] as const) {
-  test(`Settings and Parts are accessible in ${scheme}`, async ({ page }) => {
-    await setTheme(page, scheme);
-    await home(page);
-    await page.goto('/settings');
-    await expect(page.getByRole('heading', { name: 'Preferences' })).toBeVisible();
-    await expectAccessible(page);
-    await openParts(page);
-    await expect(partGroup(page, 'Work')).toBeVisible();
-    await expectAccessible(page);
-  });
-}
+test(`Settings and Parts are accessible`, async ({ page }) => {
+  await home(page);
+  await page.goto('/settings');
+  await expect(page.getByRole('heading', { name: 'Preferences' })).toBeVisible();
+  await expectAccessible(page);
+  await openParts(page);
+  await expect(partGroup(page, 'Work')).toBeVisible();
+  await expectAccessible(page);
+});
