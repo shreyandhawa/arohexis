@@ -18,10 +18,10 @@ One row per v2 "Night sky" check in the approved plan (`docs/plan.md`, v2 sectio
 | Budgets hold: initial JS at most 150 kB gzip, the Brain space chunk at most 30 kB | `node scripts/check-bundle-size.mjs` in CI: 149.3 kB and 11.0 kB at v2.0.0. Replay and the hero load on demand | Met (automated) |
 | The CSP is unchanged, with no inline scripts or styles | `tests/config/headers.test.ts`; `tests/e2e/csp.spec.ts` | Met (automated) |
 | No streaks, completions or comparisons between weeks; the copy rules hold | `src/copy/copy.test.ts`, which also scans the README. Replay's copy is cumulative only (`src/copy/brain.ts`) | Met (automated) |
-| A shared link shows the demo brain | Open Graph tags in `index.html`; `public/og.png` at 1200×630. The absolute image URL serves only after a merge deploys `main`; check it then with a link-preview tool | Owner to confirm |
+| A shared link shows the demo brain | Open Graph tags in `index.html`; `public/og.png` at 1200×630. Checked on the live site on 2026-11-22: the tags are served, the absolute `og:image` URL returns 200 `image/png` at 1200×630, byte-identical to `public/og.png`, and the iOS share sheet shows it as the link's thumbnail | Met (manual) |
 
 ## Summary
 
 - Met (automated): 11 of 15.
-- Met (manual): 1 of 15.
-- Owner to confirm: 3 of 15. Two need the owner's iPhone (VoiceOver, the plate turning). One needs the production deploy (the link preview).
+- Met (manual): 2 of 15.
+- Owner to confirm: 2 of 15. Both need the owner's iPhone (VoiceOver, the plate turning).
