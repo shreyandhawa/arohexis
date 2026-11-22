@@ -861,7 +861,7 @@ tests/e2e/                  brain-home, brain-started, parts, brain-guards, brai
   - `.gitignore` (add `.claude/settings.local.json`), `.prettierignore` (add `.claude/skills`), `eslint.config.js` ignores (add `docs/reference`)
   - `README.md:9,17,19`, `src/copy/home.ts:9`, `src/domain/config.ts:58` (milestone numbers)
 
-- [ ] **Step 1: Owner step.** Ask the owner to:
+- [x] **Step 1: Owner step.** Ask the owner to:
   - run `claude plugin install frontend-design@claude-plugins-official --scope project`;
   - put the reference stills and the canvas prototype in `docs/reference/brain-space/`, ideally with a line per still saying what it shows.
   Wait for both.
@@ -1526,8 +1526,10 @@ export function setPartEnabled(d: AppDeps, id: string, enabled: boolean): Promis
 - [x] **Step 2:** Run a whole-branch review with `code-reviewer`, against spec §16, ADR-021 to ADR-035 and this milestone.
   - Triage the findings with superpowers:receiving-code-review.
   - The builders fix the accepted ones, and the reviewer re-checks the fixes.
-- [ ] **Step 3:** Run the unslop audit against the preview URL, from Playwright screenshots of every M2 screen. `ui` fixes the accepted findings. None may override the tokens, ADR-018, the spec's copy or the approved look.
+- [x] **Step 3:** Run the unslop audit against the preview URL, from Playwright screenshots of every M2 screen. `ui` fixes the accepted findings. None may override the tokens, ADR-018, the spec's copy or the approved look.
+  - Not run at M2. Superseded by the design-critic gate at M11 and the v2.1 design gate (ledger below).
 - [ ] **Step 4: Owner acceptance on iPhone,** recorded in the PR body.
+  - 2026-11-22, iOS Simulator on the live site: a start fires the burst and draws its line during the timer, and **Still** stops all motion (the plate's pixels are identical 2 s apart). VoiceOver, turning on the device and airplane mode are still the owner's.
   - **On the preview URL:**
     - a start fires the burst and draws its line during the timer;
     - turning doesn't stutter;
@@ -1535,8 +1537,8 @@ export function setPartEnabled(d: AppDeps, id: string, enabled: boolean): Promis
     - VoiceOver reads each part's counts;
     - it all works in airplane mode.
   - **After the merge, in the installed app** (once Reload is tapped on the update card): the M1 starts show as light in their parts. The preview is a separate origin, so it can't show them.
-- [ ] **Step 5: Owner step.** The owner merges. Confirm the `deploy` job succeeds, and run `curl -sI https://arohexis.arohexis.workers.dev | grep -i content-security-policy` to confirm the exact CSP. Then the owner confirms the last acceptance item.
-- [ ] **Step 6:** Tick M2 in the ledger on `m3-plans`, the next branch, and commit: `docs: mark milestone 2 done`.
+- [x] **Step 5: Owner step.** The owner merges. Confirm the `deploy` job succeeds, and run `curl -sI https://arohexis.arohexis.workers.dev | grep -i content-security-policy` to confirm the exact CSP. Then the owner confirms the last acceptance item.
+- [x] **Step 6:** Tick M2 in the ledger on `m3-plans`, the next branch, and commit: `docs: mark milestone 2 done`.
 
 **Acceptance (owner):**
 - your M1 starts show as light in their parts;
