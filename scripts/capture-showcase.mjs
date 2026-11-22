@@ -1,7 +1,8 @@
 // Captures the showcase in demo mode: stills of Home, Started, Insights and Replay at phone and
-// desktop sizes into docs/media/, the link-preview image public/og.png, and one recording of
-// Replay playing (docs/media/replay.webm). Run it after `npm run build`; it serves dist/ itself.
-/* global document, getComputedStyle -- used inside page.evaluate, which runs in the browser */
+// desktop sizes into docs/media/, the first-run Setup and walkthrough, a part zoomed in, the ten-week
+// brain on its own, the link-preview image public/og.png, and two recordings: Replay playing
+// (replay.webm) and a short tour of the app (demo.webm). Run it after `npm run build`; it serves dist/.
+/* global document, getComputedStyle, localStorage -- used inside page.evaluate, which runs in the browser */
 import console from 'node:console';
 import { spawn } from 'node:child_process';
 import { mkdirSync, rmSync } from 'node:fs';
@@ -51,10 +52,20 @@ try {
     await settle(page);
     await page.screenshot({ path: `${MEDIA}/started-${name}.png` });
     if (name === 'desktop') await linkPreview(page);
+    // A part zoomed in, with its card beside the plate (ADR-045).
+    await page.goto(BASE + '/');
+    await settle(page);
+    await page.locator('[data-part-id]').first().click();
+    await page.locator('[data-part-card]').waitFor();
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: `${MEDIA}/part-${name}.png` });
     await context.close();
   }
 
+  await firstRun();
+  await finalBrain(demo);
   await recordReplay(demo);
+  await recordDemo(demo);
   console.log(`Saved stills and replay.webm to ${MEDIA}/, and public/og.png`);
 } finally {
   await browser.close();
@@ -80,6 +91,8 @@ async function demoState() {
   await page.goto(BASE + '/welcome');
   await page.getByRole('button', { name: 'Explore the demo' }).first().click();
   await page.getByRole('region', { name: 'Demo' }).waitFor();
+  // The stills show Home itself, so the walkthrough counts as seen.
+  await page.evaluate(() => localStorage.setItem('arohexis:toured', '1'));
   const state = await context.storageState({ indexedDB: true });
   await context.close();
   return state;
@@ -136,5 +149,77 @@ async function recordReplay(demo) {
   const video = page.video();
   await context.close();
   await video?.saveAs(`${MEDIA}/replay.webm`);
+  rmSync(dir, { recursive: true, force: true });
+}
+
+/** A new user: Setup with two names, then the first walkthrough card on Home, at phone size. */
+async function firstRun() {
+  const context = await browser.newContext({
+    ...SIZES.phone,
+    reducedMotion: 'reduce',
+    serviceWorkers: 'block',
+  });
+  const page = await context.newPage();
+  await page.goto(BASE + '/welcome');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Start fresh' }).click();
+  await page.getByLabel('Part 1').fill('Portfolio');
+  await page.getByRole('group', { name: 'Ideas' }).getByRole('button', { name: 'Health' }).click();
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({ path: `${MEDIA}/setup-phone.png` });
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.getByRole('dialog', { name: 'Light a line' }).waitFor();
+  await settle(page);
+  await page.screenshot({ path: `${MEDIA}/tour-phone.png` });
+  await context.close();
+}
+
+/** The demo's ten weeks of starts on their own: the plate's light, still, at 2x. */
+async function finalBrain(demo) {
+  const context = await browser.newContext({
+    viewport: { width: 1200, height: 900 },
+    deviceScaleFactor: 2,
+    storageState: demo,
+    reducedMotion: 'reduce',
+    serviceWorkers: 'block',
+  });
+  const page = await context.newPage();
+  await page.goto(BASE + '/');
+  await settle(page);
+  await page
+    .locator('canvas')
+    .first()
+    .screenshot({ path: `${MEDIA}/brain-ten-weeks.png` });
+  await context.close();
+}
+
+/** A short tour at phone size: zoom into a part, back to All, then Light a line to Started. */
+async function recordDemo(demo) {
+  const dir = join(tmpdir(), `arohexis-demo-${process.pid}`);
+  const size = { width: 390, height: 844 };
+  const context = await browser.newContext({
+    viewport: size,
+    storageState: demo,
+    serviceWorkers: 'block',
+    recordVideo: { dir, size },
+  });
+  const page = await context.newPage();
+  await page.goto(BASE + '/');
+  await settle(page);
+  await page.waitForTimeout(1200);
+  await page.locator('[data-part-id]').first().click();
+  await page.waitForTimeout(2500);
+  await page.getByRole('button', { name: 'All', exact: true }).click();
+  await page.waitForTimeout(1500);
+  await page.getByRole('button', { name: 'Light a line' }).click();
+  await page.waitForTimeout(800);
+  await page.getByRole('button', { name: 'Anxious' }).click();
+  await page.waitForTimeout(1500);
+  await page.getByRole('button', { name: 'Start', exact: true }).click();
+  await page.getByText('Started.', { exact: true }).waitFor();
+  await page.waitForTimeout(3500);
+  const video = page.video();
+  await context.close();
+  await video?.saveAs(`${MEDIA}/demo.webm`);
   rmSync(dir, { recursive: true, force: true });
 }

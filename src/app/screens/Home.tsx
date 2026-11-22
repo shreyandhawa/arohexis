@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useLocation, useOutletContext } from 'react-router';
 import { appName } from '../../copy/common';
 import { brain } from '../../copy/brain';
 import { Button } from '../components/Button';
-import { PART_CARD_TITLE_ID, PartCard } from '../plate/PartCard';
 import { installNote, nav, startsThisWeek } from '../../copy/home';
 import { homeNotices } from '../../copy/stuck';
 import { currentPlatformEnv, isIosSafariNonStandalone } from '../platform';
@@ -18,7 +17,6 @@ import { StuckButton } from '../layout/StuckButton';
 import type { ShellContext } from '../layout/Shell';
 import { expireOccurrences } from '../actions/lapse';
 import { hasSetUp, hasToured, hasWelcomed, markToured } from '../data/dbChoice';
-import { Tour } from '../layout/Tour';
 import { useData } from '../data/DataProvider';
 import { LapseSheet } from '../plans/LapseSheet';
 import { CheckinCard } from '../plans/CheckinCard';
@@ -29,6 +27,12 @@ import { Plate } from '../plate/Plate';
 import { PlateBoundary } from '../plate/PlateBoundary';
 import styles from '../layout/Shell.module.css';
 import homeStyles from './Home.module.css';
+
+// The part card and the walkthrough load on first use, outside the initial bundle.
+const PartCard = lazy(() => import('../plate/PartCard').then((m) => ({ default: m.PartCard })));
+const Tour = lazy(() => import('../layout/Tour').then((m) => ({ default: m.Tour })));
+/** PartCard's heading id (`PART_CARD_TITLE_ID`), kept here so this import stays lazy. */
+const PART_CARD_TITLE_ID = 'part-card-title';
 
 export function Home() {
   const starts = useStartsThisWeek();
@@ -80,7 +84,9 @@ export function Home() {
             aria-labelledby={PART_CARD_TITLE_ID}
             className={homeStyles['partCard']}
           >
-            <PartCard partId={selected} onClose={() => setSelected(null)} />
+            <Suspense fallback={null}>
+              <PartCard partId={selected} onClose={() => setSelected(null)} />
+            </Suspense>
             <Button variant="quiet" onClick={() => setSelected(null)}>
               {brain.card.close}
             </Button>
@@ -116,13 +122,15 @@ export function Home() {
         </nav>
       </div>
       {touring && config && (
-        <Tour
-          onDone={() => {
-            markToured();
-            setTouring(false);
-            document.querySelector<HTMLElement>('[data-tour="start"]')?.focus();
-          }}
-        />
+        <Suspense fallback={null}>
+          <Tour
+            onDone={() => {
+              markToured();
+              setTouring(false);
+              document.querySelector<HTMLElement>('[data-tour="start"]')?.focus();
+            }}
+          />
+        </Suspense>
       )}
     </>
   );

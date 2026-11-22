@@ -1,8 +1,30 @@
 # Arohexis
 
+![Version 2.3](https://img.shields.io/badge/version-2.3-eef1f6?labelColor=0d1017)
+![Installable PWA, works offline](https://img.shields.io/badge/PWA-works%20offline-eef1f6?labelColor=0d1017)
+![Local-first, no accounts](https://img.shields.io/badge/data-on%20your%20device-eef1f6?labelColor=0d1017)
+![No tracking](https://img.shields.io/badge/tracking-none-eef1f6?labelColor=0d1017)
+![React 19](https://img.shields.io/badge/React-19-61dafb?labelColor=0d1017&logo=react)
+![TypeScript 6](https://img.shields.io/badge/TypeScript-6-3178c6?labelColor=0d1017&logo=typescript)
+![Vite 8](https://img.shields.io/badge/Vite-8-646cff?labelColor=0d1017&logo=vite)
+
 <img src="docs/media/home-desktop.png" alt="The demo's Brain space on a laptop, beside the Light a line button" />
 
 Live demo: https://arohexis.arohexis.workers.dev/welcome (tap Explore the demo; it uses a separate database)
+
+## A short demo
+
+|                                           1. Name your parts                                            |                                           2. A walkthrough of Home                                           |                                         3. Tap a part to zoom in                                          |                                    4. Start, and a line lights up                                     |
+| :-----------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------: |
+| <img src="docs/media/setup-phone.png" width="190" alt="Setup: name up to six parts, with idea chips" /> | <img src="docs/media/tour-phone.png" width="190" alt="The walkthrough's first card, ringing Light a line" /> | <img src="docs/media/part-phone.png" width="190" alt="A part zoomed in, with its card under the plate" /> | <img src="docs/media/started-phone.png" width="190" alt="Started, with the timer and the new line" /> |
+
+Watch [the short demo](docs/media/demo.webm): tap a part to zoom into its region, go back to All, then Light a line, name the feeling, and start.
+
+## Ten weeks of starts
+
+<img src="docs/media/brain-ten-weeks.png" alt="The demo's Brain space after ten weeks: bright, thick plan lines where starts happened at the same time and place, and thin start lines elsewhere" />
+
+This is the demo after ten weeks of made-up starts. Each start lights one line. A plan's line grows thicker each time you start it at its time and place, so the thickest lines are the ones started most consistently. Start lines with no plan stay thin. Nothing fades or is taken away, so a quiet week leaves the picture as it was.
 
 Arohexis is a local-first, installable web app for chronic procrastination. It trains the moment of starting.
 
@@ -136,19 +158,19 @@ npm install
 npm run dev
 ```
 
-| Script                               | What it does                                                                             |
-| ------------------------------------ | ---------------------------------------------------------------------------------------- |
-| `npm run dev`                        | Start the Vite dev server                                                                |
-| `npm run build`                      | Type-check and build for production                                                      |
-| `npm run preview`                    | Serve the production build locally                                                       |
-| `npm run lint`                       | Run ESLint                                                                               |
-| `npm run format:check`               | Check formatting with Prettier                                                           |
-| `npm run typecheck`                  | Type-check the app and the pure domain layer                                             |
-| `npm test`                           | Run the Vitest unit tests                                                                |
-| `npm run test:watch`                 | Run Vitest in watch mode                                                                 |
-| `npm run e2e`                        | Run the Playwright end-to-end tests                                                      |
-| `node scripts/check-bundle-size.mjs` | Check the built bundle against its size budget                                           |
-| `node scripts/capture-showcase.mjs`  | Capture the README stills, og.png and a Replay recording in demo mode; run after a build |
+| Script                               | What it does                                                                            |
+| ------------------------------------ | --------------------------------------------------------------------------------------- |
+| `npm run dev`                        | Start the Vite dev server                                                               |
+| `npm run build`                      | Type-check and build for production                                                     |
+| `npm run preview`                    | Serve the production build locally                                                      |
+| `npm run lint`                       | Run ESLint                                                                              |
+| `npm run format:check`               | Check formatting with Prettier                                                          |
+| `npm run typecheck`                  | Type-check the app and the pure domain layer                                            |
+| `npm test`                           | Run the Vitest unit tests                                                               |
+| `npm run test:watch`                 | Run Vitest in watch mode                                                                |
+| `npm run e2e`                        | Run the Playwright end-to-end tests                                                     |
+| `node scripts/check-bundle-size.mjs` | Check the built bundle against its size budget                                          |
+| `node scripts/capture-showcase.mjs`  | Capture the README stills, og.png and the Replay and demo recordings; run after a build |
 
 Locally, run the end-to-end tests on Android and desktop:
 
