@@ -29,7 +29,7 @@ const stroke = {
 
 export function TurnControls({ onTurn }: { onTurn(step: -1 | 1): void }) {
   return (
-    <div className={`${styles['pair']} ${styles['pairStart']}`}>
+    <div data-tour="turn" className={`${styles['pair']} ${styles['pairStart']}`}>
       <Control label={brain.controls.turnLeft} onClick={() => onTurn(-1)}>
         <polyline points="14,6 8,12 14,18" {...stroke} strokeLinejoin="round" />
       </Control>

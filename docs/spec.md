@@ -508,7 +508,9 @@ Every chart has a visually hidden data table and a one-sentence text summary. Co
 ### 8.11 Onboarding (`/welcome`, first run only, at most 3 steps)
 1. "Arohexis helps you practice one thing: starting. When you're stuck, tap the button, name the feeling, and take a two-minute first step." Followed by the not-medical-advice note.
 2. **Only in iOS Safari outside standalone mode:** "Add Arohexis to your Home Screen: tap Share, then Add to Home Screen. Your data stays on this device. Safari and the Home Screen app keep separate copies, so use the Home Screen app."
-3. **Start fresh** (seeds defaults, then goes Home; after the first start, the Make a plan card opens the plan editor with "Pick one thing you keep putting off, and when you'll start it." and the two-month expectation line; a saved plan opens on its page, where Add to calendar is; **Skip for now** goes Home) or **Explore the demo** (switches to the demo database). ADR-042, ADR-043.
+3. **Start fresh** (seeds defaults, then opens **Setup** at `/setup`, ADR-045: up to six name fields with idea chips; the typed names replace the seeded parts in order, unnamed seeded parts are hidden, and Continue goes Home; after the first start, the Make a plan card opens the plan editor with "Pick one thing you keep putting off, and when you'll start it." and the two-month expectation line; a saved plan opens on its page, where Add to calendar is; **Skip for now** goes Home) or **Explore the demo** (switches to the demo database). ADR-042, ADR-043.
+
+**Home walkthrough (ADR-045):** on the first Home visit on a device, coach marks ring Light a line, the parts row, the turn controls, Still and the main navigation in turn, each with a short card (Skip, Back, Next, Done; Esc skips). It is not modal, and focus returns to Light a line. About offers **Show the walkthrough again**.
 
 **Make a plan card (ADR-042, ADR-043):** a real record with no plans shows one quiet card on Home after its first start, unless a plan is due or an update is ready; it ranks above the check-in. **Not now**, or skipping the first plan, sets `planNudgeDismissed` and it never returns.
 
@@ -933,7 +935,7 @@ Parts are named by the user, so no line gives advice about one kind of part. The
 - **Loading:** the renderer loads after **Light a line** is on screen. Until then the plate shows the summary line.
 - **Quiet records:** with fewer than 5 counted starts the summary adds `brain.firstLines`.
 - **Parts row:** an **All** chip and one chip per part with its swatch, 48 px tall, scrolling sideways. A chip does what tapping its part on the plate does.
-- **Tapping a part**, on the plate or its chip: the rest fades to `UNSELECTED_ALPHA`, the camera eases to it, and its card opens as a sheet. The sheet traps focus, Esc closes it, and focus returns, like the lapse sheet.
+- **Tapping a part**, on the plate or its chip: the rest fades to `UNSELECTED_ALPHA`, and the camera turns to it and zooms to at least `FOCUS_ZOOM` (1.8). Its card shows in Home's card slot, above any other card: beside the plate in the desktop rail, under the chips on a phone. It is not modal. **Close** or **All** clears the part, and the zoom returns to where it was (ADR-045).
 - **Navigation:** drag turns. **Turn left** and **Turn right** turn by `TURN_STEP_RAD` (WCAG 2.5.7). Pinch, the wheel, or **Zoom in** and **Zoom out** zoom. Zooming past `EXPLODE_FROM_ZOOM` pulls the regions apart and labels them.
 
 **Started (§8.4):**
@@ -947,7 +949,7 @@ Parts are named by the user, so no line gives advice about one kind of part. The
 - **The canvas is never needed.** It is `aria-hidden="true"` and never focusable. Every action is a DOM control: part chips, **Still**, zoom and turn buttons, and the part card.
 - **Text equivalent:** a list inside the plate's region (`role="region"`, `aria-label="Brain space"`), visually hidden except the summary line. For each part it reads, for example, "Portfolio: 30 starts. Plan lines: Steady, 18 starts on cue; New, 3 starts on cue. 9 start lines." Then "No part: 4 starts.", then the motion sentence. It follows the projection and is not announced live.
 - **Targets and focus:** touch targets are at least 48×48 px. Controls on the plate use the same tokens as the page, including the focus ring (ADR-026, ADR-038).
-- **Keyboard:** Tab reaches the chips and every plate control. Enter or Space activates, and Esc closes the card. While a plate control has focus, ← and → turn, and + and − zoom. `S` still opens the stuck flow.
+- **Keyboard:** Tab reaches the chips and every plate control. Enter or Space activates, and Esc closes a line card. While a plate control has focus, ← and → turn, and + and − zoom. `S` still opens the stuck flow.
 - **WCAG:** 2.2.2 is met by **Still**. 2.3.1 is met by one burst under the flash threshold. 2.5.7 is met by the turn buttons. 1.4.1 is met because colour is never alone.
 
 ### 16.11 Demo

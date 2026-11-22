@@ -3,6 +3,7 @@ import type { DbName } from '../../storage/db';
 export type DbChoice = 'main' | 'demo';
 const DB_KEY = 'arohexis:db';
 const WELCOMED_KEY = 'arohexis:welcomed';
+const TOURED_KEY = 'arohexis:toured';
 
 /** The pointer is advisory: any failure or unknown value falls back to the main database. */
 export function readDbChoice(): DbChoice {
@@ -38,5 +39,23 @@ export function markWelcomed(): void {
     localStorage.setItem(WELCOMED_KEY, '1');
   } catch {
     // Onboarding may show again; harmless.
+  }
+}
+
+/** The Home walkthrough (ADR-045). If storage fails it is skipped, as onboarding is. */
+export function hasToured(): boolean {
+  try {
+    return localStorage.getItem(TOURED_KEY) === '1';
+  } catch {
+    return true;
+  }
+}
+
+export function markToured(toured = true): void {
+  try {
+    if (toured) localStorage.setItem(TOURED_KEY, '1');
+    else localStorage.removeItem(TOURED_KEY);
+  } catch {
+    // The walkthrough may show again, or not; harmless.
   }
 }

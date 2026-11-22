@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useLocation, useOutletContext } from 'react-router';
 import { appName } from '../../copy/common';
+import { brain } from '../../copy/brain';
+import { Button } from '../components/Button';
+import { PART_CARD_TITLE_ID, PartCard } from '../plate/PartCard';
 import { installNote, nav, startsThisWeek } from '../../copy/home';
 import { homeNotices } from '../../copy/stuck';
 import { currentPlatformEnv, isIosSafariNonStandalone } from '../platform';
@@ -14,7 +17,8 @@ import { usePlanState } from '../hooks/usePlanState';
 import { StuckButton } from '../layout/StuckButton';
 import type { ShellContext } from '../layout/Shell';
 import { expireOccurrences } from '../actions/lapse';
-import { hasWelcomed } from '../data/dbChoice';
+import { hasToured, hasWelcomed, markToured } from '../data/dbChoice';
+import { Tour } from '../layout/Tour';
 import { useData } from '../data/DataProvider';
 import { LapseSheet } from '../plans/LapseSheet';
 import { CheckinCard } from '../plans/CheckinCard';
@@ -31,6 +35,7 @@ export function Home() {
   const hasEvents = useHasEvents();
   const { updateReady, reload } = useOutletContext<ShellContext>();
   const [selected, setSelected] = useState<string | null>(null);
+  const [touring, setTouring] = useState(() => !hasToured());
   // Spec §8.11: only until the main database has any data.
   const showInstallNote = hasEvents === false && isIosSafariNonStandalone(currentPlatformEnv());
   const deps = useData();
@@ -63,9 +68,20 @@ export function Home() {
         />
       </PlateBoundary>
       {deps.mode === 'main' ? <LapseSheet repair={planState?.repair} /> : null}
-      {/* At most one card, by priority (spec §8.1): plan due, the update card, the make-a-plan offer after a first start, the check-in, then the install note. */}
+      {/* At most one card, by priority (spec §8.1, ADR-045): the selected part, plan due, the update card, the make-a-plan offer after a first start, the check-in, then the install note. */}
       <div data-slot="card" className={homeStyles['card']}>
-        {planState?.due ? (
+        {selected !== null ? (
+          <section
+            data-part-card
+            aria-labelledby={PART_CARD_TITLE_ID}
+            className={homeStyles['partCard']}
+          >
+            <PartCard partId={selected} onClose={() => setSelected(null)} />
+            <Button variant="quiet" onClick={() => setSelected(null)}>
+              {brain.card.close}
+            </Button>
+          </section>
+        ) : planState?.due ? (
           <PlanDueCard plan={planState.due.plan} occurrence={planState.due.occurrence} />
         ) : updateReady ? (
           <UpdateCard onReload={reload} />
@@ -80,7 +96,7 @@ export function Home() {
       <div className={homeStyles['thumbZone']}>
         <StuckButton variant="primary" />
         {starts > 0 && <p className={styles['muted']}>{startsThisWeek(starts)}</p>}
-        <nav aria-label={nav.label} className={styles['nav']}>
+        <nav aria-label={nav.label} data-tour="nav" className={styles['nav']}>
           <Link to="/plans" className={styles['navLink']}>
             {nav.plans}
           </Link>
@@ -95,6 +111,15 @@ export function Home() {
           </Link>
         </nav>
       </div>
+      {touring && config && (
+        <Tour
+          onDone={() => {
+            markToured();
+            setTouring(false);
+            document.querySelector<HTMLElement>('[data-tour="start"]')?.focus();
+          }}
+        />
+      )}
     </>
   );
 }

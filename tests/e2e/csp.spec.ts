@@ -33,8 +33,7 @@ test('serves the CSP and the app runs without a single violation', async ({ page
   await expect(page.locator('canvas')).toHaveAttribute('data-loop', 'running');
   await plate.getByRole('button', { name: 'Zoom in', exact: true }).click();
   await plate.getByRole('button', { name: 'Work', exact: true }).click();
-  await expect(page.getByRole('dialog')).toBeVisible();
-  await page.keyboard.press('Escape');
+  await expect(page.locator('[data-part-card]')).toBeVisible();
   await page.goto('/');
 
   await page.getByRole('button', { name: 'Light a line' }).click();

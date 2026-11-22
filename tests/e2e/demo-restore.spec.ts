@@ -125,7 +125,35 @@ test.describe('onboarding', () => {
     await expect(page.getByText(/Add Arohexis to your Home Screen/)).toHaveCount(0);
     await page.getByRole('button', { name: 'Next' }).click();
     await page.getByRole('button', { name: 'Start fresh' }).click();
+    // Setup (ADR-045): names replace the seeded parts; unnamed ones are hidden.
+    await expect(page).toHaveURL(/\/setup$/);
+    const next = page.getByRole('button', { name: 'Continue' });
+    await expect(next).toBeDisabled();
+    await expectAccessible(page);
+    await page.getByLabel('Part 1').fill('Portfolio');
+    await page
+      .getByRole('group', { name: 'Ideas' })
+      .getByRole('button', { name: 'Health' })
+      .click();
+    await expect(page.getByLabel('Part 2')).toHaveValue('Health');
+    await next.click();
     await expect(page).toHaveURL(/\/$/);
+    const parts = page.getByRole('group', { name: 'Parts' });
+    await expect(parts.getByRole('button')).toHaveText(['All', 'Portfolio', 'Health']);
+    // The walkthrough shows once, then focus returns to Light a line.
+    const tour = page.getByRole('dialog', { name: 'Light a line' });
+    await expect(tour).toBeVisible();
+    await expectAccessible(page);
+    for (const title of ['Your parts', 'Look around', 'Still', 'Everything else']) {
+      await page.getByRole('button', { name: 'Next' }).click();
+      await expect(page.getByRole('dialog', { name: title })).toBeVisible();
+    }
+    await page.getByRole('button', { name: 'Done' }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Light a line' })).toBeFocused();
+    await page.reload();
+    await expect(page.getByRole('button', { name: 'Light a line' })).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
     const card = page.getByRole('region', { name: 'Make a plan' });
     await expect(card).toHaveCount(0);
     await page.getByRole('button', { name: 'Light a line' }).click();
@@ -155,6 +183,11 @@ test.describe('onboarding', () => {
     await page.goto('/welcome');
     await page.getByRole('button', { name: 'Next' }).click();
     await page.getByRole('button', { name: 'Start fresh' }).click();
+    await page.getByLabel('Part 1').fill('Work');
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await expect(page.getByRole('dialog', { name: 'Light a line' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
     await page.getByRole('button', { name: 'Light a line' }).click();
     await page.getByRole('button', { name: 'Anxious' }).click();
     await page.getByRole('button', { name: 'Start', exact: true }).click();

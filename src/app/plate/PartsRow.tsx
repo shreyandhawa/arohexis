@@ -15,7 +15,12 @@ export function PartsRow({
   onPreview(partId: string | null): void;
 }) {
   return (
-    <div role="group" aria-label={brain.partsLabel} className={styles['partsRow']}>
+    <div
+      role="group"
+      aria-label={brain.partsLabel}
+      data-tour="parts"
+      className={styles['partsRow']}
+    >
       <Chip pressed={selected === null} className={styles['chip']} onClick={() => onSelect(null)}>
         {brain.controls.all}
       </Chip>

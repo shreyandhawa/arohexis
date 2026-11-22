@@ -6,6 +6,7 @@ const stuck = 'Light a line';
 const region = (page: Page) => page.getByRole('region', { name: 'Brain space' });
 const canvas = (page: Page) => page.locator('canvas');
 const dialog = (page: Page) => page.getByRole('dialog');
+const partCard = (page: Page) => page.locator('[data-part-card]');
 const still = (page: Page) => region(page).getByRole('button', { name: 'Still', exact: true });
 
 /** The app has created its database once it has rendered Home's heading. */
@@ -47,12 +48,11 @@ test.describe('with the renderer chunk blocked', () => {
     for (const name of ['Zoom in', 'Zoom out', 'Turn left', 'Turn right'])
       await region(page).getByRole('button', { name, exact: true }).click();
 
-    // A part chip opens its card.
+    // A part chip shows its card beside the plate.
     await region(page).getByRole('button', { name: 'Work', exact: true }).click();
-    await expect(dialog(page)).toBeVisible();
-    await expect(dialog(page)).toContainText('3 starts');
-    await page.keyboard.press('Escape');
-    await expect(dialog(page)).toBeHidden();
+    await expect(partCard(page)).toContainText('3 starts');
+    await region(page).getByRole('button', { name: 'All', exact: true }).click();
+    await expect(partCard(page)).toHaveCount(0);
 
     // A line opens its card from the text list, with no canvas.
     const lineButton = region(page)
@@ -125,13 +125,11 @@ test('keyboard only', async ({ page }, testInfo) => {
   await page.keyboard.press('-');
   await expect.poll(() => read('data-zoom')).toBeLessThan(zoomed);
 
-  // Enter opens a card, Esc closes it.
+  // Enter shows a part's card beside the plate.
   const work = region(page).getByRole('button', { name: 'Work', exact: true });
   await work.focus();
   await page.keyboard.press('Enter');
-  await expect(dialog(page)).toBeVisible();
-  await page.keyboard.press('Escape');
-  await expect(dialog(page)).toBeHidden();
+  await expect(partCard(page)).toBeVisible();
 
   // S still opens the stuck flow.
   await page.locator('body').click({ position: { x: 1, y: 1 } });
@@ -149,10 +147,9 @@ test(`Home, Started, the card and Settings → Parts are accessible`, async ({ p
   await expectAccessible(page);
 
   await region(page).getByRole('button', { name: 'Work', exact: true }).click();
-  await expect(dialog(page)).toBeVisible();
+  await expect(partCard(page)).toBeVisible();
   await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
   await expectAccessible(page);
-  await page.keyboard.press('Escape');
 
   await page.goto('/settings/parts');
   await expect(page.getByRole('heading', { level: 1, name: 'Parts' })).toBeVisible();

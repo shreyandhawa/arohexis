@@ -60,3 +60,9 @@
 .quiet:active:not(:disabled) {
   background: var(--color-hover);
 }
+
+.button:disabled {
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.5;
+}

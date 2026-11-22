@@ -8,7 +8,7 @@ import type { ArohexisDB } from '../../storage/db';
 import { createEventStore } from '../../storage/eventStore';
 import { openStorage } from '../../storage/open';
 import type { AppDeps } from '../data/DataProvider';
-import { addPart, recolorPart, renamePart, setPartEnabled } from './parts';
+import { addPart, recolorPart, renamePart, setPartEnabled, setUpParts } from './parts';
 import { beginStuck, start, tag } from './stuck';
 
 const opened: ArohexisDB[] = [];
@@ -88,5 +88,34 @@ describe('parts actions', () => {
       d.clock.now(),
     );
     expect(space.parts.find((p) => p.partId === 'work')?.starts).toBe(1);
+  });
+});
+
+describe('setUpParts', () => {
+  const shown = async (d: AppDeps) =>
+    (await d.config.getConfig()).parts
+      .filter((p) => p.enabled)
+      .sort((a, b) => a.order - b.order)
+      .map((p) => p.label);
+
+  it('names the first parts and hides the rest', async () => {
+    const d = await setup();
+    expect(await setUpParts(d, [' Portfolio ', '', 'Gym', 'gym'])).toBeUndefined();
+    expect(await shown(d)).toEqual(['Portfolio', 'Gym']);
+    expect((await d.config.getConfig()).parts).toHaveLength(5);
+  });
+
+  it('a sixth name adds region 6', async () => {
+    const d = await setup();
+    expect(await setUpParts(d, ['A', 'B', 'C', 'D', 'E', 'F', 'G'])).toBeUndefined();
+    const { parts } = await d.config.getConfig();
+    expect(await shown(d)).toEqual(['A', 'B', 'C', 'D', 'E', 'F']);
+    expect(parts.find((p) => p.label === 'F')?.region).toBe(6);
+  });
+
+  it('no names changes nothing', async () => {
+    const d = await setup();
+    expect(await setUpParts(d, ['  '])).toBe('label');
+    expect(await shown(d)).toEqual(['Work', 'Study', 'Health', 'Home', 'Money']);
   });
 });

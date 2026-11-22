@@ -1,0 +1,68 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.swatch {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-pill);
+}
+
+.swatch[data-colour='1'] {
+  background: var(--part-1);
+}
+.swatch[data-colour='2'] {
+  background: var(--part-2);
+}
+.swatch[data-colour='3'] {
+  background: var(--part-3);
+}
+.swatch[data-colour='4'] {
+  background: var(--part-4);
+}
+.swatch[data-colour='5'] {
+  background: var(--part-5);
+}
+.swatch[data-colour='6'] {
+  background: var(--part-6);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--target-min);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-m);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.ideas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}

@@ -6,6 +6,8 @@ export const ZOOM_MAX = 3.2;
 export const BURST_MS = 1800;
 export const TURN_STEP_RAD = Math.PI / 8;
 export const ZOOM_STEP = 1.25;
+/** Zoom a tapped part eases to (ADR-045); above EXPLODE_FROM_ZOOM its region is pulled forward. */
+export const FOCUS_ZOOM = 1.8;
 /** `--motion-slow`: how long the camera takes to ease. */
 export const EASE_MS = 480;
 /** Field point the camera looks at when nothing is selected: the middle of the drawing. */
