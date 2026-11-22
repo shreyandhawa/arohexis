@@ -64,3 +64,9 @@
     box-shadow: 0 0 7px 1px var(--glow);
   }
 }
+
+@media (hover: hover) {
+  .chip:hover:not(:disabled, :active) {
+    transform: translateY(-1px);
+  }
+}

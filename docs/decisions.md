@@ -822,6 +822,16 @@ Statuses:
   5. the copy says what a line is (`brain.empty`, `brain.firstLines`, `welcome.heroCaption`).
 - **Consequences:** line placement is unchanged and no data or export changes. While the plan offer shows, the weekly check-in waits. The two-week trial (`docs/trial.md`) has a pass or fail line.
 
+## ADR-044: Bricolage and Geist, no italics
+
+- Date: 2026-11-22 · Status: **Accepted** (owner approval, 2026-11-22) · Supersedes in part ADR-018 (Typefaces)
+- **Context:** the owner asked for new fonts and no italic text anywhere. The serif display and italic "Started." read as editorial next to the night-sky plate.
+- **Decision:**
+  - Display: Bricolage Grotesque, `@fontsource-variable/bricolage-grotesque` **5.3.0** (opsz and wght axes), tracked at `--tracking-display` (-0.02em). Used for headings, the timer and "Started." (upright, weight 600).
+  - Text: Geist, `@fontsource-variable/geist` **5.3.0** (wght axis). Used for body text and controls.
+  - No italic font files load; `em`, `i` and `cite` render upright, and emphasis is bold.
+- **Consequences:** the Newsreader and Atkinson packages are removed. Colours, contrast, spacing tokens, the CSP and self-hosting are unchanged.
+
 ## ADR-045: Setup, a Home walkthrough, and parts that zoom
 
 - Date: 2026-11-22 · Status: **Accepted** (owner approval, 2026-11-22) · Supersedes in part §8.11 and §16.10
