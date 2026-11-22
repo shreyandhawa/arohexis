@@ -1,137 +1,137 @@
-# Arohexis
+<a id="readme-top"></a>
 
-![Version 2.3](https://img.shields.io/badge/version-2.3-eef1f6?labelColor=0d1017)
-![Installable PWA, works offline](https://img.shields.io/badge/PWA-works%20offline-eef1f6?labelColor=0d1017)
-![Local-first, no accounts](https://img.shields.io/badge/data-on%20your%20device-eef1f6?labelColor=0d1017)
-![No tracking](https://img.shields.io/badge/tracking-none-eef1f6?labelColor=0d1017)
-![React 19](https://img.shields.io/badge/React-19-61dafb?labelColor=0d1017&logo=react)
-![TypeScript 6](https://img.shields.io/badge/TypeScript-6-3178c6?labelColor=0d1017&logo=typescript)
-![Vite 8](https://img.shields.io/badge/Vite-8-646cff?labelColor=0d1017&logo=vite)
+[![Version 2.3](https://img.shields.io/badge/version-2.3-eef1f6?labelColor=0d1017)](https://github.com/shreyandhawa/arohexis)
+[![Installable PWA, works offline](https://img.shields.io/badge/PWA-works%20offline-eef1f6?labelColor=0d1017)](https://arohexis.arohexis.workers.dev/welcome)
+[![Data on your device](https://img.shields.io/badge/data-on%20your%20device-eef1f6?labelColor=0d1017)](#about-the-project)
+[![No tracking](https://img.shields.io/badge/tracking-none-eef1f6?labelColor=0d1017)](#about-the-project)
+[![Issues](https://img.shields.io/github/issues/shreyandhawa/arohexis?labelColor=0d1017&color=eef1f6)](https://github.com/shreyandhawa/arohexis/issues)
+[![Last commit](https://img.shields.io/github/last-commit/shreyandhawa/arohexis?labelColor=0d1017&color=eef1f6)](https://github.com/shreyandhawa/arohexis/commits/main)
 
-<img src="docs/media/home-desktop.png" alt="The demo's Brain space on a laptop, beside the Light a line button" />
+<br />
+<div align="center">
+  <a href="https://github.com/shreyandhawa/arohexis">
+    <img src="docs/media/logo.png" alt="Arohexis logo: a brain with every region lit by lines of starts" width="160" height="160">
+  </a>
 
-Live demo: https://arohexis.arohexis.workers.dev/welcome (tap Explore the demo; it uses a separate database)
+<h3 align="center">Arohexis</h3>
 
-## A short demo
+  <p align="center">
+    A local-first app that trains the moment of starting.
+    <br />
+    <a href="docs/spec.md"><strong>Explore the docs »</strong></a>
+    <br />
+    <br />
+    <a href="https://arohexis.arohexis.workers.dev/welcome">View Demo</a>
+    &middot;
+    <a href="https://github.com/shreyandhawa/arohexis/issues/new?labels=bug">Report Bug</a>
+    &middot;
+    <a href="https://github.com/shreyandhawa/arohexis/issues/new?labels=enhancement">Request Feature</a>
+  </p>
+</div>
 
-|                                           1. Name your parts                                            |                                           2. A walkthrough of Home                                           |                                         3. Tap a part to zoom in                                          |                                    4. Start, and a line lights up                                     |
-| :-----------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------: |
-| <img src="docs/media/setup-phone.png" width="190" alt="Setup: name up to six parts, with idea chips" /> | <img src="docs/media/tour-phone.png" width="190" alt="The walkthrough's first card, ringing Light a line" /> | <img src="docs/media/part-phone.png" width="190" alt="A part zoomed in, with its card under the plate" /> | <img src="docs/media/started-phone.png" width="190" alt="Started, with the timer and the new line" /> |
+<details>
+  <summary>Table of Contents</summary>
+  <ol>
+    <li>
+      <a href="#about-the-project">About The Project</a>
+      <ul>
+        <li><a href="#built-with">Built With</a></li>
+      </ul>
+    </li>
+    <li>
+      <a href="#getting-started">Getting Started</a>
+      <ul>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#installation">Installation</a></li>
+      </ul>
+    </li>
+    <li><a href="#usage">Usage</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#license">License</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="#acknowledgments">Acknowledgments</a></li>
+  </ol>
+</details>
 
-Watch [the short demo](docs/media/demo.webm): tap a part to zoom into its region, go back to All, then Light a line, name the feeling, and start.
+## About The Project
 
-## Ten weeks of starts
+GitHub: [github.com/shreyandhawa/arohexis](https://github.com/shreyandhawa/arohexis)
 
-<img src="docs/media/brain-ten-weeks.png" alt="The demo's Brain space after ten weeks: bright, thick plan lines where starts happened at the same time and place, and thin start lines elsewhere" />
+[![Arohexis Home on a laptop, labelled: Brain space, starts and lines, turn and zoom, your parts, Still, the part card, Light a line, this week, and the main navigation](docs/media/anatomy.png)](https://arohexis.arohexis.workers.dev/welcome)
 
-This is the demo after ten weeks of made-up starts. Each start lights one line. A plan's line grows thicker each time you start it at its time and place, so the thickest lines are the ones started most consistently. Start lines with no plan stay thin. Nothing fades or is taken away, so a quiet week leaves the picture as it was.
+Arohexis is an installable web app for people who put things off. It has no task list. It helps with one moment: the start. When you're stuck, you tap Light a line, name what you're feeling, and take a two-minute first step. Each start lights a line in a picture shaped like a brain.
 
-Arohexis is a local-first, installable web app for chronic procrastination. It trains the moment of starting.
+Here's why:
 
-When you are stuck, you tap one button and name the feeling. Arohexis shows a short response matched to that feeling, and you take a two-minute first step. Each start is rewarded right away.
+- Starting is the hard part, so the app trains that one moment and nothing else.
+- You see your starts add up. Every start lights a line, and a plan's line grows thicker each time you start at its time and place. The logo above is what that looks like after weeks of steady starts.
+- Your data stays on your device. There are no accounts, no tracking and no requests to other sites, and it works offline.
 
-## Install on iPhone
+Arohexis is a self-help tool, not medical advice, and it doesn't diagnose or treat any condition.
 
-1. Open the app's address in Safari.
-2. Tap Share, then Add to Home Screen.
-3. Open Arohexis from the Home Screen. It works offline after the first load.
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-Android and desktop browsers can install it too, from the browser's install option.
+### Built With
 
-## What it is and isn't
+[![React](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript_6-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite_8-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vite.dev/)
+[![Dexie](https://img.shields.io/badge/Dexie-IndexedDB-0d1017?style=for-the-badge)](https://dexie.org/)
+[![Valibot](https://img.shields.io/badge/Valibot-0d1017?style=for-the-badge)](https://valibot.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Playwright](https://img.shields.io/badge/Playwright-2EAD33?style=for-the-badge&logo=playwright&logoColor=white)](https://playwright.dev/)
 
-Arohexis is a button, Light a line, with a timer, a reward and a record of what helped. It also has Brain space, if-then plans, Insights and a weekly check-in. Feelings, responses, obstacles and parts are all editable.
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-It is not a task manager. It has no task lists, due dates or completion tracking. It has no accounts, no cloud sync, no AI chat, no social features and no app or site blocking.
+## Getting Started
 
-"Training" here means ordinary learning: the same cue, a new response, an immediate reward, repeated until it is automatic. Arohexis makes no claims about brain change and does not diagnose or treat any condition.
+To run a copy locally, follow these steps.
 
-## Local-first and privacy
+### Prerequisites
 
-All data stays on your device, in the browser's IndexedDB. There are no accounts, no analytics, no error reporting service, and no third-party fonts or scripts. The app makes no requests to any other site, and a Content Security Policy enforces that. Back up or move your data with the export and import in Settings. The repository never contains real user data.
+- Node 26 (the version in `.nvmrc`)
+- npm
 
-## Brain space
+### Installation
 
-Brain space draws your starts as lines of light in the shape of a brain. It's a picture of your starts, not a scan, and the shape is the same for everyone. Arohexis makes no claim that your brain changes. Still turns the motion off.
+1. Clone the repo
+   ```sh
+   git clone https://github.com/shreyandhawa/arohexis.git
+   ```
+2. Install the packages
+   ```sh
+   npm install
+   ```
+3. Start the dev server, then open the address it prints
+   ```sh
+   npm run dev
+   ```
+4. Run the tests
+   ```sh
+   npm test
+   ```
 
-## Night sky
+To install it on a phone, open the app in Safari on iPhone and tap Share, then Add to Home Screen. On Android and desktop, use the browser's install option.
 
-The app is dark only and built around the light of the plate. Replay (`/replay`) shows the light arriving start by start. It is cumulative only and never moves light. Here is [a recording of Replay](docs/media/replay.webm). The Welcome screen plays the demo brain lighting up once.
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-## Demo
+## Usage
 
-Explore the demo from the Welcome screen to see ten weeks of made-up data. It uses a separate database and never touches your own.
+|                                           1. Name your parts                                            |                                        2. Follow the walkthrough                                        |                                         3. Tap a part to zoom in                                          |                                    4. Start, and a line lights up                                     |
+| :-----------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------: |
+| <img src="docs/media/setup-phone.png" width="190" alt="Setup: name up to six parts, with idea chips" /> | <img src="docs/media/tour-phone.png" width="190" alt="The walkthrough's first card, on Light a line" /> | <img src="docs/media/part-phone.png" width="190" alt="A part zoomed in, with its card under the plate" /> | <img src="docs/media/started-phone.png" width="190" alt="Started, with the timer and the new line" /> |
 
-## Why it works
+1. **Name your parts.** The first time you open Arohexis, name up to six parts of your life, such as Work or Study. Each gets its own region of the picture.
+2. **Follow the walkthrough.** Home shows what each control does, once. You can see it again from About.
+3. **Tap a part.** The picture zooms into that part's region, and its card shows your starts, plans and what to focus on. All zooms back out.
+4. **Light a line when you're stuck.** Name the feeling, read a short response, and take a two-minute first step. The new line lights up.
 
-Arohexis states only what these sources support, with the caveats shown.
+Still stops all motion. Replay plays your starts back in order, and Insights shows your patterns by week and hour.
 
-**Procrastination is mostly about avoiding the bad feeling a task brings: a short-term mood repair.**
+Watch [the short demo](docs/media/demo.webm), or open the [live demo](https://arohexis.arohexis.workers.dev/welcome) and tap Explore the demo to see ten weeks of made-up starts. The demo uses its own database and never touches yours.
 
-- Sirois, F. & Pychyl, T. (2013). Procrastination and the priority of short-term mood regulation. _Social and Personality Psychology Compass_, 7(2), 115-127. doi:10.1111/spc3.12011
-- APA _Speaking of Psychology_, "Why we procrastinate and what to do about it," with Fuschia Sirois (2022): https://www.apa.org/news/podcasts/speaking-of-psychology/procrastinate
-
-Caveat: theoretical review. The podcast is an interview, not a study.
-
-**People discount future effort more steeply than future reward.**
-
-- Le Bouc, R. & Pessiglione, M. (2022). A neuro-computational account of procrastination behavior. _Nature Communications_, 13, 5639. https://doi.org/10.1038/s41467-022-33119-w
-
-Caveat: small lab study (N=51).
-
-**Psychological treatments show small benefits for procrastination; CBT looks promising in a few trials.**
-
-- Rozental, A. et al. (2018). Targeting procrastination using psychological treatments: a systematic review and meta-analysis. _Frontiers in Psychology_, 9, 1588. https://www.frontiersin.org/article/10.3389/fpsyg.2018.01588/full
-
-Caveat: overall g=0.34. The CBT estimate (g=0.55) rests on 3 studies, and the authors call CBT's superiority "unclear".
-
-**If-then plans help people act on their goals.**
-
-- Gollwitzer, P. M. & Sheeran, P. (2006). Implementation intentions and goal achievement: a meta-analysis of effects and processes. _Advances in Experimental Social Psychology_, 38, 69-119. doi:10.1016/S0065-2601(06)38002-1
-
-Caveat: d=.65 across 94 tests, on goal attainment in general rather than procrastination.
-
-**Forgiving yourself for procrastinating is associated with less procrastination later.**
-
-- Wohl, M. J. A., Pychyl, T. A. & Bennett, S. H. (2010). I forgive myself, now I can study. _Personality and Individual Differences_, 48(7), 803-808. https://doi.org/10.1016/j.paid.2010.01.029
-
-Caveat: correlational; one student sample.
-
-**In one review, habits took a median of about two months (59-66 days) to form, with a range of 4-335 days.**
-
-- Singh, Murphy, Maher & Smith (2024). Time to form a habit: a systematic review and meta-analysis of health behaviour habit formation and its determinants. _Healthcare_, 12(23), 2488. https://doi.org/10.3390/healthcare12232488
-
-Caveat: only 4 studies reported timing; a stable cue is thought to help but was not tested.
-
-**Naming your feelings and breaking a task into a first step made people feel more likely to start.**
-
-- Garg, Shelat & Schooler (2025). "Now I feel like I'm going to get to it soon…" _BMC Psychology_, 13, 1158 (RCT, N=1,035).
-
-Caveat: measured self-reported likelihood, not actual completion.
-
-**The weekly check-in uses a published habit measure.**
-
-- Gardner, B., Abraham, C., Lally, P. & de Bruijn, G.-J. (2012). Towards parsimony in habit measurement: the Self-Report Behavioural Automaticity Index. _IJBNPA_, 9, 102. doi:10.1186/1479-5868-9-102 (CC BY)
-
-Caveat: self-report.
-
-**The two-minute start.** No source. It is presented as a practical technique. No trial has tested it.
-
-**Correction to the original brief.** The brief said "CBT-based treatment and if-then plans have the best trial support" and cited Rozental et al. (2018). That paper doesn't support the claim: it found small effects overall and did not pool implementation intentions. We use the softer wording above and cite Gollwitzer & Sheeran (2006) for if-then plans. See ADR-010 in [docs/decisions.md](docs/decisions.md).
-
-## Not medical advice
-
-> Arohexis is a self-help tool, not medical advice. It doesn't diagnose or treat ADHD, depression, anxiety or any other condition. If procrastination is seriously affecting your life, consider talking to a qualified professional.
-
-## The stack
-
-- React 19, Vite 8 and strict TypeScript 6, built as an offline-first PWA.
-- Dexie for IndexedDB, Valibot for import validation, and hand-written CSS tokens with CSS Modules.
-- Brain space draws with canvas 2D and no library.
-- `src/domain` is pure TypeScript with no React, Dexie, DOM or network. Its own `tsconfig` has no DOM lib, and ESLint bans UI and storage imports there.
-- `src/storage` holds the Dexie database and the repositories. `src/app` holds routes, screens and actions. `src/copy` holds every user-facing string, and a test enforces the copy rules.
-
-The full design is in [docs/spec.md](docs/spec.md).
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Architecture
 
@@ -147,52 +147,51 @@ flowchart LR
   copy[src/copy] --> app
 ```
 
-Arrows point from the imported layer to the one that imports it. The domain holds events, attempts and projections such as `projectBrainSpace` and `projectAt`. Geometry and storage both import it, and neither imports the other. The Brain space renderer loads on demand.
+Arrows point from the imported layer to the one that imports it.
 
-## Develop and test
+- `src/domain`: events, attempts and projections such as `projectBrainSpace`. Pure TypeScript with no React, storage, DOM or network.
+- `src/geometry`: the seeded brain-shaped field and where each line goes.
+- `src/storage`: the Dexie database in IndexedDB and its repositories.
+- `src/app/brain`: the canvas 2D renderer for Brain space, loaded on demand.
+- `src/app`: routes, screens and the actions that write events.
+- `src/copy`: every user-facing string, checked by a test.
 
-Use the Node version in `.nvmrc` (26).
+The full design is in [docs/spec.md](docs/spec.md), and the reasons for each decision are in [docs/decisions.md](docs/decisions.md).
 
-```sh
-npm install
-npm run dev
-```
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-| Script                               | What it does                                                                            |
-| ------------------------------------ | --------------------------------------------------------------------------------------- |
-| `npm run dev`                        | Start the Vite dev server                                                               |
-| `npm run build`                      | Type-check and build for production                                                     |
-| `npm run preview`                    | Serve the production build locally                                                      |
-| `npm run lint`                       | Run ESLint                                                                              |
-| `npm run format:check`               | Check formatting with Prettier                                                          |
-| `npm run typecheck`                  | Type-check the app and the pure domain layer                                            |
-| `npm test`                           | Run the Vitest unit tests                                                               |
-| `npm run test:watch`                 | Run Vitest in watch mode                                                                |
-| `npm run e2e`                        | Run the Playwright end-to-end tests                                                     |
-| `node scripts/check-bundle-size.mjs` | Check the built bundle against its size budget                                          |
-| `node scripts/capture-showcase.mjs`  | Capture the README stills, og.png and the Replay and demo recordings; run after a build |
+## Roadmap
 
-Locally, run the end-to-end tests on Android and desktop:
+- [x] Light a line: one button, a feeling, a two-minute first step
+- [x] Brain space, Replay and Insights
+- [x] If-then plans with Add to calendar
+- [x] Every start lights a line
+- [x] Setup, a Home walkthrough, and parts that zoom
+- [ ] The two-week trial and its pass line ([docs/trial.md](docs/trial.md))
+- [ ] Push reminders, if the trial shows the calendar cue isn't enough
 
-```sh
-npx playwright test --project=android --project=desktop
-```
+See the [open issues](https://github.com/shreyandhawa/arohexis/issues) for proposed features and known issues.
 
-The iPhone project (WebKit) runs in CI. CI's Linux WebKit is not an iPhone, so timings there say nothing about the device. See ADR-029 in [docs/decisions.md](docs/decisions.md).
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-## Deploy
-
-Every push to `main` that passes CI deploys to Cloudflare Workers Static Assets with `wrangler deploy`. Pull requests get preview URLs. The deploy settings are in `wrangler.jsonc` and `.github/workflows/ci.yml`.
-
-## Licence
+## License
 
 No licence file is present, so all rights are reserved.
 
-## Project docs
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-- [docs/spec.md](docs/spec.md): the design spec.
-- [docs/decisions.md](docs/decisions.md): the decision log (ADRs).
-- [docs/plan.md](docs/plan.md): the implementation plan and milestones.
-- [docs/case-study.md](docs/case-study.md): the decisions and what changed.
-- [docs/v1-success-criteria.md](docs/v1-success-criteria.md): the v1.0 success criteria and their evidence.
-- [docs/v2-success-criteria.md](docs/v2-success-criteria.md): the v2.0 "Night sky" success criteria and their evidence.
+## Contact
+
+[@shreyandhawa](https://github.com/shreyandhawa) on GitHub
+
+Project link: [github.com/shreyandhawa/arohexis](https://github.com/shreyandhawa/arohexis)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+## Acknowledgments
+
+- [Best-README-Template](https://github.com/othneildrew/Best-README-Template), the layout of this README
+- [Shields.io](https://shields.io), the badges
+- [Fontsource](https://fontsource.org), the self-hosted fonts
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>

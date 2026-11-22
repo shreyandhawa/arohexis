@@ -168,3 +168,27 @@ export function full(now: number): Seed {
   items.push({ undone: false }, { undone: false });
   return { events: attemptEvents(items, now), parts, plans };
 }
+
+/** Every region lit at full strength: six parts, a Well-worn plan each (42 starts on cue), and start lines. */
+export function lit(now: number): Seed {
+  const parts = [{ id: 'extra', label: 'Extra', order: 6, enabled: true, colour: 6, region: 6 }];
+  const ids = ['work', 'study', 'health', 'home', 'money', 'extra'] as const;
+  const plans = ids.map((partId, i) => ({
+    ...PLAN_BASE,
+    id: `plan-${partId}`,
+    partId,
+    createdAt: now - (60 + i) * 24 * 60 * 60 * 1000,
+  }));
+  const items: AttemptItem[] = [];
+  for (const partId of ids) {
+    for (let i = 0; i < 42; i += 1)
+      items.push({
+        part: [partId, partId],
+        undone: false,
+        plan: { planId: `plan-${partId}`, occurrence: `plan-${partId}-${i}` },
+      });
+    for (let i = 0; i < 4; i += 1) items.push({ part: [partId, partId], undone: false });
+  }
+  items.push({ undone: false }, { undone: false });
+  return { events: attemptEvents(items, now), parts, plans };
+}
