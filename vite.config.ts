@@ -79,7 +79,9 @@ export default defineConfig({
         // are needed; the other subsets load on demand and are not precached.
         globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}', 'assets/*-latin-*.woff2'],
         // The link-preview image is for other sites' crawlers, never needed offline.
-        globIgnores: ['og.png'],
+        // iOS fetches its one matching startup image when the app is added to the
+        // Home Screen, so the 26 splash files stay out of everyone's precache.
+        globIgnores: ['og.png', 'apple-splash*'],
         cleanupOutdatedCaches: true,
         // Takes control of the first visit, so offline works without a second load.
         // skipWaiting stays off: an update waits for the person to press Reload.

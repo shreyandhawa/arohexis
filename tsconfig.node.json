@@ -12,6 +12,7 @@
     "playwright.config.ts",
     "config",
     "pwa-assets.config.ts",
+    "pwa-splash.config.ts",
     "eslint.config.js",
     "tests"
   ],
