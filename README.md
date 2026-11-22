@@ -186,4 +186,3 @@ No licence file is present, so all rights are reserved.
 Project link: [github.com/shreyandhawa/arohexis](https://github.com/shreyandhawa/arohexis)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
