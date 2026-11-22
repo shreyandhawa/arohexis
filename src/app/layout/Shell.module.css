@@ -49,14 +49,16 @@
 .title {
   margin: 0;
   font-family: var(--font-display);
+  letter-spacing: var(--tracking-display);
   font-size: var(--step-3);
-  font-weight: 500;
-  line-height: 1.15;
+  font-weight: 600;
+  line-height: 1.1;
 }
 
 .subtitle {
   margin: 0;
   font-family: var(--font-display);
+  letter-spacing: var(--tracking-display);
   font-size: var(--step-1);
   font-weight: 500;
 }
@@ -73,7 +75,15 @@
   align-items: center;
   color: var(--color-text);
   text-decoration: underline;
+  text-decoration-color: var(--color-border);
   text-underline-offset: 0.2em;
+  transition: text-decoration-color var(--motion-quick) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .link:hover {
+    text-decoration-color: var(--color-text);
+  }
 }
 
 .list {
@@ -106,8 +116,14 @@
   text-decoration: none;
 }
 
-.listLink:hover {
-  background: var(--color-hover);
+.listLink {
+  transition: background-color var(--motion-quick) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .listLink:hover {
+    background: var(--color-hover);
+  }
 }
 
 .nav {
@@ -127,11 +143,17 @@
   text-decoration: none;
   transition:
     background-color var(--motion-quick) var(--ease-standard),
-    box-shadow var(--motion-quick) var(--ease-standard);
+    box-shadow var(--motion-quick) var(--ease-standard),
+    transform var(--motion-quick) var(--ease-standard);
+}
+
+.navLink:active {
+  transform: scale(0.97);
 }
 
 @media (hover: hover) {
-  .navLink:hover {
+  .navLink:hover:not(:active) {
+    transform: translateY(-1px);
     background: var(--color-hover);
     box-shadow: 0 0 14px var(--color-glow);
   }
@@ -190,5 +212,24 @@
 
   .mainHome {
     min-height: 0;
+  }
+}
+
+/* Each screen's content settles in once when the route mounts; Home's plate stays put.
+   :where keeps this weaker than a screen's own entrance. */
+:where(.main:not(.mainHome) > *) {
+  animation: enter var(--motion-calm) var(--ease-standard) both;
+}
+
+@keyframes enter {
+  /* Transform only: text stays at full contrast from the first frame. */
+  from {
+    transform: translateY(6px);
+  }
+}
+
+@media (min-width: 30rem) {
+  .page:not(.pageHome) {
+    padding-inline: var(--space-5);
   }
 }

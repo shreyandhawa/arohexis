@@ -124,7 +124,7 @@ function Steps({ target, onFinished }: { target: Target; onFinished(): void }) {
           copy.updated
         ) : (
           <>
-            {copy.happened} <em>{label}</em>.
+            {copy.happened} <strong>{label}</strong>.
           </>
         )}
       </h2>

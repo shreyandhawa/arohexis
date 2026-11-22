@@ -19,6 +19,25 @@ body {
   font-family: var(--font-text);
   font-size: var(--step-0);
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ADR-044: nothing renders italic; emphasis is bold. */
+em,
+i,
+cite {
+  font-style: normal;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
 }
 
 .numeric {
@@ -44,6 +63,7 @@ body {
   *,
   *::before,
   *::after {
+    animation-duration: 0ms !important;
     transform: none !important;
     filter: none !important;
   }

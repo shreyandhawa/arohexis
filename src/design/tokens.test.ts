@@ -139,9 +139,9 @@ describe('semantic tokens', () => {
     for (const name of names) expect(root, name).toHaveProperty([name]);
   });
 
-  it('uses the ADR-018 fonts with fallbacks', () => {
-    expect(root['--font-display']).toMatch(/^'Newsreader Variable',.*serif$/);
-    expect(root['--font-text']).toMatch(/^'Atkinson Hyperlegible Next Variable',.*sans-serif$/);
+  it('uses the ADR-044 fonts with fallbacks', () => {
+    expect(root['--font-display']).toMatch(/^'Bricolage Grotesque Variable',.*sans-serif$/);
+    expect(root['--font-text']).toMatch(/^'Geist Variable',.*sans-serif$/);
   });
 
   it('uses the ADR-018 shape, motion and spacing values', () => {

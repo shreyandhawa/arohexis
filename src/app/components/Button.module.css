@@ -45,14 +45,16 @@
 }
 
 @media (hover: hover) {
-  .primary:hover:not(:disabled) {
+  .primary:hover:not(:disabled, :active) {
+    transform: translateY(-1px);
     box-shadow: 0 0 40px var(--color-glow);
   }
 }
 
 /* Hover only where a pointer can hover, so a tap on iOS does not leave it stuck on. */
 @media (hover: hover) {
-  .quiet:hover {
+  .quiet:hover:not(:disabled, :active) {
+    transform: translateY(-1px);
     background: var(--color-hover);
   }
 }

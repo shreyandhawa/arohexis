@@ -27,8 +27,8 @@
 .firstStep {
   margin: 0;
   font-family: var(--font-display);
+  letter-spacing: var(--tracking-display);
   font-size: var(--step-1);
-  font-style: italic;
   font-weight: 400;
 }
 

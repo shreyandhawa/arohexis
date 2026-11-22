@@ -47,10 +47,10 @@
   --part-5: hsl(262 92% 72%);
   --part-6: hsl(225 90% 76%);
 
-  /* Type. */
-  --font-display: 'Newsreader Variable', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
-  --font-text:
-    'Atkinson Hyperlegible Next Variable', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  /* Type (ADR-044). */
+  --font-display: 'Bricolage Grotesque Variable', system-ui, 'Segoe UI', sans-serif;
+  --font-text: 'Geist Variable', system-ui, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --tracking-display: -0.02em;
 
   /* Fluid scale: ratio 4/3, base 17px at 375px rising to 18px at 1280px. */
   --step--1: clamp(12.75px, 12.439px + 0.0829vw, 13.5px);
