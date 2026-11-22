@@ -827,7 +827,7 @@ Statuses:
 - Date: 2026-11-22 · Status: **Accepted** (owner approval, 2026-11-22) · Supersedes in part §8.11 and §16.10
 - **Context:** the owner asked for a new user to name their own parts before Home, for a walkthrough of Home's controls like most apps have, and for a part chip to zoom into its region with its card beside it rather than in a sheet.
 - **Decision:**
-  1. Start fresh opens `/setup`: six name fields and idea chips. Seeding is unchanged; `setUpParts` gives the seeded parts the typed names in order, hides (disables) the unnamed ones, and adds a sixth. Blank and repeated names are dropped.
+  1. Start fresh opens `/setup`: six name fields and idea chips. Seeding is unchanged; `setUpParts` gives the seeded parts the typed names in order, hides (disables) the unnamed ones, and adds a sixth. Blank and repeated names are dropped. Until Setup is saved (`arohexis:setup`), an empty main record opens Setup from Home, so leaving the demo first still leads there.
   2. Home shows coach marks once per device (`arohexis:toured`, beside `arohexis:welcomed`): Light a line, parts, turn controls, Still, navigation. Non-modal; About can show it again.
   3. Tapping a part zooms to at least `FOCUS_ZOOM` (1.8) as well as turning to it; All restores the earlier zoom. The part card moves from a modal sheet to Home's card slot, first in priority. The line card stays a sheet.
 - **Consequences:** onboarding is longer than §8.11's three steps, but Setup is one screen and the walkthrough is skippable. No data, schema or export changes. The part card no longer traps focus; it follows the chips in tab order, so the canvas is still never needed.

@@ -4,6 +4,7 @@ export type DbChoice = 'main' | 'demo';
 const DB_KEY = 'arohexis:db';
 const WELCOMED_KEY = 'arohexis:welcomed';
 const TOURED_KEY = 'arohexis:toured';
+const SET_UP_KEY = 'arohexis:setup';
 
 /** The pointer is advisory: any failure or unknown value falls back to the main database. */
 export function readDbChoice(): DbChoice {
@@ -57,5 +58,22 @@ export function markToured(toured = true): void {
     else localStorage.removeItem(TOURED_KEY);
   } catch {
     // The walkthrough may show again, or not; harmless.
+  }
+}
+
+/** Whether the main record's parts were named on Setup (ADR-045). If storage fails, Setup is skipped. */
+export function hasSetUp(): boolean {
+  try {
+    return localStorage.getItem(SET_UP_KEY) === '1';
+  } catch {
+    return true;
+  }
+}
+
+export function markSetUp(): void {
+  try {
+    localStorage.setItem(SET_UP_KEY, '1');
+  } catch {
+    // Setup may show again while the record is empty; harmless.
   }
 }

@@ -5,6 +5,7 @@ import { PART_LABEL_MAX } from '../../domain/parts';
 import { setUpParts } from '../actions/parts';
 import { Button } from '../components/Button';
 import chip from '../components/Chip.module.css';
+import { markSetUp } from '../data/dbChoice';
 import { useData } from '../data/DataProvider';
 import shell from '../layout/Shell.module.css';
 import welcome from './Welcome.module.css';
@@ -29,8 +30,10 @@ export function Setup() {
     if (!ready) return;
     setUnsaved(false);
     try {
-      if ((await setUpParts(deps, names)) === undefined) void navigate('/', { replace: true });
-      else setUnsaved(true);
+      if ((await setUpParts(deps, names)) === undefined) {
+        markSetUp();
+        void navigate('/', { replace: true });
+      } else setUnsaved(true);
     } catch (error) {
       console.error(error);
       setUnsaved(true);

@@ -17,7 +17,7 @@ import { usePlanState } from '../hooks/usePlanState';
 import { StuckButton } from '../layout/StuckButton';
 import type { ShellContext } from '../layout/Shell';
 import { expireOccurrences } from '../actions/lapse';
-import { hasToured, hasWelcomed, markToured } from '../data/dbChoice';
+import { hasSetUp, hasToured, hasWelcomed, markToured } from '../data/dbChoice';
 import { Tour } from '../layout/Tour';
 import { useData } from '../data/DataProvider';
 import { LapseSheet } from '../plans/LapseSheet';
@@ -55,6 +55,10 @@ export function Home() {
   // First run: no data in the main database and onboarding not yet seen (spec §8.11).
   if (hasEvents === false && deps.mode === 'main' && !hasWelcomed()) {
     return <Navigate to="/welcome" replace />;
+  }
+  // An empty main record whose parts were never named goes to Setup, also after leaving the demo (ADR-045).
+  if (hasEvents === false && deps.mode === 'main' && !hasSetUp()) {
+    return <Navigate to="/setup" replace />;
   }
   return (
     <>

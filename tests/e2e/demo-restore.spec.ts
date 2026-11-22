@@ -207,6 +207,24 @@ test.describe('onboarding', () => {
     await expect(page.getByRole('region', { name: 'Demo' })).toBeVisible();
   });
 
+  test('leaving the demo before any start opens Setup', async ({ page }) => {
+    await page.goto('/welcome');
+    await page.getByRole('button', { name: 'Explore the demo' }).click();
+    const ribbon = page.getByRole('region', { name: 'Demo' });
+    await expect(ribbon).toBeVisible();
+    await page.keyboard.press('Escape'); // the walkthrough, shown once
+    await ribbon.getByRole('button', { name: 'Exit demo' }).click();
+    await expect(page).toHaveURL(/\/setup$/);
+    await page.getByLabel('Part 1').fill('Portfolio');
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await expect(page).toHaveURL(/\/$/);
+    await page.reload();
+    await expect(page).toHaveURL(/\/$/);
+    await expect(
+      page.getByRole('group', { name: 'Parts' }).getByRole('button', { name: 'Portfolio' }),
+    ).toBeVisible();
+  });
+
   test('the Welcome hero plays without touching any database', async ({ page }) => {
     await page.goto('/welcome');
     await expect(
