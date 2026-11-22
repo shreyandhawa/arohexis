@@ -50,7 +50,6 @@
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
 </details>
 
@@ -188,10 +187,3 @@ Project link: [github.com/shreyandhawa/arohexis](https://github.com/shreyandhawa
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-## Acknowledgments
-
-- [Best-README-Template](https://github.com/othneildrew/Best-README-Template), the layout of this README
-- [Shields.io](https://shields.io), the badges
-- [Fontsource](https://fontsource.org), the self-hosted fonts
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
