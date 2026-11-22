@@ -1,9 +1,14 @@
 import { about, evidence } from '../../copy/about';
 import { basisLabels } from '../../copy/lists';
 import { BASIS_SOURCES, CHECKIN_ATTRIBUTION } from '../../domain/defaults';
+import { useNavigate } from 'react-router';
+import { tour } from '../../copy/tour';
+import { Button } from '../components/Button';
+import { markToured } from '../data/dbChoice';
 import styles from '../layout/Shell.module.css';
 
 export function About() {
+  const navigate = useNavigate();
   return (
     <>
       <h1 className={styles['title']}>{about.title}</h1>
@@ -48,6 +53,15 @@ export function About() {
       </ul>
       <h2 className={styles['subtitle']}>{about.checkinTitle}</h2>
       <p className={styles['muted']}>{CHECKIN_ATTRIBUTION}</p>
+      <Button
+        variant="quiet"
+        onClick={() => {
+          markToured(false);
+          void navigate('/');
+        }}
+      >
+        {tour.again}
+      </Button>
       <p className={styles['muted']}>{about.version(__APP_VERSION__, __BUILD_SHA__)}</p>
     </>
   );

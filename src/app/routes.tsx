@@ -26,6 +26,7 @@ const SettingsObstacles = lazy(() =>
   import('./screens/SettingsObstacles').then((m) => ({ default: m.SettingsObstacles })),
 );
 const Welcome = lazy(() => import('./screens/Welcome').then((m) => ({ default: m.Welcome })));
+const Setup = lazy(() => import('./screens/Setup').then((m) => ({ default: m.Setup })));
 
 const Insights = lazy(() => import('./screens/Insights').then((m) => ({ default: m.Insights })));
 const Checkin = lazy(() => import('./screens/Checkin').then((m) => ({ default: m.Checkin })));
@@ -39,6 +40,14 @@ export function AppRoutes() {
         element={
           <Suspense fallback={null}>
             <Welcome />
+          </Suspense>
+        }
+      />
+      <Route
+        path="setup"
+        element={
+          <Suspense fallback={null}>
+            <Setup />
           </Suspense>
         }
       />

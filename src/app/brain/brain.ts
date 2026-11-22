@@ -20,6 +20,7 @@ import {
   BRAIN_CENTRE,
   BURST_MS,
   EASE_MS,
+  FOCUS_ZOOM,
   GLOW_ALPHA,
   MIN_STRIP_BAND,
   SETTLE_MS,
@@ -140,6 +141,8 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   let sceneVersion = 0;
   let cam: Camera = { ...START_CAMERA };
   let target: Camera = { ...START_CAMERA };
+  /** The zoom before a part was focused, restored when All clears it. */
+  let unfocusZoom: number | null = null;
   /** Where each ease started, and when (null until its first frame). Turning and zooming keep their own clocks. */
   let orbitFrom = {
     yaw: START_CAMERA.yaw,
@@ -834,8 +837,12 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
   function faceRegion(partId: string, parts: readonly Part[]): void {
     const part = parts.find((p) => p.id === partId);
     const at = part && rig?.labelAt.get(regionKey(part.region));
-    if (at) aim(facing(at, target));
-    else aim(target);
+    if (!at) {
+      aim(target);
+      return;
+    }
+    unfocusZoom ??= target.zoom;
+    aim({ ...facing(at, target), zoom: Math.max(target.zoom, FOCUS_ZOOM) });
   }
 
   /** Eases the camera so a line's side faces the viewer. */
@@ -872,7 +879,11 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Options): BrainR
       if (landing) faceLine(next.land!);
       else if (!strip && next.selected !== before) {
         if (next.selected !== null) faceRegion(next.selected, next.parts);
-        else aim(target); // the look-at returns to the centre
+        else {
+          // The look-at returns to the centre, and the zoom to where it was before the part.
+          aim({ ...target, zoom: unfocusZoom ?? target.zoom });
+          unfocusZoom = null;
+        }
       }
       syncTouchAction();
       request();

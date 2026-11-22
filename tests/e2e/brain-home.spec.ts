@@ -286,13 +286,12 @@ test('a part chip selects its part, and All clears it', async ({ page }) => {
   await work.click();
   await expect(work).toHaveAttribute('aria-pressed', 'true');
   await expect(all).toHaveAttribute('aria-pressed', 'false');
-  // The chip also opened the part's card, which loads on first use; closing it keeps the part selected.
-  await expect(page.getByRole('dialog')).toBeVisible();
-  await page.keyboard.press('Escape');
-  await expect(work).toHaveAttribute('aria-pressed', 'true');
+  // The chip also shows the part's card beside the plate, with no sheet (ADR-045).
+  const card = page.locator('[data-part-card]');
+  await expect(card.getByRole('heading', { name: 'Work' })).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   await plate.getByRole('button', { name: 'Study', exact: true }).click();
-  await expect(page.getByRole('dialog')).toBeVisible();
-  await page.keyboard.press('Escape');
+  await expect(card.getByRole('heading', { name: 'Study' })).toBeVisible();
   await expect(work).toHaveAttribute('aria-pressed', 'false');
   await all.click();
   await expect(all).toHaveAttribute('aria-pressed', 'true');

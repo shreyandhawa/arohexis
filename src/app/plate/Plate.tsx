@@ -27,8 +27,8 @@ import { useRenderer } from './useRenderer';
 import styles from './Plate.module.css';
 
 /** If the sheets' chunk cannot load (offline, or a stale cache after an update), say so and close. */
-function SheetsFailed({ cardFor, lineFor, onFailed }: SheetsProps) {
-  const open = cardFor !== null || lineFor !== null;
+function SheetsFailed({ lineFor, onFailed }: SheetsProps) {
+  const open = lineFor !== null;
   useEffect(() => {
     if (open) onFailed();
   }, [open, onFailed]);
@@ -62,8 +62,6 @@ export function Plate({ selected, onSelect, notice, data: frame, lands }: Props)
   const canvas = useRef<HTMLCanvasElement>(null);
   const root = useRef<HTMLElement>(null);
   const [opener, setOpener] = useState<HTMLElement | null>(null);
-  // The card opens on a tap; closing it keeps the part selected until All clears it.
-  const [cardFor, setCardFor] = useState<string | null>(null);
   // Hovering or focusing a chip previews its part. It opens no card.
   const [lineFor, setLineFor] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -73,7 +71,6 @@ export function Plate({ selected, onSelect, notice, data: frame, lands }: Props)
   const [armed, setArmed] = useState(false);
   const [sheetsFailed, setSheetsFailed] = useState(false);
   const onSheetsFailed = useCallback(() => {
-    setCardFor(null);
     setLineFor(null);
     setSheetsFailed(true);
   }, []);
@@ -89,15 +86,8 @@ export function Plate({ selected, onSelect, notice, data: frame, lands }: Props)
       },
     [data, selected, still, preview, land],
   );
-  // Tapping a part, on the plate or its chip, opens its card. Focus returns to that part's chip.
+  // Tapping a part, on the plate or its chip, zooms to it; Home shows its card beside the plate (ADR-045).
   function select(partId: string | null) {
-    setCardFor(partId);
-    if (partId !== null) {
-      setSheetsFailed(false);
-      setArmed(true);
-      const chips = root.current?.querySelectorAll<HTMLElement>('[data-part-id]');
-      setOpener([...(chips ?? [])].find((c) => c.dataset['partId'] === partId) ?? null);
-    }
     onSelect(partId);
   }
 
@@ -185,7 +175,7 @@ export function Plate({ selected, onSelect, notice, data: frame, lands }: Props)
                   <> {brain.firstLines}</>
                 )}
               </p>
-              <Chip pressed={still} className={styles['still']} onClick={toggle}>
+              <Chip pressed={still} data-tour="still" className={styles['still']} onClick={toggle}>
                 {brain.controls.still}
               </Chip>
               <TurnControls onTurn={renderer.turn} />
@@ -214,10 +204,8 @@ export function Plate({ selected, onSelect, notice, data: frame, lands }: Props)
       {armed && (
         <Suspense fallback={null}>
           <Sheets
-            cardFor={cardFor}
             lineFor={lineFor}
             opener={opener}
-            onCloseCard={() => setCardFor(null)}
             onCloseLine={() => setLineFor(null)}
             onFailed={onSheetsFailed}
           />

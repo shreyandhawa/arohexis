@@ -7,6 +7,7 @@ const canvas = (page: Page) => page.locator('canvas');
 const region = (page: Page) => page.getByRole('region', { name: 'Brain space' });
 const chip = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
 const dialog = (page: Page) => page.getByRole('dialog');
+const partCard = (page: Page) => page.locator('[data-part-card]');
 const SIX = { id: 'extra', label: 'Extra', order: 6, enabled: true, colour: 6, region: 6 };
 
 /** The app has created its database once Home has rendered its heading. */
@@ -134,32 +135,28 @@ test('leaving Started early shows the light whole on Home', async ({ page }) => 
 });
 
 test.describe('the part card', () => {
-  test('a part chip opens its card with focus trapped; Esc and Close each return focus to the chip', async ({
+  test('a part chip zooms to its part and shows its card beside the plate; Close returns', async ({
     page,
   }) => {
     await home(page);
     await seedEvents(page, knownEvents(Date.now()));
     const work = region(page).getByRole('button', { name: 'Work', exact: true });
+    const before = await canvas(page).getAttribute('data-zoom');
     await work.click();
-    await expect(dialog(page)).toBeVisible();
-    for (let i = 0; i < 6; i += 1) {
-      await page.keyboard.press('Tab');
-      expect(await page.evaluate(() => !!document.activeElement?.closest('dialog'))).toBe(true);
-    }
-    await page.keyboard.press('Escape');
-    await expect(dialog(page)).toBeHidden();
-    await expect(work).toBeFocused();
-    await work.click();
-    await dialog(page).getByRole('button', { name: 'Close' }).click();
-    await expect(dialog(page)).toBeHidden();
-    await expect(work).toBeFocused();
+    await expect(partCard(page).getByRole('heading', { name: 'Work' })).toBeVisible();
+    await expect(dialog(page)).toHaveCount(0);
+    await expect(canvas(page)).toHaveAttribute('data-zoom', '1.80');
+    await partCard(page).getByRole('button', { name: 'Close' }).click();
+    await expect(partCard(page)).toHaveCount(0);
+    await expect(work).toHaveAttribute('aria-pressed', 'false');
+    await expect(canvas(page)).toHaveAttribute('data-zoom', before ?? '1.00');
   });
 
   test('the card shows counts and the focus line', async ({ page }) => {
     await home(page);
     await seedEvents(page, knownEvents(Date.now()));
     await region(page).getByRole('button', { name: 'Work', exact: true }).click();
-    const card = dialog(page);
+    const card = partCard(page);
     await expect(card.getByRole('heading', { name: 'Work' })).toBeVisible();
     await expect(card).toContainText('3 starts');
     await expect(card).toContainText('3 start lines');
@@ -184,6 +181,6 @@ test(`Started and the card are accessible`, async ({ page }) => {
   await expectAccessible(page);
   await page.getByRole('button', { name: 'Done for now' }).click();
   await region(page).getByRole('button', { name: 'Work', exact: true }).click();
-  await expect(dialog(page)).toBeVisible();
+  await expect(partCard(page)).toBeVisible();
   await expectAccessible(page);
 });

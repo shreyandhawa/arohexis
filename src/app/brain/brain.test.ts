@@ -4,7 +4,8 @@ import type { Plan } from '../../domain/config';
 import { DEFAULT_PARTS } from '../../domain/defaults';
 import { buildField } from '../../geometry/field';
 import { createRenderer, type RenderState } from './brain';
-import { BRAIN_CENTRE, BURST_MS, STILL_FADE_MS } from './constants';
+import { explodeAmount } from './camera';
+import { BRAIN_CENTRE, BURST_MS, FOCUS_ZOOM, STILL_FADE_MS } from './constants';
 import type { BrainSpace } from '../../domain/brainSpace';
 import { buildRig, pulledLabel } from './draw';
 
@@ -348,8 +349,8 @@ describe('the look-at', () => {
   });
 
   const rig = buildRig(buildField());
-  // Zoom does not change on selecting, so the pull is the one at zoom 1: none.
-  const workAt = lookOf(pulledLabel(rig, 'region-1', 0)!);
+  // Selecting zooms to FOCUS_ZOOM (ADR-045), so the look-at is the region as pulled at that zoom.
+  const workAt = lookOf(pulledLabel(rig, 'region-1', explodeAmount(FOCUS_ZOOM))!);
 
   it('eases to the selected region and back to the centre when the selection clears', () => {
     const h = setup();
@@ -364,6 +365,7 @@ describe('the look-at', () => {
     expect(h.canvas.dataset['loop']).toBe('running');
     h.flush(1000);
     expect(h.canvas.dataset['loop']).toBe('idle');
+    expect(h.canvas.dataset['zoom']).toBe(FOCUS_ZOOM.toFixed(2));
     h.renderer.update(h.live({ selected: null }));
     expect(h.canvas.dataset['look']).toBe(lookOf(BRAIN_CENTRE));
     h.flush(1100);
@@ -371,6 +373,7 @@ describe('the look-at', () => {
     expect(h.canvas.dataset['loop']).toBe('running');
     h.flush(2000);
     expect(h.canvas.dataset['loop']).toBe('idle');
+    expect(h.canvas.dataset['zoom']).toBe('1.00');
   });
 
   it('snaps under Still', () => {

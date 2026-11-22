@@ -1,7 +1,7 @@
-import type { ButtonHTMLAttributes } from 'react';
+import type { ComponentProps } from 'react';
 import styles from './Button.module.css';
 
-type Props = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'quiet' };
+type Props = ComponentProps<'button'> & { variant?: 'primary' | 'quiet' };
 
 export function Button({ variant = 'primary', className, type = 'button', ...rest }: Props) {
   const classes = [styles['button'], styles[variant], className].filter(Boolean).join(' ');

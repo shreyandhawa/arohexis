@@ -1,0 +1,68 @@
+/* The ring dims everything around the target with one large shadow; clicks pass through. */
+.ring {
+  position: fixed;
+  z-index: 20;
+  border: 2px solid var(--color-focus);
+  border-radius: var(--radius-m);
+  box-shadow: 0 0 0 100vmax rgb(5 6 10 / 0.72);
+  pointer-events: none;
+  transition:
+    top var(--motion-calm) var(--ease-standard),
+    left var(--motion-calm) var(--ease-standard),
+    width var(--motion-calm) var(--ease-standard),
+    height var(--motion-calm) var(--ease-standard);
+}
+
+.card {
+  position: fixed;
+  z-index: 21;
+  right: var(--space-4);
+  left: var(--space-4);
+  display: flex;
+  max-width: 24rem;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-inline: auto;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-m);
+  background: var(--color-surface);
+  box-shadow: 0 0 28px var(--color-glow);
+}
+
+.step,
+.body {
+  margin: 0;
+}
+
+.step {
+  color: var(--color-text-muted);
+  font-size: var(--step--1);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  font-weight: 500;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.actions > * {
+  flex: 1;
+}
+
+.skip {
+  margin-right: auto;
+}
+
+/* Compact buttons: the card sits over the page, so it stays small. */
+.actions button {
+  min-height: var(--target-min);
+  font-size: var(--step-0);
+}

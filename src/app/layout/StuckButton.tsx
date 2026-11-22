@@ -8,6 +8,7 @@ export function StuckButton({ variant = 'quiet' }: { variant?: 'primary' | 'quie
   return (
     <button
       type="button"
+      data-tour={variant === 'primary' ? 'start' : undefined}
       className={`${styles['stuck']} ${styles[variant]}`}
       onClick={() => void navigate('/stuck')}
     >

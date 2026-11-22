@@ -25,6 +25,7 @@ const plan = (over: Record<string, unknown> = {}) => ({
 
 const region = (page: Page) => page.getByRole('region', { name: 'Brain space' });
 const sheet = (page: Page) => page.getByRole('dialog');
+const partCard = (page: Page) => page.locator('[data-part-card]');
 
 async function allEvents(page: Page): Promise<{ type: string; outcome?: string }[]> {
   return page.evaluate(
@@ -224,14 +225,14 @@ test('the part card lists its plans: Next while waiting, Start now while open', 
 }) => {
   await homeWithPlans(page, [plan()]);
   await page.getByRole('button', { name: 'Work', exact: true }).click();
-  await expect(sheet(page)).toContainText(SENTENCE);
-  await expect(sheet(page)).toContainText('Next: 9:00 today');
-  await expect(sheet(page).getByRole('button', { name: 'Start now' })).toHaveCount(0);
-  await expect(sheet(page)).toContainText('Make the plan');
-  await sheet(page).getByRole('button', { name: 'Close', exact: true }).click();
+  await expect(partCard(page)).toContainText(SENTENCE);
+  await expect(partCard(page)).toContainText('Next: 9:00 today');
+  await expect(partCard(page).getByRole('button', { name: 'Start now' })).toHaveCount(0);
+  await expect(partCard(page)).toContainText('Make the plan');
+  await partCard(page).getByRole('button', { name: 'Close', exact: true }).click();
   await page.clock.fastForward('50:00');
   await page.getByRole('button', { name: 'Work', exact: true }).click();
-  await sheet(page).getByRole('button', { name: 'Start now' }).click();
+  await partCard(page).getByRole('button', { name: 'Start now' }).click();
   await expect(page).toHaveURL(/\/started\//);
 });
 
@@ -276,9 +277,9 @@ test(`the due card, the repair sheet and the part card are accessible`, async ({
   await expectAccessible(page);
 
   await page.getByRole('button', { name: 'Work', exact: true }).click();
-  await expect(sheet(page)).toContainText(SENTENCE);
+  await expect(partCard(page)).toContainText(SENTENCE);
   await expectAccessible(page);
-  await sheet(page).getByRole('button', { name: 'Close', exact: true }).click();
+  await partCard(page).getByRole('button', { name: 'Close', exact: true }).click();
 
   await page.clock.fastForward('03:00:00');
   await expect(sheet(page)).toBeVisible();

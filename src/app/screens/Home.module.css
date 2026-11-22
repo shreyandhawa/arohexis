@@ -3,6 +3,16 @@
   display: none;
 }
 
+.partCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-m);
+  background: var(--color-surface);
+}
+
 .thumbZone {
   display: flex;
   flex: none;
@@ -34,5 +44,13 @@
   .thumbZone {
     grid-column: 2;
     grid-row: 3;
+  }
+}
+
+/* Phone (ADR-045): a part's card follows the plate, which keeps most of the screen for the zoomed region. */
+@media (width < 64rem) {
+  :global(main):has([data-part-card]) > :global(.plate) {
+    flex: none;
+    height: 60dvh;
   }
 }

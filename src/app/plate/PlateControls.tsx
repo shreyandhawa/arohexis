@@ -29,7 +29,7 @@ const stroke = {
 
 export function TurnControls({ onTurn }: { onTurn(step: -1 | 1): void }) {
   return (
-    <div className={`${styles['pair']} ${styles['pairStart']}`}>
+    <div data-tour="turn" className={`${styles['pair']} ${styles['pairStart']}`}>
       <Control label={brain.controls.turnLeft} onClick={() => onTurn(-1)}>
         <polyline points="14,6 8,12 14,18" {...stroke} strokeLinejoin="round" />
       </Control>
@@ -42,7 +42,7 @@ export function TurnControls({ onTurn }: { onTurn(step: -1 | 1): void }) {
 
 export function ZoomControls({ onZoom }: { onZoom(step: -1 | 1): void }) {
   return (
-    <div className={`${styles['pair']} ${styles['pairEnd']}`}>
+    <div data-tour="zoom" className={`${styles['pair']} ${styles['pairEnd']}`}>
       <Control label={brain.controls.zoomOut} onClick={() => onZoom(-1)}>
         <line x1="6" y1="12" x2="18" y2="12" {...stroke} />
       </Control>
